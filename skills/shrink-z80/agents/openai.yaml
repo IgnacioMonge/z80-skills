@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shrink Z80 v2026.06.02-divergent"
+  short_description: "Ambitious Z80 size optimizer with divergent architecture/data/libpull search"
+  default_prompt: "Use $shrink-z80 v2026.06.02-divergent to find the highest-value size wins in this mixed Z80/C codebase. Run the divergent pass so architecture, libpull, data representation, generated/offline work, repeated tails, and code/data co-design are explored before micro-optimizations."
