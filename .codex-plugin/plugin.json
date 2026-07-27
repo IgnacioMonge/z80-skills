@@ -1,6 +1,6 @@
 {
   "name": "z80-skills",
-  "version": "0.3.0+codex.20260727112300",
+  "version": "0.3.0+codex.20260727120612",
   "description": "Adaptive, evidence-first audit, size, and optimization skills for ZX Spectrum Z80/C projects.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
