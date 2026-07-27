@@ -12,6 +12,7 @@ Read this reference for `c`, `memory`, or any `full` audit that touches generate
 - Switches and bool logic: verify the generated intent, not just the source appearance
 - Blocking calls in input/render/audio paths are UX defects when they can drop keys, tear frames, or stall feedback
 - `strlen`, `strcmp`, `memcpy`, and `memset` inside small loops deserve generated-ASM inspection; they can be both slow and size-expensive
+- Inline ASM in C is not a black box. Inspect generated output and manual register preservation before trusting C locals across it
 
 ## Memory reality
 
@@ -30,6 +31,7 @@ Verify any use of:
 - UDG or ROM-adjacent scratch space
 - Overlay slots or loader scratch regions
 - esxDOS-sensitive areas if the code does RST 8 or file work
+- Contended `$4000..$7fff` placement for ISR, UART, audio, loader, or tight draw loops
 
 ## Generated-code sanity
 
@@ -39,3 +41,4 @@ When the C looks suspicious:
 - Check that pointer tables and string tables were emitted correctly
 - Confirm the compiler kept operations at 8-bit width when the source seemed to expect that
 - Confirm jump tables, switch cascades, and pointer-table initializers match the C source when a logic bug would be user-visible
+- Confirm optimizer-sensitive functions under `--opt-code-size` or `--sdcccall` still pass/return values in the registers the hand ASM expects

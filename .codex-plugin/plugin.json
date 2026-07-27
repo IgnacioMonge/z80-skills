@@ -1,7 +1,7 @@
 {
   "name": "z80-skills",
-  "version": "0.1.0",
-  "description": "Codex plugin containing audit-z80 and shrink-z80 skills for ZX Spectrum Z80/C projects.",
+  "version": "0.3.0+codex.20260727105203",
+  "description": "Adaptive, evidence-first audit, size, and optimization skills for ZX Spectrum Z80/C projects.",
   "author": {
     "name": "Ignacio Monge"
   },
@@ -12,13 +12,14 @@
     "sdcc",
     "z88dk",
     "audit",
-    "size-optimization"
+    "size-optimization",
+    "performance"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Z80 Skills",
-    "shortDescription": "Audit and shrink mixed Z80/C projects.",
-    "longDescription": "Bundles audit-z80 and shrink-z80 for evidence-first bug review and aggressive binary-size optimization of ZX Spectrum Z80/C codebases.",
+    "displayName": "Z80 Skills \u2014 Adaptive Research",
+    "shortDescription": "Adaptive audit, shrink, and optimization for Z80/C.",
+    "longDescription": "Bundles audit-z80, shrink-z80, and optimize-z80 with adaptive parallel analysis, local evidence gates, and targeted external research for ZX Spectrum Z80/C codebases.",
     "developerName": "Ignacio Monge",
     "category": "Productivity",
     "capabilities": [
@@ -30,6 +31,7 @@
     "defaultPrompt": [
       "Use audit-z80 to review this Z80/C change.",
       "Use shrink-z80 to find size wins in this build.",
+      "Use optimize-z80 to find the best speed/RAM optimization path.",
       "Audit ABI, stack, ISR, memory, and map risks."
     ]
   }

@@ -4,12 +4,13 @@ Start here for `scan`. Small wins are fine, but do not let them crowd out the ca
 
 ## Attack order
 
-1. `arch`
-2. `libpull`
-3. `deadcode` or `refactor`
-4. `data`
-5. `micro`
-6. `dedup`
+1. `crt` / resident pressure (map + freshness)
+2. `arch`
+3. `libpull`
+4. `deadcode` or `refactor`
+5. `data`
+6. `micro`
+7. `dedup`
 
 ## Arch checks
 
@@ -52,15 +53,33 @@ Use the `.map` to prove the routine is actually present before claiming the savi
 - buffers larger than the real worst case
 - pointer tables where byte offsets, packed deltas, or token streams beat 16-bit addresses
 - sprite/text/screen tables that can be generated, mirrored, delta-coded, RLE-packed, or ZX0/LZSA-compressed
+- byte tables with long runs; count packed+decoder+call glue for storage and workspace separately for RAM
 - assets stored in update order instead of draw/decode order, forcing extra address math
 
 ## Black-belt pass
 
-Only after the safe pass, test these ideas and either accept or reject them with evidence:
+Only after the safe pass. Load `size-blackbook.md` for the seven dark-art
+families (ROM-as-data, instruction-skip, demo flag idioms, self-destructing
+init, undocumented registers, custom SDCC peepholes, string packing) and its
+ordering rule; then test these ideas and either accept or reject them with
+evidence:
 
 - repeated ASM tails and n-grams: factor only when `call`/`jp` overhead is net-positive
 - RST/call vectors: count vector handler bytes, call-site count, register contract, and reserved vectors
 - stack blitters: count bytes and prove SP restore, interrupt state, and clipping exits
+- stack-as-reader copy paths: consider only when repeated `LDI`/manual copies or sprite draws dominate and the SP save/restore plus DI cost is net-positive
 - screen-specific algorithms: exploit Spectrum row/attribute layout only when target is fixed
-- compression: count decoder, packed bytes, workspace, call sites, and load-time cost
+- compression: count packed+decoder+call glue, separate RAM workspace, and load-time cost
 - self-modifying/layout tricks: mark `EXPERIMENTAL` unless already an established project pattern
+
+## Extended size playbook
+
+After the safe attack order, load `size-playbook-extended.md` for resident/banked
+accounting, CRT/startup, IM2, display geometry, Z80N, compression nets,
+generative tables, buffer lifetimes, sound drivers, and 256B/4K transfers.
+Still obey `hard-contract.md` — playbook items are seeds, not proof.
+
+## External / demoscene pass
+
+After SAFE categories, use `external-research.md` only for evidence-selected
+questions. Keep notable rejected ideas; do not emit a fixed folklore checklist.

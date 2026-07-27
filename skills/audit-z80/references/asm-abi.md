@@ -27,6 +27,8 @@ For every C to ASM symbol in scope:
 - Verify return register width: `L`, `HL`, or `DEHL`
 - Verify preservation of IX and IY against the current preflight profile
 - Cross-check exports and imports with `scripts/abi_inventory.py`
+- For every inline ASM block in C, list registers written or called helpers and verify the surrounding generated `.asm` keeps C temporaries safe
+- For `__z88dk_fastcall`, `__z88dk_callee`, `__smallc`, and `__sdcccall(0/1)`, cite the actual convention used before assigning stack offsets
 
 ## ASM-specific hazards
 
@@ -38,6 +40,24 @@ For every C to ASM symbol in scope:
 - Stack blitters and push-burst screen writers: verify DI/EI, saved SP, clipping exits, and ISR model before calling them safe
 - Screen writers: verify bitmap/attribute address math, row carry, third-screen boundaries, and attribute bleed
 - Port I/O: verify register clobbers, contention/timing, and hardware target before trusting a generic emulator result
+- `DJNZ` loops containing `CALL`: prove the callee preserves `B` or that the loop counter is saved/restored manually
+- `EI; RET/JP/HALT`: treat as an explicit delayed-interrupt contract and verify the following instruction is the intended interrupt boundary
+- `pop hl ; jp/jr/call target` or other caller-stack edits: prove every caller is at the same stack depth
+
+## Control-flow state
+
+- Prefer exported/global labels as routine starts. Treat branch-only labels as
+  internal until proven otherwise.
+- `ret`, `reti`, and `retn` are verified exits. Direct `jp`/`jr` are transfers:
+  resolve the target before calling one an internal branch, tail call, or
+  non-local exit.
+- Do not reset stack, DI/EI, EXX, or alternate-AF state at every label.
+- Keep DI state across internal labels until `ei`, a verified return, or a
+  proven tail transfer.
+- Treat conditional returns/jumps/calls as path hypotheses; a linear scanner
+  cannot prove all paths.
+- State whether stack and interrupt evidence is path-sensitive or a linear-scan
+  approximation.
 
 ## Coverage reminder
 

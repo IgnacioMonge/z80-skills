@@ -1,38 +1,83 @@
 # Reporting
 
-Reports should read like an optimization backlog, not a stream of consciousness.
+Write an optimization backlog, not a transcript.
 
-## Each finding should state
+## Candidate
 
 ```text
-[CATEGORY] ID - short title
-Safety: SAFE | AGGRESSIVE | EXPERIMENTAL
-Certainty: EXACTO | ESTIMADO | REQUIERE BUILD
-File: path:line
-Current pattern: what exists now
-Proposal: concrete replacement
-Savings: CODE and BSS impact
-Cost: stack, complexity, and testing notes
-Dependency: none or what must land first
-Rejected alternative: optional, but required for black-belt candidates that looked tempting and failed proof
+[CATEGORY] ID - title | SAFE|AGGRESSIVE|EXPERIMENTAL | EXACTO|ESTIMADO|REQUIERE BUILD
+Anchor: current path:line plus artifact/byte evidence
+Pressure target:
+Change:
+Net saving: CODE/DATA/storage/BSS/stack/bank impact
+Cost: runtime, peak RAM, complexity, compatibility, testing
+Dependency: independent | depends_on:<ID> | subsumed_by:<ID> | exclusive_with:<ID>
+Verification:
 ```
 
-## Ordering
+Order by net impact, safety, and leverage. Never sum speculative, dependent,
+subsumed, or mutually exclusive candidates.
 
-- order quick wins by savings first
-- keep `SAFE` wins ahead of riskier ideas when savings are similar
-- group detailed findings by category after the quick-win list
+## Totals
 
-## Scan coverage
+Report only:
 
-A real `scan` must mention:
+- confirmed independent total;
+- confirmed dependent items;
+- requires-build items;
+- speculative items excluded from totals.
 
-- `arch`
-- `libpull`
-- `deadcode` or `refactor`
-- `data`
-- `micro`
-- `dedup`
-- black-belt candidates and rejected ideas
+For multiple maps or targets, name the selected artifacts. A candidate is
+confirmed only when every declared target passes its resident ceiling and
+stack-gap floor on the same build.
 
-If one category yields nothing useful, say `none found` and cite the evidence used.
+## Coverage
+
+Add one compact ledger:
+
+```text
+Checked: <applicable high-yield lanes + evidence>
+None found: <checked lanes with no surviving candidate>
+Skipped/n/a: <irrelevant or blocked lanes + reason>
+Artifacts: <map/sym/list/generated asm/opt/rul/bin or none>
+Freshness:
+Sandbox: <none | path + deleted | retained by explicit request>
+```
+
+Mention actual agent/research use only when it occurred.
+
+## Compression Net
+
+For every compression claim:
+
+```text
+Original_bytes:
+Packed_bytes:
+Decoder_share:
+Call_glue_bytes:
+Net_storage = Original - (Packed + Decoder_share + Call_glue)
+
+Workspace/stack/BSS peak delta:
+Workspace lifetime/reuse proof:
+Pressure target:
+Certainty:
+Evidence:
+```
+
+Do not subtract workspace from storage. Combine them only for an explicitly
+defined resident-total metric with proven non-overlapping lifetimes.
+
+## Multi-Target Gate
+
+For each target include:
+
+```text
+target | artifact | resident used/ceiling | stack gap/floor | pass|reject|REQUIERE BUILD
+```
+
+Missing linked evidence is `REQUIERE BUILD`, never a partial confirmation.
+
+## Hard-Contract Echo
+
+If a disposable worktree was used, state its path, primary-tree clean check,
+and whether it was deleted or retained by explicit user request.

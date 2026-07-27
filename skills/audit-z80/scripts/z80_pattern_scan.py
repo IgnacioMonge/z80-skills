@@ -7,8 +7,12 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-TEXT_EXTS = {".asm", ".s", ".inc", ".c", ".h", ".i", ".opt", ".lst", ".rul"}
-PREFERRED_DIRS = ("src", "asm", "include", "overlay")
+TEXT_EXTS = {".asm", ".s", ".inc", ".c", ".h", ".i", ".map", ".opt", ".lst", ".rul", ".sym"}
+TOP_LEVEL_FILES = {"Makefile", "makefile"}
+SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
+MAX_BYTES = 2_000_000
+SKIPPED_TOO_LARGE: list[Path] = []
+CONDITIONS = {"z", "nz", "c", "nc", "m", "p", "pe", "po"}
 ASM_EXTS = {".asm", ".s", ".inc", ".opt", ".lst"}
 C_EXTS = {".c", ".h", ".i"}
 
@@ -31,7 +35,7 @@ PATTERNS: dict[str, tuple[str, str]] = {
         "prove alternate-register convention across ISR, ROM, and every C/ASM boundary",
     ),
     "stack-pointer-trick": (
-        r"\b(ld\s+sp\s*,|ex\s+\(sp\)\s*,|push\s+(af|bc|de|hl|ix|iy))",
+        r"\b(ld\s+sp\s*,|ex\s+\(sp\)\s*,|add\s+hl\s*,\s*sp)",
         "check stack restoration, DI span, interrupt model, and caller stack assumptions",
     ),
     "self-modifying-or-layout": (
@@ -43,7 +47,7 @@ PATTERNS: dict[str, tuple[str, str]] = {
         "IX/IY indexed code is prefix-heavy and ABI-sensitive; verify frame-pointer/reserved-register contract",
     ),
     "page-local-indexing": (
-        r"\b(inc\s+l|dec\s+l|ld\s+h\s*,|ld\s+l\s*,|add\s+a\s*,\s*l)\b",
+        r"\b(inc\s+l|dec\s+l|align\s+256|defs\s+256)\b|/\s*256|>>\s*8",
         "page-local table/screen indexing; prove 256-byte alignment and no row/table page crossing",
     ),
     "timing-pad-or-cycle-equalizer": (
@@ -66,8 +70,12 @@ PATTERNS: dict[str, tuple[str, str]] = {
         r"\b(in|out)\s*(?:a\s*,)?\(",
         "verify port decode, timing, border/AY/UART/esxDOS side effects, and register preservation",
     ),
+    "rst8-or-esxdos": (
+        r"\brst\s+(?:8|\$08|0x08|08h)\b|\besxdos\b|\bdivmmc\b|\b(f_open|f_read|f_write|f_close|m_getsetdrv)\b",
+        "firmware/divMMC boundary; verify RST8 ABI, paged ROM state, scratch RAM, IY/AF/BC/DE/HL clobbers, and error exits",
+    ),
     "screen-or-rom-anchor": (
-        r"(\$|#|0x)(4000|5800|5b00|5c00|5c3a|5c78|ff58|ffff)\b|\b(16384|22528|23296|23552|23610|23672|65368|65535)\b",
+        r"(?:\$|#)(?:4[0-9A-Fa-f]{3}|5[0-9A-Fa-f]{3}|ff58|ffff)\b|0x(?:4[0-9A-Fa-f]{3}|5[0-9A-Fa-f]{3}|ff58|ffff)\b|\b(?:16384|22528|23296|23552|23610|23672|65368|65535)\b",
         "fixed Spectrum address; prove model, aliasing, firmware/esxDOS interaction, and 48K/128K/Next contract",
     ),
     "i-or-r-register": (
@@ -86,20 +94,26 @@ PATTERNS: dict[str, tuple[str, str]] = {
         r"\bchar\s*\*\s+\w+\s*=\s*\"|=\s*\(char\s*\*\)\s*\"",
         "string literal passed through mutable char pointer; verify no write-through corrupts code/data",
     ),
+    "inline-asm-marker": (
+        r"\b__asm\b|\b__endasm\b|#asm\b|#endasm\b",
+        "inline ASM inside C makes register/flag/stack effects invisible to the optimizer; inspect generated ASM and manual preserves",
+    ),
 }
 
-CALL_RE = re.compile(r"\bcall\s+([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
-RET_RE = re.compile(r"^\s*ret[imn]?\b", re.IGNORECASE)
-UNCOND_EXIT_RE = re.compile(
-    r"^\s*(?:ret[imn]?|jp\s+[^,;]+|jr\s+[^,;]+)\b", re.IGNORECASE
-)
+CALL_RE = re.compile(r"\bcall\s+((?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
+RET_UNCOND_RE = re.compile(r"^\s*ret[imn]?\s*$", re.IGNORECASE)
+JUMP_RE = re.compile(r"^\s*(jp|jr)\s+(.+)$", re.IGNORECASE)
 DI_RE = re.compile(r"\bdi\b", re.IGNORECASE)
 EI_RE = re.compile(r"\bei\b", re.IGNORECASE)
 HALT_RE = re.compile(r"\bhalt\b", re.IGNORECASE)
+DJNZ_RE = re.compile(r"^\s*djnz\b", re.IGNORECASE)
+EI_ONLY_RE = re.compile(r"^\s*ei\b", re.IGNORECASE)
+EI_BOUNDARY_RE = re.compile(r"^\s*(?:ret[imn]?|jp\s+[^,;]+|jr\s+[^,;]+|halt)\b", re.IGNORECASE)
 EXX_RE = re.compile(r"\bexx\b", re.IGNORECASE)
 EX_AF_RE = re.compile(r"\bex\s+af\s*,\s*af'\b", re.IGNORECASE)
 PUSH_RE = re.compile(r"^\s*push\s+(af|bc|de|hl|ix|iy)\b", re.IGNORECASE)
 POP_RE = re.compile(r"^\s*pop\s+(af|bc|de|hl|ix|iy)\b", re.IGNORECASE)
+POP_HL_RE = re.compile(r"^\s*pop\s+hl\b", re.IGNORECASE)
 LD_SP_RE = re.compile(r"^\s*ld\s+sp\s*,", re.IGNORECASE)
 RESTORE_SP_RE = re.compile(
     r"^\s*(?:ld\s+sp\s*,\s*\([^)]*\)|ld\s+sp\s*,\s*(?:hl|ix|iy)|pop\s+sp)\b",
@@ -115,23 +129,82 @@ FLAG_NEUTRAL_RE = re.compile(
 INC_DEC_RE = re.compile(r"^\s*(?:inc|dec)\s+", re.IGNORECASE)
 BLOCK_RE = re.compile(r"\b(ldir|lddr|cpir|cpdr|inir|indr|otir|otdr)\b", re.IGNORECASE)
 LD_BC_ZERO_RE = re.compile(r"\bld\s+bc\s*,\s*(?:0|\$0|#0|0x0)\b", re.IGNORECASE)
-LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):\s*$")
+LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):(?:\s*(.*))?$")
 LOOP_RE = re.compile(r"\b(for|while)\s*\(", re.IGNORECASE)
 STRLEN_RE = re.compile(r"\bstrlen\s*\(", re.IGNORECASE)
+INLINE_ASM_START_RE = re.compile(r"\b__asm\b|#asm\b", re.IGNORECASE)
+INLINE_ASM_END_RE = re.compile(r"\b__endasm\b|#endasm\b", re.IGNORECASE)
+INLINE_ASM_TOUCH_RE = re.compile(
+    r"\b(?:ld|pop|push|exx|ex|add|adc|sbc|sub|xor|or|and|cp|inc|dec|call|rst|jp\s*\(|out|in|di|ei)\b",
+    re.IGNORECASE,
+)
+EXPORT_RE = re.compile(r"^\s*(?:PUBLIC|GLOBAL|XDEF|EXPORT|\.globl)\s+(.+)", re.IGNORECASE)
+SYMBOL_RE = re.compile(r"[A-Za-z_.$][\w.$?@]*")
 ARRAY_DECL_RE = re.compile(r"\b(?:uint8_t|char|unsigned\s+char)\s+(\w+)\s*\[(\d+)\]")
 ARRAY_WRITE_RE = re.compile(r"\b(\w+)\s*\[[^]]+\]\s*=")
 
+HIGH_KEYS = {
+    "block-op-bc-zero", "halt-while-di-active", "exit-with-interrupts-disabled",
+    "sp-hijack-at-exit", "odd-exx-at-exit", "odd-ex-af-at-exit",
+    "inline-asm-register-clobber",
+}
+MEDIUM_KEYS = HIGH_KEYS | {
+    "long-di-span", "stack-delta-at-exit", "pop-hl-nonlocal-exit",
+    "djnz-loop-with-call", "stale-flag-branch", "carry-after-inc-dec",
+    "ei-delayed-boundary", "block-repeat-op", "shadow-register-use",
+    "stack-pointer-trick", "page-local-indexing", "dynamic-vector-dispatch",
+    "rst8-or-esxdos", "screen-or-rom-anchor", "port-io", "i-or-r-register",
+    "next-only-or-undocumented", "call-followed-by-ret",
+}
+LEVEL_KEYS = {"high": HIGH_KEYS, "medium": MEDIUM_KEYS, "broad": None}
 
-def source_roots(root: Path) -> list[Path]:
-    roots = [root / name for name in PREFERRED_DIRS if (root / name).exists()]
-    return roots or [root]
+
+
+def parse_args(argv: list[str]) -> tuple[str, Path]:
+    level = "broad"
+    args = list(argv)
+    if args and args[0] == "--level":
+        if len(args) < 2 or args[1] not in LEVEL_KEYS:
+            raise SystemExit("usage: z80_pattern_scan.py [--level high|medium|broad] <root>")
+        level = args[1]
+        args = args[2:]
+    elif args and args[0].startswith("--level="):
+        level = args[0].split("=", 1)[1]
+        if level not in LEVEL_KEYS:
+            raise SystemExit("usage: z80_pattern_scan.py [--level high|medium|broad] <root>")
+        args = args[1:]
+    return level, Path(args[0] if args else ".").resolve()
+
+
+def apply_level(hits: dict[str, list[Hit]], level: str) -> dict[str, list[Hit]]:
+    keep = LEVEL_KEYS[level]
+    if keep is None:
+        return hits
+    return defaultdict(list, {key: value for key, value in hits.items() if key in keep})
+
+
+def skip_path(path: Path, root: Path) -> bool:
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        parts = path.parts
+    return any(part in SKIP_DIRS for part in parts)
 
 
 def iter_text_files(root: Path):
-    for base in source_roots(root):
-        for path in base.rglob("*"):
-            if path.is_file() and path.suffix.lower() in TEXT_EXTS:
-                yield path
+    if root.is_file():
+        if root.suffix.lower() in TEXT_EXTS and root.stat().st_size <= MAX_BYTES:
+            yield root
+        return
+    for path in root.rglob("*"):
+        if skip_path(path, root) or not path.is_file():
+            continue
+        if path.name not in TOP_LEVEL_FILES and path.suffix.lower() not in TEXT_EXTS:
+            continue
+        if path.stat().st_size > MAX_BYTES:
+            SKIPPED_TOO_LARGE.append(path)
+            continue
+        yield path
 
 
 def strip_comment(line: str) -> str:
@@ -153,9 +226,64 @@ def add_hit(
     hits[key].append(Hit(path, line_no, text.strip(), note))
 
 
-def label_name(line: str) -> str | None:
+def split_label(line: str) -> tuple[str, str] | None:
     match = LABEL_RE.match(line.strip())
-    return match.group(1) if match else None
+    return (match.group(1), match.group(2) or "") if match else None
+
+
+def directive_symbols(line: str, regex: re.Pattern[str]) -> list[str]:
+    match = regex.search(line)
+    if not match:
+        return []
+    body = re.split(r";|//", match.group(1), 1)[0]
+    return [token for token in re.split(r"[\s,]+", body.strip()) if SYMBOL_RE.fullmatch(token)]
+
+
+def exported_labels(clean: list[str]) -> set[str]:
+    labels = set()
+    for line in clean:
+        labels.update(directive_symbols(line, EXPORT_RE))
+    return labels
+
+
+def parse_call(line: str) -> tuple[str, bool] | None:
+    match = CALL_RE.search(line)
+    if not match:
+        return None
+    return match.group(2), bool(match.group(1))
+
+
+def is_uncond_jump(line: str) -> bool:
+    match = JUMP_RE.match(line)
+    if not match:
+        return False
+    args = match.group(2).strip()
+    if "," in args:
+        return args.split(",", 1)[0].strip().lower() not in CONDITIONS
+    return args.split()[0].lower() not in CONDITIONS
+
+
+def is_uncond_exit(line: str) -> bool:
+    return bool(RET_UNCOND_RE.match(line))
+
+
+def is_boundary_transfer(line: str) -> bool:
+    return is_uncond_exit(line) or is_uncond_jump(line)
+
+
+def starts_new_label(line: str, label: str) -> bool:
+    if is_uncond_exit(line):
+        return True
+    match = JUMP_RE.match(line)
+    if not match or not is_uncond_jump(line):
+        return False
+    target = match.group(2).strip().split()[0]
+    return target.lower() != label.lower()
+
+
+def is_nonlocal_exit_after_pop(line: str) -> bool:
+    call = parse_call(line)
+    return is_boundary_transfer(line) or (call is not None and not call[1])
 
 
 def scan_asm_structure(
@@ -165,10 +293,12 @@ def scan_asm_structure(
     clean: list[str],
     hits: dict[str, list[Hit]],
 ) -> None:
+    exports = exported_labels(clean)
     current_label = "(file-scope)"
     label_line = 1
     stack_delta = 0
     di_line: int | None = None
+    long_di_reported = False
     exx_parity = 0
     exaf_parity = 0
     sp_hijack_line: int | None = None
@@ -180,6 +310,7 @@ def scan_asm_structure(
             label_line, \
             stack_delta, \
             di_line, \
+            long_di_reported, \
             exx_parity, \
             exaf_parity, \
             sp_hijack_line, \
@@ -188,6 +319,7 @@ def scan_asm_structure(
         label_line = lineno
         stack_delta = 0
         di_line = None
+        long_di_reported = False
         exx_parity = 0
         exaf_parity = 0
         sp_hijack_line = None
@@ -199,15 +331,23 @@ def scan_asm_structure(
         if not stripped:
             continue
 
-        label = label_name(stripped)
+        label = split_label(stripped)
         if label is not None:
-            reset_state(label, lineno)
-            continue
+            if label[0] in exports or current_label == "(file-scope)" or (
+                previous_code is not None
+                and starts_new_label(previous_code[1], label[0])
+            ):
+                reset_state(label[0], lineno)
+            stripped = label[1].strip()
+            if not stripped:
+                continue
 
         if DI_RE.search(stripped):
             di_line = lineno
+            long_di_reported = False
         if EI_RE.search(stripped):
             di_line = None
+            long_di_reported = False
         if di_line is not None and HALT_RE.search(stripped):
             add_hit(
                 hits,
@@ -217,7 +357,7 @@ def scan_asm_structure(
                 lines[idx],
                 f"HALT appears after DI in {current_label}; prove an EI or interrupt source can wake it",
             )
-        if di_line is not None and lineno - di_line > 64:
+        if di_line is not None and not long_di_reported and lineno - di_line > 64:
             add_hit(
                 hits,
                 "long-di-span",
@@ -226,7 +366,7 @@ def scan_asm_structure(
                 lines[di_line - 1],
                 f"DI span in {current_label} exceeds 64 scanned code lines before EI",
             )
-            di_line = None
+            long_di_reported = True
 
         if PUSH_RE.search(stripped):
             stack_delta += 2
@@ -261,6 +401,24 @@ def scan_asm_structure(
                     lines[idx],
                     f"carry branch follows INC/DEC at line {prev_lineno}; INC/DEC do not update carry",
                 )
+            if EI_ONLY_RE.search(prev) and EI_BOUNDARY_RE.search(stripped):
+                add_hit(
+                    hits,
+                    "ei-delayed-boundary",
+                    path,
+                    lineno,
+                    lines[idx],
+                    f"EI at line {prev_lineno} only takes effect after this instruction; prove this boundary is intentional",
+                )
+            if POP_HL_RE.search(prev) and is_nonlocal_exit_after_pop(stripped):
+                add_hit(
+                    hits,
+                    "pop-hl-nonlocal-exit",
+                    path,
+                    lineno,
+                    lines[idx],
+                    f"POP HL at line {prev_lineno} edits caller stack/control flow; prove every caller has identical stack depth",
+                )
 
         if BLOCK_RE.search(stripped):
             window = "\n".join(clean[max(0, idx - 6) : idx])
@@ -274,7 +432,20 @@ def scan_asm_structure(
                     "block repeat follows an apparent BC=0 setup; on Z80 this means 65536 iterations",
                 )
 
-        if RET_RE.search(stripped) or UNCOND_EXIT_RE.search(stripped):
+        if DJNZ_RE.search(stripped):
+            window_start = max(label_line - 1, idx - 24)
+            window = "\n".join(clean[window_start:idx])
+            if CALL_RE.search(window):
+                add_hit(
+                    hits,
+                    "djnz-loop-with-call",
+                    path,
+                    lineno,
+                    lines[idx],
+                    f"DJNZ loop in {current_label} contains a CALL in the scanned loop window; prove callee preserves B/BC",
+                )
+
+        if is_uncond_exit(stripped):
             if stack_delta != 0:
                 add_hit(
                     hits,
@@ -370,6 +541,50 @@ def scan_c_structure(
                     f"write to small buffer declared size {size} at line {decl_line}; prove index and terminator bounds",
                 )
 
+    in_inline_asm = False
+    asm_start = 0
+    touched_regs = False
+    for idx, line in enumerate(clean):
+        if INLINE_ASM_START_RE.search(line):
+            in_inline_asm = True
+            asm_start = idx + 1
+            touched_regs = bool(INLINE_ASM_TOUCH_RE.search(line))
+        elif in_inline_asm and INLINE_ASM_TOUCH_RE.search(line):
+            touched_regs = True
+
+        if in_inline_asm and INLINE_ASM_END_RE.search(line):
+            if touched_regs:
+                add_hit(
+                    hits,
+                    "inline-asm-register-clobber",
+                    path,
+                    asm_start,
+                    lines[asm_start - 1],
+                    "inline ASM block appears to touch registers or call helpers; verify manual preserves and generated C temporaries",
+                )
+            in_inline_asm = False
+            touched_regs = False
+
+        if "__asm" in line and "__endasm" not in line and INLINE_ASM_TOUCH_RE.search(line):
+            add_hit(
+                hits,
+                "inline-asm-register-clobber",
+                path,
+                idx + 1,
+                lines[idx],
+                "one-line inline ASM appears to touch registers; verify optimizer assumptions and generated ASM",
+            )
+
+    if in_inline_asm and touched_regs:
+        add_hit(
+            hits,
+            "inline-asm-register-clobber",
+            path,
+            asm_start,
+            lines[asm_start - 1],
+            "inline ASM block appears unterminated in this file scan and touches registers; inspect generated output",
+        )
+
 
 def scan_file(
     root: Path, path: Path, hits: dict[str, list[Hit]], calls: Counter[str]
@@ -392,13 +607,14 @@ def scan_file(
         for name, regex, note in compiled:
             if regex.search(line):
                 add_hit(hits, name, path, idx + 1, lines[idx], note)
-        match = CALL_RE.search(line) if is_asm else None
-        if match is not None:
-            calls[match.group(1)] += 1
+        call = parse_call(line) if is_asm else None
+        if call is not None:
+            target, conditional = call
+            calls[target] += 1
             nxt = idx + 1
             while nxt < len(clean) and not clean[nxt].strip():
                 nxt += 1
-            if nxt < len(clean) and RET_RE.search(clean[nxt]):
+            if not conditional and nxt < len(clean) and RET_UNCOND_RE.search(clean[nxt]):
                 add_hit(
                     hits,
                     "call-followed-by-ret",
@@ -426,21 +642,26 @@ def print_hits(root: Path, hits: dict[str, list[Hit]]) -> None:
 
 
 def main() -> int:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    level, root = parse_args(sys.argv[1:])
     hits: dict[str, list[Hit]] = defaultdict(list)
     calls: Counter[str] = Counter()
     files = list(iter_text_files(root))
     for path in files:
         scan_file(root, path, hits, calls)
 
+    hits = apply_level(hits, level)
     print(f"root: {root}")
+    print(f"level: {level}")
     print(f"files_scanned: {len(files)}")
-    print(
-        "purpose: adversarial hints only; every item needs local proof before reporting"
-    )
+    print("dirs_scanned: .")
+    print("dirs_skipped: " + ", ".join(sorted(SKIP_DIRS)))
+    print("files_skipped_too_large: " + (str(len(SKIPPED_TOO_LARGE)) if SKIPPED_TOO_LARGE else "0"))
+    for path in SKIPPED_TOO_LARGE[:20]:
+        print(f"  {rel(path, root)} {path.stat().st_size} bytes")
+    print("purpose: adversarial hints only; every item needs local proof before reporting")
     print_hits(root, hits)
 
-    repeated = [
+    repeated = [] if level == "high" else [
         (target, count) for target, count in calls.most_common(32) if count >= 3
     ]
     print("\n[repeated-call-targets] count=" + str(len(repeated)))

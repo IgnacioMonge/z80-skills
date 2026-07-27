@@ -16,9 +16,9 @@ Use this reference for `isr`, `map`, `memory`, and any `full` audit where concur
 - Custom startup, overlay loaders, and banked projects frequently break default ROM assumptions
 - If the project disables interrupts for long polling or UART work, verify no helper re-enables them unexpectedly
 
-## Map file priorities
+## Map/Symbol file priorities
 
-In z88dk-style `.map` files, look for:
+In z88dk-style `.map` files or parsed `.sym` files, look for:
 
 - `__CODE_head`, `__CODE_tail`, `__CODE_size`
 - `__DATA_head`, `__DATA_tail`, `__DATA_size`

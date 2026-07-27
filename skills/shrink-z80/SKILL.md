@@ -1,92 +1,82 @@
 ---
 name: shrink-z80
-description: "shrink-z80 v2026.06.02-divergent: ambitious demoscene-grade binary-size optimizer for mixed Z80 ASM and C projects on ZX Spectrum with z88dk or SDCC. Use to reduce CODE/BSS/stack pressure, explain .asm/.c/.map/.lst/.opt size, and find non-obvious wins around architecture, library drag, dead code, data/code layout, generated/offline work, code/data co-design, tail merging, table compression, RST/call vectors, screen algorithms, Z80/SDCC codegen, and forum-mined tricks. Includes an ADHD-style divergent branch pass so scans do not collapse into micro-wins. Triggers: shrink, optimize size, reduce binary, quitar grasa, quitar lastre."
-metadata:
-  version: "v2026.06.02-divergent"
-  version-note: "ADHD-style divergent branch pass, architecture/data/code-design first, micro-wins demoted unless larger levers are exhausted."
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
+description: Evidence-first binary-size optimization for Z80 and ZX Spectrum projects, including mixed ASM/C built with z88dk or SDCC. Use to reduce linked code, data, BSS, stack pressure, resident payloads, banks, overlays, library pulls, generated code, and compressed assets. Adapts from a focused single-agent check to independent parallel lanes and targeted external research while ranking only locally evidenced net savings.
 ---
 
-# Shrink-Z80
+# Shrink Z80
 
-Version: `v2026.06.02-divergent`
+Use this file as a lean dispatcher. Measure before proposing savings and load
+only references selected by current evidence.
 
-Treat this skill as a measured size-reduction workflow. Start with preflight and evidence, force a divergent pass for non-local ideas, attack high-impact categories first, and do not stop at dedup or instruction-level polish.
+## Runtime Portability
+
+- Resolve `SKILL_DIR` as the directory containing this file.
+- Use the Python 3 interpreter exposed by the host or explicitly provided by
+  the user; never assume a Windows, macOS, or Linux path.
+- Invoke bundled scripts by absolute path so project-local same-named scripts
+  cannot masquerade as skill evidence.
 
 ## Modes
 
-- Supported modes: `help`, `preflight`, `scan`, `diverge`, `deadcode`, `dedup`, `micro`, `data`, `refactor`, `arch`, `libpull`, `copt`, `report`
-- If no mode is given, run `scan`
-- `scan` means: preflight, arch, libpull, deadcode or refactor, data, micro, dedup, report
+- `help`: summarize modes from this file and stop.
+- `preflight`: profile artifacts and pressure targets, then stop.
+- `scan` (default): adaptive full size pass.
+- Focused: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
+  `arch`, `libpull`, `blackbelt`, `reserve`.
+- `diverge`: force a broad candidate search but retain normal proof gates.
 
-## Workflow
+For every real pass, read `references/hard-contract.md` and
+`references/dispatcher.md`.
 
-1. Parse mode and scope.
-   - Announce the active version in the first skill-use status line: `shrink-z80 v2026.06.02-divergent`.
-   - Narrow the scope only if the user explicitly limits it.
-   - Use `scan` for the full pass, not a dedup-only pass.
-2. Measure before proposing.
-   - Read [references/preflight.md](references/preflight.md).
-   - Run `scripts/preflight_scan.py <root>` when build flags or artifacts are unclear.
-   - Run `scripts/map_summary.py <mapfile-or-root>` whenever a `.map` exists.
-   - Run `scripts/libpull_scan.py <root> [map]` for `scan`, `libpull`, or when arithmetic or library drag may matter.
-   - Run `scripts/literal_dup_scan.py <root>` for `dedup` or when strings and tables dominate.
-   - Run `scripts/z80_pattern_scan.py <root>` for `scan`, `arch`, `refactor`, `micro`, or when the user asks for demoscene/exotic/Gemini-level ideas. Treat output as candidates, not savings.
-3. Run the divergent size pass for `scan`, `diverge`, `arch`, `refactor`, `data`, or when early findings are mostly local.
-   - Read [references/divergent-pass.md](references/divergent-pass.md).
-   - Generate separated hypothesis branches before judging them; prefer real Agent branches when available.
-   - Use branches to seek representation changes, offline/generated work, protocol/state collapse, table/data redesign, library deletion, lifetime reuse, and code/data co-design.
-   - Score and converge before reporting. Promote only investigated candidates with byte evidence; keep unproven ideas as `SPECULATIVE` or `Rejected ideas`.
-   - If a `scan` returns only sub-20B micro wins without a clear explanation for absent architecture/libpull/data wins, the pass is incomplete.
-4. Load only the reference modules that match the task.
-   - `scan`, `arch`, `libpull`, or high-level triage: [references/high-impact.md](references/high-impact.md)
-   - Divergent high-impact search: [references/divergent-pass.md](references/divergent-pass.md)
-   - C-generated size patterns: [references/c-patterns.md](references/c-patterns.md)
-   - Hand-written ASM work: [references/asm-micro.md](references/asm-micro.md)
-   - External tools and demoscene-grade idea bank: [references/external-toolkit.md](references/external-toolkit.md)
-   - Forum-mined black-belt tricks, old-school game routines, and underground idea bank: [references/forum-gems.md](references/forum-gems.md)
-   - Final ranking and dependencies: [references/reporting.md](references/reporting.md)
-   - Anti-shallow checks: [references/blind-spots.md](references/blind-spots.md)
-5. Attack in priority order.
-   - For `scan`, inspect `arch` and `libpull` before `dedup`.
-   - Prefer high-impact `SAFE` wins over tiny local rewrites, even if they require a broader refactor.
-   - Treat representation changes, generated/offline computation, table redesign, generic-code deletion, and buffer lifetime reuse as first-class candidates.
-   - Consider `CODE`, `BSS`, stack, complexity, and testing cost together.
-6. Run the black-belt pass after the safe pass.
-   - Look for screen-memory/layout rewrites, active lists, page-local tables, table/token encodings, suffix merging, RST/call-vector amortization, stack-copy opportunities, generated tables, compiled sprites, compression nets, and code/data co-design.
-   - Keep a `Rejected ideas` list for clever candidates that fail byte count, ABI, flags, stack, timing, or maintainability proof.
-   - Do not present `EXPERIMENTAL` tricks before exhausting `SAFE` and `AGGRESSIVE` wins with larger expected savings.
-7. Enforce category coverage.
-   - `scan` must say something explicit about `diverge`, `arch`, `libpull`, `deadcode or refactor`, `data`, `micro`, `dedup`, and black-belt candidates, even if the statement is `none found`.
-   - Do not present a dedup-only report as a full shrink pass.
-8. Preserve behavior unless the user opts into more risk.
-   - Default to `SAFE`.
-   - Mark `AGGRESSIVE` and `EXPERIMENTAL` explicitly and leave them after `SAFE` wins.
+## Demand
 
-## Evidence thresholds
+Classify after preflight:
 
-- `EXACTO`: counted or measured locally
-- `ESTIMADO`: local reasoning is solid but the final build impact may vary
-- `REQUIERE BUILD`: linker elimination, `jr` range, or library removal must still be confirmed
-- Always say what must be re-measured after the edit
+- **Focused**: one file/routine/asset/category and a known pressure target.
+  Keep the main agent only.
+- **Standard**: multiple plausible size mechanisms or uncertain linked impact.
+  Use one independent delegate when available.
+- **Deep**: broad scan, multi-target ceilings, banks/overlays, mixed source and
+  generated artifacts, insufficient SAFE wins, or an explicit black-belt /
+  exhaustive request. Run useful high-yield lanes in parallel up to available
+  capacity; add a later wave only when new evidence justifies it.
 
-## Bundled scripts
+Unavailable agents reduce parallelism, not byte accounting or safety. Run only
+evidence-selected lanes, but an explicit broad `scan` must still cover every
+applicable high-yield lane or state that the pass is incomplete.
 
-- `scripts/preflight_scan.py`: summarize build flags, output artifacts, copt rules, map files, and memory settings.
-- `scripts/map_summary.py`: extract code/data/BSS markers, stack-gap inputs, largest symbol spans, and heavy map symbols from z88dk-style `.map` files.
-- `scripts/libpull_scan.py`: correlate heavy library symbols in the map with source-level calls, arithmetic, constant arithmetic, tiny mem helpers, and loop libcalls in `.c`.
-- `scripts/literal_dup_scan.py`: list repeated C string literals and repeated ASM `db` string payloads.
-- `scripts/z80_pattern_scan.py`: surface high-yield hand-written Z80 shrink candidates and risky exotic shapes: tail-call wrappers, repeated calls, repeated ASM n-grams, repeated suffix tails, stack blitters, page-local indexing, timing pads, pointer dispatch, block ops, IX/IY hot paths, self-modifying/layout dependencies, fixed screen anchors, large byte tables, switch/pointer-table overhead, and costly runtime triggers.
+## First Actions
 
-## Output contract
+1. Identify the exact pressure target: storage, linked CODE/DATA, resident
+   memory, BSS/stack gap, bank/overlay ceiling, or a per-target reserve.
+2. Run `scripts/preflight_scan.py` and `scripts/artifact_freshness.py`; use
+   `scripts/map_summary.py` for selected maps.
+3. Read `references/agent-orchestration.md` only when independent lanes add
+   value.
+4. Attack SAFE high-impact mechanisms before micro or dark-art tricks.
+5. Read `references/external-research.md` only when a research trigger in
+   `references/dispatcher.md` fires.
+6. Treat script, subagent, and web output as candidates. Only the main agent
+   may confirm net savings.
 
-- Put high-value wins first, ordered by bytes, safety, and dependency leverage; do not let tiny quick wins bury architectural savings.
-- Include a short divergent shortlist: top investigated branch candidates, their score or rank, and rejected traps.
-- Then give detailed findings grouped by category.
-- Close with dependencies, open questions, and what still needs a build to confirm.
+## Reference Map
+
+- Evidence, worktrees, multi-target gate: `references/hard-contract.md`
+- Mode and script routing: `references/dispatcher.md`
+- Adaptive parallelism: `references/agent-orchestration.md`
+- SAFE attack order: `references/high-impact.md`
+- Rare/high-risk static techniques: `references/size-blackbook.md`,
+  `references/size-playbook-extended.md`
+- Dynamic forum/blog/repository discovery:
+  `references/external-research.md`
+- Byte and report rules: `references/z80-byte-evidence.md`,
+  `references/reporting.md`
+- Guardrails: `references/blind-spots.md`
+
+## Core Rules
+
+- Preserve behavior unless the user explicitly accepts more risk.
+- Rank larger SAFE wins before AGGRESSIVE or EXPERIMENTAL ideas.
+- Never sum dependent, subsumed, mutually exclusive, or unbuilt candidates.
+- Compression claims use net storage and separate peak-RAM accounting.
+- If only micro wins survive, state which higher-yield categories were checked.

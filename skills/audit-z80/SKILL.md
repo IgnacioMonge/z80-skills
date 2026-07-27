@@ -1,87 +1,77 @@
 ---
 name: audit-z80
-description: "audit-z80 v2026.06.02-divergent: structured bug, logic, performance, UX, and inconsistency audit for mixed Z80 ASM and C projects on ZX Spectrum with z88dk or SDCC. Use for deep review of .asm, .c, .h, .map, .lst, or .opt files: ABI mismatches, stack balance, stale flags, ISR/shared-state hazards, memory layout, fixed-address RAM, calling conventions, hot-path stalls, user-visible regressions, and real 48K/128K failures. Includes an ADHD-style divergent threat-model pass that broadens hypotheses without lowering evidence thresholds. Triggers: audit, review z80, check code, revisar codigo, buscar bugs."
-metadata:
-  version: "v2026.06.02-divergent"
-  version-note: "ADHD-style divergent threat-model pass, expanded pressure map, evidence thresholds unchanged."
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Agent
+description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or user-visible regressions. Adapts from a focused single-agent pass to independent parallel branches and targeted external research when scope, ambiguity, or risk justifies the cost.
 ---
 
-# Audit-Z80
+# Audit Z80
 
-Version: `v2026.06.02-divergent`
-
-Treat this skill as a workflow, not a free-form persona prompt. Start with preflight, use divergent threat modeling to broaden what gets investigated, load only the reference files needed for the chosen mode, gather evidence, then report findings first.
+Use this file as a lean dispatcher. Load only references selected by the current
+scope. Prefer context-efficient reads, searches, and shell output when the
+runtime provides them.
 
 ## Modes
 
-- Supported modes: `help`, `preflight`, `full`, `diverge`, `asm`, `c`, `abi`, `isr`, `memory`, `copt`, `map`
-- If no mode is given, run `full`
-- If the user only wants a quick overview, summarize `help` without loading every reference file
+- `help`: summarize modes from this file and stop.
+- `preflight`: run the relevant profile scripts, report escalation signals, and
+  stop.
+- `auto` (default): preflight, then choose focused, standard, or deep demand.
+- `full` / `diverge`: force broad category coverage; depth still adapts to the
+  evidence and available agent capacity.
+- Focused modes: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
+  `toolchain`, `copt`, `map`.
 
-## Workflow
+For every real audit, read `references/hard-contract.md` and
+`references/dispatcher.md`. Read `references/agent-orchestration.md` only when
+more than one independent investigation lane is useful.
 
-1. Parse mode and scope.
-   - Announce the active version in the first skill-use status line: `audit-z80 v2026.06.02-divergent`.
-   - Narrow the scope only if the user explicitly limits it.
-   - For `full`, include preflight and every major category.
-2. Build the project profile before judging code.
-   - Read [references/preflight.md](references/preflight.md).
-   - Run `scripts/preflight_scan.py <root>` when build flags, target, startup, or artifact availability are not already obvious.
-   - If a `.map` exists or the user mentions memory pressure, run `scripts/map_summary.py <mapfile-or-root>`.
-   - If the project mixes C and ASM, run `scripts/abi_inventory.py <root>` before concluding about calling conventions.
-   - For `full`, `asm`, `isr`, unusual hand-written code, or demoscene-style hot paths, run `scripts/z80_pattern_scan.py <root>` and treat its output as hints to investigate, not findings.
-3. Build a pressure map before reading linearly.
-   - Identify boundary code, ISR/shared state, hot loops, screen/attribute writers, input polling, loaders/overlays, and fixed-RAM users.
-   - Compare comments, symbol names, C prototypes, ASM exports, and `.map` reality; contradictions outrank style concerns.
-   - For games/demos/apps with visible interaction, include UX failure modes: missed input, frame hitching, flicker, corrupt attributes, bad clipping, blocking I/O, and silent stalls.
-4. Run the divergent threat-model pass for `full`, `diverge`, large/unusual scopes, fuzzy failures, or demoscene-style code.
-   - Read [references/divergent-pass.md](references/divergent-pass.md).
-   - Generate isolated hypothesis branches before judging them; prefer real Agent branches when available.
-   - Use branches to widen the investigation queue across ABI, ISR, map, toolchain, UX/timing, memory pressure, and contradiction classes.
-   - Never promote a branch hypothesis directly to a finding. It must pass the normal evidence thresholds or be downgraded to `ROBUSTNESS`, `SUSPICIOUS`, `NEEDS BUILD`, or dropped.
-5. Load only the reference modules that match the task.
-   - `asm` or `abi`: [references/asm-abi.md](references/asm-abi.md)
-   - `c` or `memory`: [references/c-memory.md](references/c-memory.md)
-   - `isr`, `map`, or memory-pressure work: [references/isr-map.md](references/isr-map.md)
-   - Divergent threat modeling: [references/divergent-pass.md](references/divergent-pass.md)
-   - Any large or unusual codebase: [references/blind-spots.md](references/blind-spots.md)
-   - If the user asks for external/Gemini/Claude-level imagination, demoscene tricks, exotic routines, or tool-backed hardening: [references/external-toolkit.md](references/external-toolkit.md)
-   - If the user asks for forum-mined, underground, old-school, demoscene, or "black magic" review: [references/forum-gems.md](references/forum-gems.md)
-   - Final report rules: [references/reporting.md](references/reporting.md)
-6. Gather evidence before naming a bug.
-   - Read every in-scope source file fully.
-   - Cross-check declarations, call sites, stack layout, and fixed-address usage.
-   - Treat `.map`, `.lst`, `.sym`, `.opt`, and build flags as evidence, not optional garnish.
-7. Enforce coverage.
-   - `full` must explicitly cover: preflight, divergent hypothesis coverage, ASM/registers/flags, C semantics, ABI boundary, ISR/shared state, memory/BSS gap, hot-path or UX risk, and `.map` or copt when present.
-   - If a category has no findings, say `none found` and cite the evidence used.
-   - Do not stop after the first plausible bug class.
-8. Report findings first and never edit files.
-   - Use the reporting contract in [references/reporting.md](references/reporting.md).
-   - Separate `BUG`, `ROBUSTNESS`, `PERF/UX`, `TRADEOFF`, `THEORETICAL`, and `OBSERVATION`.
-   - Keep severity and confidence independent.
+## Demand
 
-## Evidence thresholds
+Classify after preflight:
 
-- Use `PROVEN` only when an opcode trace, stack trace, symbol, offset, or direct contradiction makes the bug concrete.
-- Use `LIKELY`, `SUSPICIOUS`, or `NEEDS BUILD` when the missing proof is real.
-- State the contract you are assuming when the target, startup, or toolchain changes the analysis.
+- **Focused**: explicit files/functions, one boundary, and a concrete question.
+  Keep the main agent only.
+- **Standard**: two or more interacting domains, a fuzzy symptom, or a material
+  evidence gap. Use one independent delegate when available.
+- **Deep**: broad/full scope, high-impact corruption or timing risk, mixed
+  source/generated evidence, several targets, contradictory artifacts, or an
+  explicit exhaustive request. Use parallel independent lanes up to useful
+  runtime capacity; add later waves only when the first wave changes the search
+  frontier.
 
-## Bundled scripts
+Unavailable agents reduce parallelism, not evidence standards. In `auto`, stop
+after risk-prioritized lanes cease changing the result. In explicit `full`,
+cover every applicable lane serially or state that the audit is incomplete.
 
-- `scripts/preflight_scan.py`: summarize toolchain flags, artifacts, calling-convention markers, and interrupt clues.
-- `scripts/map_summary.py`: extract code/data/BSS boundaries, stack-top symbols, largest symbol spans, and libpull signatures from z88dk-style `.map` files.
-- `scripts/abi_inventory.py`: inventory calling convention markers, C boundary prototypes, ASM exports/imports, mismatch candidates, and stack-cleanup hints.
-- `scripts/z80_pattern_scan.py`: surface expert-review hints around stale flags, carry-after-INC/DEC, DI exits, HALT under DI, block ops, shadow registers, stack tricks, page-local indexing, timing pads, dynamic dispatch, self-modifying/layout code, IX/IY hot paths, Next-only opcodes, port I/O, screen/ROM anchors, C mutability traps, loop libcalls, and repeated call targets.
+## First Actions
 
-## Output contract
+1. Resolve the skill directory before invoking bundled scripts.
+2. Parse scope and mode; narrow only on an explicit user limit.
+3. Build one project profile and one evidence digest.
+4. Select domain references from `references/dispatcher.md`.
+5. Select independent lanes from `references/agent-orchestration.md` when
+   demand is standard or deep.
+6. Read `references/external-research.md` only when a research trigger in
+   `references/dispatcher.md` fires.
+7. Treat scripts, agents, prior knowledge, and web sources as candidate
+   generators. The main agent verifies every promoted finding.
 
-- Put findings first.
-- Follow with open questions or assumptions.
-- Close with a short coverage note or residual-risk note, including which divergent hypothesis classes were investigated or rejected.
-- If no findings remain, say so explicitly instead of padding with observations.
+## Reference Map
+
+- Evidence and sandbox rules: `references/hard-contract.md`
+- Routing and scripts: `references/dispatcher.md`
+- Adaptive parallelism: `references/agent-orchestration.md`
+- External discovery: `references/external-research.md`
+- Promotion: `references/promotion-gate.md`
+- Reporting: `references/reporting.md`
+- Domain checks: `references/asm-abi.md`, `references/c-memory.md`,
+  `references/isr-map.md`, `references/sdcc-z88dk-quirks.md`,
+  `references/spectrum-hardware-esxdos.md`,
+  `references/promotion-gate.md`
+
+## Core Rules
+
+- Findings first; never edit project code during an audit.
+- Promote only current-code or fresh-artifact evidence.
+- Verify reachability, ABI, stack, flags, registers, interrupt state, memory
+  layout, generated-code reality, and target constraints as applicable.
+- If no finding survives, say so and identify the strongest residual risk.

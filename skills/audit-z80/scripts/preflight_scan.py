@@ -18,11 +18,27 @@ TEXT_EXTS = {
     ".ps1",
     ".rul",
     ".s",
+    ".sym",
     ".sh",
     ".txt",
+    ".bat",
+    ".cmd",
+    ".cfg",
+    ".json",
+    ".toml",
+    ".yaml",
+    ".yml",
+    ".def",
+    ".z80",
+    ".a80",
+    ".mac",
+    ".bas",
 }
-TOP_LEVEL_FILES = {"Makefile", "makefile", "build.sh", "build.ps1"}
+TOP_LEVEL_FILES = {"Makefile", "makefile", "build.sh", "build.ps1", "CMakeLists.txt"}
 PREFERRED_DIRS = ("src", "asm", "include", "overlay")
+ARTIFACT_DIRS = ("build", "out", "obj", "gen", "generated", "dist")
+SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
+MAX_BYTES = 2_000_000
 
 PATTERNS = {
     "toolchain": [
@@ -35,8 +51,14 @@ PATTERNS = {
         r"-compiler=sdcc",
         r"-clib=sdcc_iy",
         r"-startup=\d+",
+        r"--sdcccall\s*\d+",
+        r"--reserve-regs-iy",
+        r"--fno-omit-frame-pointer",
         r"--fomit-frame-pointer",
         r"--opt-code-size",
+        r"--max-allocs-per-node",
+        r"--peep-asm",
+        r"--list\b",
         r"-zorg=\d+",
         r"custom-copt-rules",
     ],
@@ -44,6 +66,8 @@ PATTERNS = {
         r"__z88dk_callee",
         r"__z88dk_fastcall",
         r"__naked",
+        r"__smallc",
+        r"__sdcccall\s*\(\s*[01]\s*\)",
     ],
     "interrupts": [
         r"\bim\s+1\b",
@@ -52,6 +76,8 @@ PATTERNS = {
         r"\bei\b",
     ],
     "fixed_address_clues": [
+        r"\$4000\b",
+        r"\$5800\b",
         r"\$5B[0-9A-Fa-f]{2}",
         r"\$5C[0-9A-Fa-f]{2}",
         r"\$FF58\b",
@@ -59,29 +85,72 @@ PATTERNS = {
         r"\bring_buffer\b",
         r"\bprinter buffer\b",
     ],
+    "inline_asm": [
+        r"__asm\b",
+        r"__endasm\b",
+        r"#asm\b",
+        r"#endasm\b",
+    ],
+    "firmware_esxdos_divmmc": [
+        r"\brst\s+(?:8|\$08|0x08|08h)\b",
+        r"\besxDOS\b",
+        r"\besxdos\b",
+        r"\bdivMMC\b",
+        r"\bdot command\b",
+        r"\bm_getsetdrv\b",
+        r"\bf_open\b",
+        r"\bf_read\b",
+        r"\bf_write\b",
+        r"\bf_close\b",
+    ],
+    "overlays_banks": [
+        r"\boverlay\b",
+        r"\bbank(ed|ing)?\b",
+        r"\bpaged\b",
+        r"\bslot\b",
+    ],
+    "contention_timing": [
+        r"\$40[0-9A-Fa-f]{2}",
+        r"\$5[0-7][0-9A-Fa-f]{2}",
+        r"\b0x40[0-9A-Fa-f]{2}",
+        r"\b0x5[0-7][0-9A-Fa-f]{2}",
+        r"\bport\s+\$?fe\b",
+        r"\bFRAMES\b",
+        r"\bfast\b",
+        r"\buart\b",
+        r"\baudio\b",
+        r"\bbeep\b",
+    ],
 }
 
 
-def source_roots(root: Path) -> list[Path]:
-    roots = [root / name for name in PREFERRED_DIRS if (root / name).exists()]
-    return roots or [root]
+def recognized_dirs(root: Path) -> list[Path]:
+    return [root / name for name in (*PREFERRED_DIRS, *ARTIFACT_DIRS) if (root / name).exists()]
+
+
+def skip_path(path: Path, root: Path) -> bool:
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        parts = path.parts
+    return any(part in SKIP_DIRS for part in parts)
 
 
 def text_files(root: Path):
-    for name in TOP_LEVEL_FILES:
-        path = root / name
-        if path.is_file():
-            yield path
-    for base in source_roots(root):
-        for path in base.rglob("*"):
-            if not path.is_file():
-                continue
-            if path.suffix.lower() in TEXT_EXTS:
+    if root.is_file():
+        if root.suffix.lower() in TEXT_EXTS and root.stat().st_size <= MAX_BYTES:
+            yield root
+        return
+    for path in root.rglob("*"):
+        if skip_path(path, root) or not path.is_file():
+            continue
+        if path.name in TOP_LEVEL_FILES or path.suffix.lower() in TEXT_EXTS:
+            if path.stat().st_size <= MAX_BYTES:
                 yield path
 
 
 def find_artifacts(root: Path, suffix: str) -> list[Path]:
-    return sorted(root.rglob(f"*{suffix}"))
+    return sorted(p for p in root.rglob(f"*{suffix}") if not skip_path(p, root))
 
 
 def collect_hits(root: Path, patterns: list[str], limit: int = 8) -> list[str]:
@@ -105,7 +174,13 @@ def collect_hits(root: Path, patterns: list[str], limit: int = 8) -> list[str]:
 
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    files = list(text_files(root))
+    recognized = recognized_dirs(root)
     print(f"root: {root}")
+    print("dirs_scanned: .")
+    print("recognized_dirs: " + (", ".join(str(p.relative_to(root)) for p in recognized) if recognized else "none"))
+    print("dirs_skipped: " + ", ".join(sorted(SKIP_DIRS)))
+    print(f"text_files_scanned: {len(files)}")
     for suffix in (".map", ".lst", ".sym", ".opt", ".rul"):
         matches = find_artifacts(root, suffix)
         print(f"{suffix} files: {len(matches)}")

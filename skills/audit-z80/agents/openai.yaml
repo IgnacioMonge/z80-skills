@@ -1,4 +1,4 @@
 interface:
-  display_name: "Audit Z80 v2026.06.02-divergent"
-  short_description: "Deep Z80/C audit with divergent threat modeling and strict evidence"
-  default_prompt: "Use $audit-z80 v2026.06.02-divergent to audit this mixed Z80/C change for real bugs, ABI mistakes, stale flags, memory hazards, timing stalls, and UX-visible regressions. Run the divergent threat-model pass to widen hypotheses, but promote only evidence-backed findings."
+  display_name: "Audit Z80"
+  short_description: "Adaptive evidence-first Z80/C code audit"
+  default_prompt: "Use $audit-z80 to audit this Z80 project at the depth justified by its scope and report only locally verified findings."

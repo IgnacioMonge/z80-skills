@@ -1,0 +1,4 @@
+interface:
+  display_name: "Optimize Z80"
+  short_description: "Adaptive, evidence-ranked Z80 optimization"
+  default_prompt: "Use $optimize-z80 to identify this Z80 project's real bottleneck and rank the best locally evidenced optimization experiments."

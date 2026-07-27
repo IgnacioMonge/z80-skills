@@ -5,99 +5,75 @@ import re
 import sys
 from pathlib import Path
 
-TEXT_EXTS = {
-    ".asm",
-    ".c",
-    ".h",
-    ".i",
-    ".inc",
-    ".lst",
-    ".map",
-    ".mk",
-    ".opt",
-    ".ps1",
-    ".rul",
-    ".s",
-    ".sh",
-    ".txt",
-}
-TOP_LEVEL_FILES = {"Makefile", "makefile", "build.sh", "build.ps1"}
-PREFERRED_DIRS = ("src", "asm", "include", "overlay")
+from scan_common import BINARY_ARTIFACT_EXTS, BUILD_EXTS, TEXT_EXTS, read_text_lines, rel_path, resolve_scope, print_scope
 
 PATTERNS = {
     "build_flags": [
-        r"\bzcc\b",
-        r"\bzsdcc\b",
-        r"\bsdcc\b",
-        r"\bsccz80\b",
-        r"-compiler=sdcc",
-        r"-clib=sdcc_iy",
-        r"-startup=\d+",
-        r"--fomit-frame-pointer",
-        r"--opt-code-size",
-        r"-SO\d",
-        r"-zorg=\d+",
-        r"custom-copt-rules",
+        r"\bzcc\b", r"\bzsdcc\b", r"\bsdcc\b", r"\bsccz80\b", r"-compiler=sdcc", r"-compiler=sccz80",
+        r"-clib=sdcc_iy", r"-startup=\d+", r"--sdcccall\s*\d+", r"--reserve-regs-iy",
+        r"--max-allocs-per-node", r"--peep-asm", r"--list\b", r"--fomit-frame-pointer",
+        r"--opt-code-size", r"-SO\d", r"-zorg=\d+", r"custom-copt-rules",
     ],
     "artifacts_and_rules": [
-        r"\.map\b",
-        r"\.lst\b",
-        r"\.sym\b",
-        r"\.opt\b",
-        r"\.rul\b",
-        r"CRT_STACK_SIZE",
+        r"\.map\b", r"\.lst\b", r"\.lis\b", r"\.sym\b", r"\.opt\b", r"\.rul\b",
+        r"\.rel\b", r"\.ihx\b", r"\.lk\b", r"\.noi\b", r"\.mem\b",
+        r"CRT_STACK_SIZE", r"z88dk-zx0", r"z88dk-zx7", r"\bzx0\b", r"\bzx7\b",
+        r"\blzsa\b", r"\brle\b",
     ],
 }
+ARTIFACT_EXTS = {".map", ".lst", ".lis", ".sym", ".opt", ".rul", ".rel", ".ihx", ".lk", ".noi", ".mem"}
 
 
-def source_roots(root: Path) -> list[Path]:
-    roots = [root / name for name in PREFERRED_DIRS if (root / name).exists()]
-    return roots or [root]
-
-
-def text_files(root: Path):
-    for name in TOP_LEVEL_FILES:
-        path = root / name
-        if path.is_file():
-            yield path
-    for base in source_roots(root):
-        for path in base.rglob("*"):
-            if not path.is_file():
-                continue
-            if path.suffix.lower() in TEXT_EXTS:
-                yield path
-
-
-def collect_hits(root: Path, patterns: list[str], limit: int = 10) -> list[str]:
+def collect_hits(scope, patterns: list[str], limit: int = 20) -> list[str]:
     hits: list[str] = []
     compiled = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
-    for path in text_files(root):
-        try:
-            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except OSError:
+    for path in scope.files:
+        if path.suffix.lower() in BINARY_ARTIFACT_EXTS:
+            continue
+        lines, skipped = read_text_lines(path)
+        if skipped:
             continue
         for lineno, line in enumerate(lines, start=1):
             if len(line) > 300:
                 continue
             if any(regex.search(line) for regex in compiled):
-                hits.append(f"{path.relative_to(root)}:{lineno}: {line.strip()}")
+                hits.append(f"{rel_path(path, scope.base)}:{lineno}: {line.strip()}")
                 if len(hits) >= limit:
                     return hits
     return hits
 
 
 def main() -> int:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-    print(f"root: {root}")
-    for suffix in (".map", ".lst", ".sym", ".opt", ".rul"):
-        matches = sorted(root.rglob(f"*{suffix}"))
+    target = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
+    scope = resolve_scope(target, TEXT_EXTS | BUILD_EXTS)
+    print_scope(scope)
+
+    for suffix in sorted(ARTIFACT_EXTS):
+        matches = [path for path in scope.files if path.suffix.lower() == suffix]
         print(f"{suffix} files: {len(matches)}")
-        for path in matches[:5]:
-            print(f"  - {path.relative_to(root)}")
+        for path in matches[:8]:
+            print(f"  - {rel_path(path, scope.base)}")
+
+    binary = [path for path in scope.files if path.suffix.lower() in BINARY_ARTIFACT_EXTS]
+    print("\n[binary_artifacts]")
+    if not binary:
+        print("  none")
+    else:
+        for path in sorted(binary):
+            stat = path.stat()
+            print(f"  {rel_path(path, scope.base)} size={stat.st_size} mtime={int(stat.st_mtime)}")
+
+    maps = [path for path in scope.files if path.suffix.lower() == ".map"]
+    if len(maps) > 1:
+        print("\n[map_candidates]")
+        for path in sorted(maps):
+            stat = path.stat()
+            print(f"  {rel_path(path, scope.base)} size={stat.st_size} mtime={int(stat.st_mtime)}")
+        print("  note: multiple maps found; main agent must choose one explicitly before byte claims")
 
     for section, patterns in PATTERNS.items():
         print(f"\n[{section}]")
-        hits = collect_hits(root, patterns)
+        hits = collect_hits(scope, patterns)
         if not hits:
             print("  none")
             continue
