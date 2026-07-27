@@ -34,7 +34,14 @@ defaults change only when the user explicitly requests that change.
   2. Create a **detached disposable worktree** in a host temporary directory
      outside the primary tree. Do not edit `.git/info/exclude`, tracked ignore
      files, or project configuration merely to host it.
-  3. Run builds/patches **only** there.
+  3. Run builds/patches **only** there. Invoke every sandbox build, test,
+     measurement, or patch command from an allowed directory with the host
+     Python interpreter and
+     `<skill-dir>/../../scripts/run_in_worktree.py`, passing
+     `--primary <primary-root> --worktree <worktree-root> -- <command>`.
+     Never pass the temporary directory as a wrapper `cwd`: a rejected,
+     substituted, or unverifiable `cwd` is a hard failure, never permission to
+     retry the gate in the primary tree.
   4. Before finishing, compare primary status/diff with the captured baseline.
      Require no skill-caused delta; do not require an initially dirty tree to
      become clean.

@@ -394,6 +394,7 @@ README.es.md
   plugin.json
 scripts/
   install_personal_marketplace.py
+  run_in_worktree.py
 skills/
   audit-z80/
     SKILL.md
@@ -421,6 +422,7 @@ in `references/`, and reproducible analyzers in `scripts/`.
 Included tests:
 
 ```sh
+python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
 python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
