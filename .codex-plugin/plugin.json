@@ -1,10 +1,11 @@
 {
   "name": "z80-skills",
-  "version": "0.3.0+codex.20260727111135",
+  "version": "0.3.0+codex.20260727112300",
   "description": "Adaptive, evidence-first audit, size, and optimization skills for ZX Spectrum Z80/C projects.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
   },
+  "repository": "https://github.com/IgnacioMonge/z80-skills",
   "license": "MIT",
   "keywords": [
     "z80",
@@ -21,6 +22,7 @@
     "shortDescription": "Adaptive audit, shrink, and optimization for Z80/C.",
     "longDescription": "Bundles audit-z80, shrink-z80, and optimize-z80 with adaptive parallel analysis, local evidence gates, and targeted external research for ZX Spectrum Z80/C codebases.",
     "developerName": "M. Ignacio Monge Garc\u00eda",
+    "websiteURL": "https://github.com/IgnacioMonge/z80-skills",
     "category": "Productivity",
     "capabilities": [
       "Code review",
