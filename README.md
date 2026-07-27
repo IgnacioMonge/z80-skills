@@ -1,290 +1,286 @@
 # Z80 Skills — Adaptive Research
 
-Plugin para Codex con tres skills complementarios para analizar proyectos Z80,
-especialmente software de ZX Spectrum escrito en ensamblador, C o una mezcla de
-ambos con z88dk o SDCC.
+**Languages:** English · [Español](README.es.md)
 
-El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
-el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
-riesgo real y distinguen claramente entre evidencia probada, estimaciones e
-hipótesis.
+Codex plugin with three complementary skills for analyzing Z80 projects,
+especially ZX Spectrum software written in assembly, C, or a mixture of both
+using z88dk or SDCC.
+
+The goal is not to produce generic lists of tricks. The skills inspect the
+current code and artifacts, adapt depth and parallelism to the actual risk, and
+clearly distinguish proven evidence, estimates, and hypotheses.
 
 > Evidence-first auditing, size reduction and multi-objective optimization for
 > Z80 and ZX Spectrum projects.
 
-## Contenido
+## Contents
 
-- [Qué incluye](#qué-incluye)
-- [Qué aporta frente a un análisis genérico](#qué-aporta-frente-a-un-análisis-genérico)
-- [Ejecución adaptativa y multiagente](#ejecución-adaptativa-y-multiagente)
-- [Investigación externa dirigida](#investigación-externa-dirigida)
-- [Detalle de cada skill](#detalle-de-cada-skill)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Artefactos recomendados](#artefactos-recomendados)
-- [Seguridad y límites](#seguridad-y-límites)
-- [Estructura del repositorio](#estructura-del-repositorio)
-- [Validación](#validación)
-- [Licencia](#licencia)
+- [What is included](#what-is-included)
+- [What it adds beyond generic analysis](#what-it-adds-beyond-generic-analysis)
+- [Adaptive and multi-agent execution](#adaptive-and-multi-agent-execution)
+- [Targeted external research](#targeted-external-research)
+- [Skill details](#skill-details)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Recommended artifacts](#recommended-artifacts)
+- [Safety and limitations](#safety-and-limitations)
+- [Repository structure](#repository-structure)
+- [Validation](#validation)
+- [License](#license)
 
-## Qué incluye
+## What is included
 
-| Skill | Pregunta principal | Resultado |
+| Skill | Primary question | Result |
 |---|---|---|
-| `audit-z80` | ¿Hay defectos, corrupción, errores ABI, riesgos ISR/memoria/hardware o regresiones? | Hallazgos priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
-| `shrink-z80` | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
-| `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
+| `audit-z80` | Are there defects, corruption, ABI errors, ISR/memory/hardware risks, or regressions? | Findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
+| `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
+| `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
-Los tres skills se solapan solo donde es útil:
+The three skills overlap only where useful:
 
-- Usa `audit-z80` para corrección y seguridad técnica.
-- Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
-  tamaño.
-- Usa `optimize-z80` para decidir entre objetivos que compiten entre sí y
-  ordenar los siguientes experimentos.
+- Use `audit-z80` for correctness and technical safety.
+- Use `shrink-z80` for an exhaustive search focused exclusively on size.
+- Use `optimize-z80` to decide among competing objectives and prioritize the
+  next experiments.
 
-## Qué aporta frente a un análisis genérico
+## What it adds beyond generic analysis
 
-### Evidencia local antes que folklore
+### Local evidence before folklore
 
-- Solo el código actual y los artefactos demostrablemente frescos pueden
-  confirmar un hallazgo o una mejora.
-- Los mapas, símbolos, listings, ASM generado y binarios enlazados cuentan como
-  evidencia únicamente cuando corresponden a la misma revisión, configuración
-  y target.
-- Escáneres, agentes, conocimiento previo, foros y repositorios generan
-  candidatos; no sustituyen la verificación local.
-- Un artefacto obsoleto reduce explícitamente la confianza a estados como
-  `NEEDS BUILD`, `REQUIERE BUILD` o `SPECULATIVE`.
-- En proyectos con varios targets, una propuesta solo supera la puerta de
-  promoción cuando cada target satisface sus propios límites.
+- Only the current code and demonstrably fresh artifacts can confirm a finding
+  or improvement.
+- Maps, symbols, listings, generated ASM, and linked binaries count as evidence
+  only when they correspond to the same revision, configuration, and target.
+- Scanners, agents, prior knowledge, forums, and repositories generate
+  candidates; they do not replace local verification.
+- A stale artifact explicitly lowers confidence to states such as
+  `NEEDS BUILD`, `REQUIERE BUILD`, or `SPECULATIVE`.
+- In multi-target projects, a proposal passes the promotion gate only when
+  every target satisfies its own limits.
 
-### Carga progresiva
+### Progressive loading
 
-Cada `SKILL.md` funciona como un dispatcher compacto. Codex carga primero el
-contrato común y después únicamente las referencias y scripts pertinentes para
-el problema observado. Esto evita introducir en contexto manuales, técnicas o
-logs que no pueden cambiar el resultado.
+Each `SKILL.md` acts as a compact dispatcher. Codex first loads the shared
+contract and then only the references and scripts relevant to the observed
+problem. This avoids adding manuals, techniques, or logs to the context when
+they cannot change the result.
 
-### Herramientas deterministas
+### Deterministic tools
 
-El plugin incluye analizadores Python sin dependencias externas para perfilar
-el proyecto, resumir mapas, detectar patrones, inventariar fronteras ABI,
-evaluar frescura de artefactos, localizar library pulls y estimar candidatos.
-Sus resultados son señales reproducibles, no veredictos automáticos.
+The plugin includes dependency-free Python analyzers for profiling the project,
+summarizing maps, detecting patterns, inventorying ABI boundaries, assessing
+artifact freshness, locating library pulls, and estimating candidates. Their
+results are reproducible signals, not automatic verdicts.
 
-## Ejecución adaptativa y multiagente
+## Adaptive and multi-agent execution
 
-Los skills no presuponen que existan subagentes ni lanzan un roster fijo. Tras
-un único preflight clasifican la demanda:
+The skills do not assume that subagents are available or launch a fixed roster.
+After a single preflight, they classify the workload:
 
-| Demanda | Estrategia |
+| Workload | Strategy |
 |---|---|
-| **Focused** | El agente principal resuelve una pregunta acotada sin delegar. |
-| **Standard** | El principal conserva la verificación y, si hay capacidad, un delegado investiga la incertidumbre independiente más valiosa. |
-| **Deep** | Se ejecutan en paralelo tantas líneas independientes como sean útiles y estén disponibles; normalmente no más de tres delegados por oleada. |
+| **Focused** | The primary agent answers a bounded question without delegation. |
+| **Standard** | The primary agent retains verification and, when capacity is available, one delegate investigates the most valuable independent uncertainty. |
+| **Deep** | As many useful and available independent lines of inquiry as possible run in parallel, normally with no more than three delegates per wave. |
 
 ```mermaid
 flowchart LR
-    A["Petición y alcance"] --> B["Preflight único"]
-    B --> C{"Demanda"}
-    C -->|Focused| D["Agente principal"]
-    C -->|Standard| E["Principal + una línea independiente"]
-    C -->|Deep| F["Líneas independientes en paralelo"]
-    D --> G["Verificación local"]
+    A["Request and scope"] --> B["Single preflight"]
+    B --> C{"Workload"}
+    C -->|Focused| D["Primary agent"]
+    C -->|Standard| E["Primary + one independent line"]
+    C -->|Deep| F["Independent lines in parallel"]
+    D --> G["Local verification"]
     E --> G
     F --> G
-    R["Investigación externa dirigida"] --> G
-    G --> H["Hallazgos o candidatos priorizados"]
+    R["Targeted external research"] --> G
+    G --> H["Prioritized findings or candidates"]
 ```
 
-Reglas de eficiencia:
+Efficiency rules:
 
-- Se reserva capacidad para que el agente principal mantenga el contexto
-  completo y juzgue la evidencia.
-- Cada delegado recibe la misma línea base inmutable, una pregunta falsable y
-  un conjunto estrecho de archivos o artefactos.
-- Las ramas son independientes; solo se solapan para una comprobación
-  adversarial deliberada.
-- Los escáneres deterministas se ejecutan una vez y se comparte un resumen, no
-  el log completo.
-- El agente principal deduplica, aplica vetos, verifica anclas locales y conserva
-  la responsabilidad sobre severidad, contabilidad y ranking.
-- Una segunda oleada solo se abre si aparece un nuevo cuello de botella, una
-  contradicción o una pregunta de verificación concreta.
-- Se detiene el análisis cuando las nuevas líneas solo repiten candidatos o ya
-  no pueden cambiar la decisión.
-- Si no hay subagentes, se recorren serialmente las líneas que todavía pueden
-  alterar el resultado. El umbral de evidencia no se rebaja.
+- Capacity is reserved so that the primary agent retains the full context and
+  judges the evidence.
+- Each delegate receives the same immutable baseline, a falsifiable question,
+  and a narrow set of files or artifacts.
+- Branches are independent; they overlap only for deliberate adversarial
+  checking.
+- Deterministic scanners run once, and a summary—not the complete log—is shared.
+- The primary agent deduplicates, applies vetoes, verifies local anchors, and
+  retains responsibility for severity, accounting, and ranking.
+- A second wave opens only when a new bottleneck, contradiction, or concrete
+  verification question appears.
+- Analysis stops when new lines of inquiry only repeat candidates or can no
+  longer change the decision.
+- If subagents are unavailable, the lines that can still change the result are
+  examined serially. The evidence threshold is not lowered.
 
-## Investigación externa dirigida
+## Targeted external research
 
-La búsqueda externa se activa para resolver una incertidumbre concreta, no
-para adornar el informe ni repetir una lista de sitios conocidos.
+External research is activated to resolve a specific uncertainty, not to
+decorate the report or repeat a list of well-known sites.
 
-### Cuándo se activa
+### When it is activated
 
-- El usuario solicita investigación profunda en foros, blogs, repositorios o
+- The user requests deep research across forums, blogs, repositories, or the
   demoscene.
-- Una versión de compilador, ABI, firmware, emulador, modelo de hardware o
-  detalle de timing puede cambiar un hallazgo principal.
-- El código, los artefactos generados y la documentación se contradicen.
-- Un análisis profundo mantiene un punto ciego material.
-- Una secuencia de instrucciones, helper, codec, renderer, loader o esquema de
-  bancos requiere arqueología de código.
+- A compiler version, ABI, firmware, emulator, hardware model, or timing detail
+  can change a primary finding.
+- The code, generated artifacts, and documentation contradict one another.
+- A deep analysis retains a material blind spot.
+- An instruction sequence, helper, codec, renderer, loader, or banking scheme
+  requires code archaeology.
 
-### Cómo busca
+### How it searches
 
-1. Formula una pregunta desde una firma local mínima: opcode, símbolo, fragmento
-   emitido, versión, dirección, síntoma o restricción.
-2. Busca fragmentos exactos y conceptos con vocabulario alternativo.
-3. Amplía términos en inglés, español, polaco, ruso, checo y otras comunidades
-   regionales pertinentes.
-4. Diversifica las fuentes: código, tests, commits, issues, forks, emuladores,
-   mediciones de hardware, listas de correo, foros archivados, blogs personales,
-   repositorios pequeños, disassemblies, generadores y material demoscene.
-5. Sigue autores, citas, forks, problemas relacionados y enlaces archivados.
-6. Intenta refutar cada finalista buscando bugs, regresiones, issues cerrados o
-   rechazados y fallos específicos por modelo.
-7. Verifica CPU, modelo Spectrum, ABI, interrupciones, paginación, memoria,
-   toolchain y timing antes de transferir una técnica.
+1. Formulate a question from a minimal local signature: opcode, symbol, emitted
+   fragment, version, address, symptom, or constraint.
+2. Search for exact fragments and concepts using alternative terminology.
+3. Expand terms across English, Spanish, Polish, Russian, Czech, and other
+   relevant regional communities.
+4. Diversify sources: code, tests, commits, issues, forks, emulators, hardware
+   measurements, mailing lists, archived forums, personal blogs, small
+   repositories, disassemblies, generators, and demoscene material.
+5. Follow authors, citations, forks, related issues, and archived links.
+6. Try to refute each finalist by looking for bugs, regressions, closed or
+   rejected issues, and model-specific failures.
+7. Verify the CPU, Spectrum model, ABI, interrupts, paging, memory, toolchain,
+   and timing before transferring a technique.
 
-La investigación tiene presupuesto y reglas de parada: conserva solo las pocas
-fuentes capaces de cambiar una decisión. Una técnica popular sin ancla en el
-proyecto permanece como hipótesis.
+Research has a budget and stopping rules: it retains only the few sources that
+can change a decision. A popular technique without a project-local anchor
+remains a hypothesis.
 
-Para proteger proyectos privados, las búsquedas usan únicamente firmas mínimas
-normalizadas; nunca deben subir código privado ni identificadores del proyecto.
+To protect private projects, searches use only minimal normalized signatures;
+they must never upload private code or project identifiers.
 
-## Detalle de cada skill
+## Skill details
 
 ### `audit-z80`
 
-Auditoría de solo lectura para encontrar defectos reales y riesgos
-reproducibles.
+Read-only auditing for finding real defects and reproducible risks.
 
-**Cobertura**
+**Coverage**
 
-- fronteras C/ASM, calling conventions, registros, flags y stack;
-- ISR, `DI`/`EI`, reentrada y estado compartido;
-- mapas de memoria, BSS, stack gap, bancos y overlays;
-- firmware, ROM, RST 8, esxDOS, divMMC y diferencias entre modelos;
-- semántica C, buffers, promoción, signedness y lifetime;
-- ASM/listings generados, reglas copt y comportamiento z88dk/SDCC;
-- ULA, contention, puertos, timing y regresiones visibles para el usuario.
+- C/ASM boundaries, calling conventions, registers, flags, and stack;
+- ISRs, `DI`/`EI`, reentrancy, and shared state;
+- memory maps, BSS, stack gap, banks, and overlays;
+- firmware, ROM, RST 8, esxDOS, divMMC, and differences among models;
+- C semantics, buffers, promotion, signedness, and lifetime;
+- generated ASM/listings, copt rules, and z88dk/SDCC behavior;
+- ULA, contention, ports, timing, and user-visible regressions.
 
-**Modos**
+**Modes**
 
-- `auto`: preflight y profundidad adaptativa.
-- `preflight`: perfil y señales de escalado sin auditoría completa.
-- `full` / `diverge`: cobertura amplia con las mismas puertas de evidencia.
-- Focos: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
-  `toolchain`, `copt` y `map`.
+- `auto`: preflight and adaptive depth.
+- `preflight`: profile and escalation signals without a full audit.
+- `full` / `diverge`: broad coverage with the same evidence gates.
+- Focus areas: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
+  `toolchain`, `copt`, and `map`.
 
-**Helpers principales**
+**Primary helpers**
 
-- `preflight_scan.py`: inventario de fuentes, artefactos y señales de riesgo.
-- `z80_pattern_scan.py`: patrones estructurales ASM/C.
-- `abi_inventory.py`: declaraciones, convenciones y fronteras C/ASM.
-- `map_summary.py`: símbolos, direcciones y aproximación del stack gap.
-- `smoke_test.py`: comprobación reproducible de los analizadores.
+- `preflight_scan.py`: inventory of sources, artifacts, and risk signals.
+- `z80_pattern_scan.py`: structural ASM/C patterns.
+- `abi_inventory.py`: declarations, conventions, and C/ASM boundaries.
+- `map_summary.py`: symbols, addresses, and stack-gap approximation.
+- `smoke_test.py`: reproducible checks for the analyzers.
 
-La salida pone primero los hallazgos que superan la puerta de promoción. Si
-ninguno sobrevive, lo indica y señala el riesgo residual más importante en vez
-de rellenar el informe con observaciones débiles.
+The output puts findings that pass the promotion gate first. If none survive,
+it says so and identifies the most important residual risk instead of padding
+the report with weak observations.
 
 ### `shrink-z80`
 
-Optimizador de tamaño basado en mediciones y contabilidad neta.
+Size optimizer based on measurement and net accounting.
 
-**Objetivos separados**
+**Separate objectives**
 
-- tamaño de almacenamiento;
-- CODE/DATA enlazado;
-- memoria residente;
-- BSS y margen de stack;
-- techo de banco u overlay;
-- reserva mínima por target.
+- storage size;
+- linked CODE/DATA;
+- resident memory;
+- BSS and stack headroom;
+- bank or overlay ceiling;
+- minimum reserve per target.
 
-**Modos**
+**Modes**
 
-- `scan`: análisis adaptativo completo.
-- `preflight`: perfil de artefactos y presión.
-- Focos: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
-  `arch`, `libpull`, `blackbelt` y `reserve`.
-- `diverge`: exploración amplia sin relajar la prueba.
+- `scan`: complete adaptive analysis.
+- `preflight`: artifact and pressure profile.
+- Focus areas: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
+  `arch`, `libpull`, `blackbelt`, and `reserve`.
+- `diverge`: broad exploration without relaxing the proof requirements.
 
-**Orden de ataque**
+**Order of attack**
 
-1. Arquitectura, residencia, datos y librerías enlazadas.
-2. Código generado, helpers y representaciones repetidas.
-3. Compresión con coste neto y RAM pico separados.
-4. Microoptimizaciones y técnicas de mayor riesgo solo cuando pueden importar.
+1. Architecture, residency, data, and linked libraries.
+2. Generated code, helpers, and repeated representations.
+3. Compression with net cost and peak RAM accounted for separately.
+4. Micro-optimizations and higher-risk techniques only when they can matter.
 
-No suma propuestas dependientes, subsumidas, incompatibles o todavía no
-construidas. Distingue seguridad (`SAFE`, `AGGRESSIVE`, `EXPERIMENTAL`) y
-calidad de medida (`EXACTO`, `ESTIMADO`, `REQUIERE BUILD`).
+It does not add together proposals that are dependent, subsumed, incompatible,
+or not yet built. It distinguishes safety (`SAFE`, `AGGRESSIVE`,
+`EXPERIMENTAL`) and measurement quality (`EXACTO`, `ESTIMADO`,
+`REQUIERE BUILD`).
 
-**Helpers principales**
+**Primary helpers**
 
-- `preflight_scan.py` y `artifact_freshness.py`;
-- `map_summary.py`, `deadcode_scan.py` y `libpull_scan.py`;
-- `generated_helper_scan.py` y `literal_dup_scan.py`;
+- `preflight_scan.py` and `artifact_freshness.py`;
+- `map_summary.py`, `deadcode_scan.py`, and `libpull_scan.py`;
+- `generated_helper_scan.py` and `literal_dup_scan.py`;
 - `z80_pattern_scan.py`;
-- `net_compression_check.py`, que separa ahorro de almacenamiento y RAM pico.
+- `net_compression_check.py`, which separates storage savings from peak RAM.
 
 ### `optimize-z80`
 
-Motor de estrategia multiobjetivo para decidir qué optimizar primero y cómo
-validarlo.
+Multi-objective strategy engine for deciding what to optimize first and how to
+validate it.
 
-**Ámbitos**
+**Areas**
 
-- tamaño, ciclos y latencia;
-- RAM, stack y layout de datos;
-- renderizado, contention e I/O;
-- bancos, overlays y transiciones;
-- C a ASM, ABI, librerías, codegen y toolchain;
-- restricciones por modelo y hardware.
+- size, cycles, and latency;
+- RAM, stack, and data layout;
+- rendering, contention, and I/O;
+- banks, overlays, and transitions;
+- C-to-ASM, ABI, libraries, code generation, and toolchain;
+- model- and hardware-specific constraints.
 
-**Modos**
+**Modes**
 
-- `Triage`: inspección de solo lectura sin build. Los artefactos obsoletos
-  limitan la confianza.
-- `Measurement`: baseline reproducible en un worktree desechable.
-- `Experiment`: requiere aprobación explícita, cambia una sola variable y se
-  elimina salvo que el usuario pida conservarla.
+- `Triage`: read-only inspection without a build. Stale artifacts limit
+  confidence.
+- `Measurement`: reproducible baseline in a disposable worktree.
+- `Experiment`: requires explicit approval, changes a single variable, and is
+  deleted unless the user asks to keep it.
 
-Primero identifica el cuello de botella dominante. Después aplica vetos de
-política y target, fusiona duplicados, audita los finalistas y recomienda como
-máximo tres experimentos siguientes.
+It first identifies the dominant bottleneck. It then applies policy and target
+vetoes, merges duplicates, audits the finalists, and recommends no more than
+three next experiments.
 
-Cada candidato incluye:
+Each candidate includes:
 
-- ancla y frescura de la evidencia;
-- zona, mecanismo e impacto esperado;
-- efecto sobre tamaño, ciclos/latencia, RAM/stack y UX cuando corresponda;
-- riesgo, targets, restricciones, rollback y validación;
-- confianza (`PROVEN`, `LIKELY` o `SPECULATIVE`);
-- motivo por el que supera ahora a las alternativas.
+- evidence anchor and freshness;
+- area, mechanism, and expected impact;
+- effect on size, cycles/latency, RAM/stack, and UX where applicable;
+- risk, targets, constraints, rollback, and validation;
+- confidence (`PROVEN`, `LIKELY`, or `SPECULATIVE`);
+- the reason it currently outranks the alternatives.
 
-Los estimadores estáticos de ciclos, mapas o patrones no constituyen prueba por
-sí solos.
+Static cycle, map, or pattern estimators do not constitute proof by themselves.
 
-## Instalación
+## Installation
 
-### Requisitos
+### Requirements
 
-- Codex con soporte para plugins y skills.
-- Git para clonar y actualizar el repositorio.
-- Python 3.9 o posterior para los helpers; Python 3.11 o posterior es
-  recomendable para la ruta completa de políticas TOML de `optimize-z80`.
-- z88dk o SDCC únicamente cuando el proyecto o una medición reproducible los
-  requiera.
+- Codex with plugin and skill support.
+- Git to clone and update the repository.
+- Python 3.9 or later for the helpers; Python 3.11 or later is recommended for
+  the complete TOML policy path in `optimize-z80`.
+- z88dk or SDCC only when required by the project or a reproducible measurement.
 
-### Primera instalación
+### Initial installation
 
-El instalador espera que el repositorio esté exactamente en
+The installer expects the repository to be located exactly at
 `~/plugins/z80-skills`.
 
 ```sh
@@ -294,104 +290,106 @@ python3 scripts/install_personal_marketplace.py
 codex plugin add z80-skills@personal
 ```
 
-`install_personal_marketplace.py` crea o actualiza
-`~/.agents/plugins/marketplace.json`, conserva las demás entradas y sustituye
-solo la entrada llamada `z80-skills`.
+`install_personal_marketplace.py` creates or updates
+`~/.agents/plugins/marketplace.json`, preserves all other entries, and replaces
+only the entry named `z80-skills`.
 
-Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
-carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea
-ya abierta.
+Open a new Codex task after installing: the skill catalog is loaded when the
+task starts and does not update dynamically within an already open task.
 
-### Actualización
+### Updating
 
 ```sh
 git -C ~/plugins/z80-skills pull --ff-only
 codex plugin add z80-skills@personal
 ```
 
-Después de actualizar, vuelve a abrir una tarea nueva.
+After updating, open a new task again.
 
-## Uso
+## Usage
 
-Los skills se invocan mediante lenguaje natural. Cuanto más concretos sean el
-target, el objetivo y los artefactos disponibles, más precisa será la
-priorización.
+The skills are invoked through natural language. The more specific the target,
+objective, and available artifacts are, the more precise the prioritization
+will be.
 
-### Auditoría
+### Auditing
 
 ```text
-Usa audit-z80 en modo auto para revisar este proyecto mixto ASM/C.
-Prioriza ABI, ISR y memoria; informa únicamente hallazgos anclados al código actual.
+Use audit-z80 in auto mode to review this mixed ASM/C project.
+Prioritize ABI, ISR, and memory; report only findings anchored in the current code.
 ```
 
 ```text
-Usa audit-z80 en modo full. Revisa las diferencias entre los targets 48K y 128K,
-incluidos paging, ROM, stack, interrupciones y artefactos generados.
+Use audit-z80 in full mode. Review the differences between the 48K and 128K targets,
+including paging, ROM, stack, interrupts, and generated artifacts.
 ```
 
-### Reducción de tamaño
+### Size reduction
 
 ```text
-Usa shrink-z80 en modo scan. Necesito recuperar al menos 512 bytes de CODE/DATA
-sin cambiar el comportamiento y separando ahorro exacto de ahorro estimado.
-```
-
-```text
-Usa shrink-z80 en modo compress para comparar el tamaño neto y la RAM pico de
-los codecs aplicados a estos assets concretos.
-```
-
-### Optimización multiobjetivo
-
-```text
-Usa optimize-z80 en modo Triage para identificar el cuello de botella real y
-devolver los tres experimentos con mejor relación entre impacto, riesgo y coste.
+Use shrink-z80 in scan mode. I need to recover at least 512 bytes of CODE/DATA
+without changing behavior, and keep exact savings separate from estimated savings.
 ```
 
 ```text
-Usa optimize-z80 en modo Measurement para obtener una línea base fresca sin
-modificar mi árbol principal.
+Use shrink-z80 in compress mode to compare the net size and peak RAM of
+the codecs applied to these specific assets.
 ```
 
-## Artefactos recomendados
+### Multi-objective optimization
 
-Los skills pueden empezar solo con fuentes, pero estos artefactos aumentan la
-confianza:
+```text
+Use optimize-z80 in Triage mode to identify the real bottleneck and return
+the three experiments with the best balance of impact, risk, and cost.
+```
 
-| Evidencia | Utilidad |
+```text
+Use optimize-z80 in Measurement mode to obtain a fresh baseline without
+modifying my main working tree.
+```
+
+## Recommended artifacts
+
+The skills can start with source files alone, but these artifacts increase
+confidence:
+
+| Evidence | Usefulness |
 |---|---|
-| `.asm`, `.s`, `.c`, `.h` | Semántica actual, fronteras ABI, patrones y reachability. |
-| `.map`, `.sym` | Layout, símbolos, secciones, bancos, library pulls y stack gap. |
-| `.lst` o ASM generado | Comportamiento real del compilador y coste del codegen. |
-| Binarios, TAP y assets | Tamaño final, compresión y comparaciones reproducibles. |
-| Receta de build y flags | Reproducibilidad, toolchain, ABI y configuración. |
-| Targets y límites explícitos | Vetos, reservas, compatibilidad y ranking correcto. |
+| `.asm`, `.s`, `.c`, `.h` | Current semantics, ABI boundaries, patterns, and reachability. |
+| `.map`, `.sym` | Layout, symbols, sections, banks, library pulls, and stack gap. |
+| `.lst` or generated ASM | Actual compiler behavior and code-generation cost. |
+| Binaries, TAP files, and assets | Final size, compression, and reproducible comparisons. |
+| Build recipe and flags | Reproducibility, toolchain, ABI, and configuration. |
+| Explicit targets and limits | Vetoes, reserves, compatibility, and correct ranking. |
 
-Un timestamp reciente por sí solo no demuestra correspondencia. La revisión,
-configuración y receta deben pertenecer a la misma línea base.
+A recent timestamp alone does not prove correspondence. The revision,
+configuration, and recipe must belong to the same baseline.
 
-## Seguridad y límites
+## Safety and limitations
 
-- Los análisis normales son de solo lectura.
-- `audit-z80` y `shrink-z80` no editan el proyecto.
-- `optimize-z80` solo modifica una copia desechable en modo `Experiment` y
-  requiere aprobación explícita.
-- Los scripts incluidos usan la biblioteca estándar de Python, trabajan con
-  archivos locales y no realizan búsquedas de red.
-- Los tests escriben en directorios temporales y los eliminan al terminar.
-- El plugin no incluye z88dk, SDCC, emuladores ni herramientas de profiling.
-- No es un compilador, un profiler de hardware ni un optimizador automático.
-- No confirma ahorros enlazados, timings o compatibilidad sin evidencia
-  adecuada.
-- SMC, abuso de SP, `DI`/`EI`, opcodes no documentados, floating bus y otras
-  técnicas dependientes de hardware requieren etiquetas de riesgo y validación
-  específica por target.
-- La investigación externa nunca debe publicar fuentes privadas, rutas,
-  símbolos sensibles ni identificadores del proyecto.
+- Normal analyses are read-only.
+- `audit-z80` and `shrink-z80` do not edit the project.
+- `optimize-z80` modifies only a disposable copy in `Experiment` mode and
+  requires explicit approval.
+- The included scripts use the Python standard library, work with local files,
+  and do not perform network searches.
+- Tests write to temporary directories and remove them when finished.
+- The plugin does not include z88dk, SDCC, emulators, or profiling tools.
+- It is not a compiler, hardware profiler, or automatic optimizer.
+- It does not confirm linked savings, timings, or compatibility without
+  appropriate evidence.
+- SMC, SP abuse, `DI`/`EI`, undocumented opcodes, floating bus behavior, and
+  other hardware-dependent techniques require risk labels and target-specific
+  validation.
+- External research must never publish private source code, paths, sensitive
+  symbols, or project identifiers.
 
-## Estructura del repositorio
+## Repository structure
 
 ```text
+LICENSE
+README.md
+README.es.md
 .codex-plugin/
   plugin.json
 scripts/
@@ -415,12 +413,12 @@ skills/
     scripts/
 ```
 
-Cada skill mantiene las instrucciones centrales en `SKILL.md`, los detalles de
-carga selectiva en `references/` y los analizadores reproducibles en `scripts/`.
+Each skill keeps its core instructions in `SKILL.md`, selective-loading details
+in `references/`, and reproducible analyzers in `scripts/`.
 
-## Validación
+## Validation
 
-Pruebas incluidas:
+Included tests:
 
 ```sh
 python3 skills/audit-z80/scripts/smoke_test.py
@@ -428,18 +426,15 @@ python3 skills/shrink-z80/tests/run_smoke.py
 python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
 ```
 
-También debe validarse el manifiesto del plugin y el frontmatter de cada skill
-antes de publicar una nueva versión.
+The plugin manifest and the front matter of each skill should also be validated
+before publishing a new version.
 
-## Licencia
+## License
 
-El manifiesto declara `UNLICENSED` y este repositorio no incluye una licencia de
-software libre. Su visibilidad pública permite leer el código, pero no concede
-permiso para copiarlo, modificarlo o redistribuirlo.
+This project is licensed under the [MIT License](LICENSE).
 
-La elección de una licencia —por ejemplo MIT, Apache-2.0 o GPL— requiere una
-decisión explícita del propietario.
+Copyright © 2026 M. Ignacio Monge García.
 
-## Autor
+## Author
 
-Ignacio Monge
+M. Ignacio Monge García
