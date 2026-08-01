@@ -27,6 +27,31 @@ If a spawn fails, times out, or capacity drops, keep completed results and do
 not relaunch the same brief unchanged. Cover locally only a missing lane that
 can still change the frontier, policy decision, or residual risk.
 
+## Adaptive Model and Effort Routing
+
+After preflight and the baseline digest, route every selected lane separately.
+Do not map lane names or demand classes to fixed model/effort pairs.
+
+1. Inspect the models and reasoning levels actually exposed by the runtime.
+2. Use the highest-capability available decision model at a high reasoning
+   tier, normally `high` or `xhigh`, to choose the routes. If the main agent
+   cannot provide that tier and explicit overrides are available, run one
+   read-only routing adviser before launching analysis delegates; the main
+   agent verifies its proposal. Reserve `max` for a contradictory or unusually
+   high-impact preflight, not as a default; never enable nested delegation.
+3. For each lane, assess ambiguity, cross-domain coupling, impact, evidence
+   freshness and determinism, context breadth, and verification burden.
+4. Select model capability for ambiguity, judgment, and context handling;
+   select reasoning effort independently for proof depth and checking. Use the
+   least costly setting likely to clear the evidence and policy gates.
+5. Record the requested model/effort, one-line rationale, and actual setting or
+   fallback. If an override requires a smaller context fork, pass the compact
+   baseline digest instead of full history.
+6. Re-evaluate after lane results. Escalate only for contradictions, missing
+   proof, low confidence, or a candidate that can change the frontier, policy
+   decision, or residual risk. Never rerun an unchanged brief merely at higher
+   effort.
+
 ## Selectable Lanes
 
 Choose by observed zones and pressure:
@@ -63,6 +88,7 @@ Lane:
 Question:
 Scope:
 Baseline: <target, policy, toolchain, freshness, bottleneck; <=12 lines>
+Routing: <requested model/effort; one-line rationale; fallback>
 Constraints: read-only; no nested agents/builds; candidates only
 References: <only relevant files/sections>
 ```
@@ -89,12 +115,17 @@ otherwise look attractive.
 
 1. Build policy/profile, freshness, bottleneck, and zone digest once.
 2. Select lanes by expected decision value, not role completeness.
-3. Launch delegates together; analyze non-overlapping evidence concurrently.
-4. Merge by mechanism, apply vetoes, and score survivors.
-5. Adversarially review only the finalists.
-6. Stop when new work cannot change the top three experiments, confidence, or
+3. Route each lane with the adaptive model/effort policy and record the
+   requested and actual settings.
+4. Launch delegates together; analyze non-overlapping evidence concurrently.
+5. Merge by mechanism, apply vetoes, and score survivors.
+6. Adversarially review only the finalists.
+7. Re-evaluate routing and escalate only where unresolved evidence can change
+   the result.
+8. Stop when new work cannot change the top three experiments, confidence, or
    residual risk.
-7. Report actual delegation and materially skipped lanes in one short block.
+9. Report actual delegation, model/effort fallbacks, and materially skipped
+   lanes in one short block.
 
 The research lane follows `external-research.md`; its sources never substitute
 for project-local proof.

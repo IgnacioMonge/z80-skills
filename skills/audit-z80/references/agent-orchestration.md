@@ -30,6 +30,30 @@ If a spawn fails, times out, or capacity drops, keep completed results and do
 not relaunch the same brief unchanged. Cover locally only the missing lane that
 can still change severity, confidence, or residual risk.
 
+## Adaptive Model and Effort Routing
+
+After preflight and the baseline digest, route every selected lane separately.
+Do not map lane names or demand classes to fixed model/effort pairs.
+
+1. Inspect the models and reasoning levels actually exposed by the runtime.
+2. Use the highest-capability available decision model at a high reasoning
+   tier, normally `high` or `xhigh`, to choose the routes. If the main agent
+   cannot provide that tier and explicit overrides are available, run one
+   read-only routing adviser before launching investigation delegates; the main
+   agent verifies its proposal. Reserve `max` for a contradictory or unusually
+   high-impact preflight, not as a default; never enable nested delegation.
+3. For each lane, assess ambiguity, cross-domain coupling, impact, evidence
+   freshness and determinism, context breadth, and verification burden.
+4. Select model capability for ambiguity, judgment, and context handling;
+   select reasoning effort independently for proof depth and checking. Use the
+   least costly setting likely to clear the evidence gates.
+5. Record the requested model/effort, one-line rationale, and actual setting or
+   fallback. If an override requires a smaller context fork, pass the compact
+   baseline digest instead of full history.
+6. Re-evaluate after lane results. Escalate only for contradictions, missing
+   proof, low confidence, or a candidate that can change severity, confidence,
+   or residual risk. Never rerun an unchanged brief merely at higher effort.
+
 ## Lane Selection
 
 Choose from project signals; do not launch every lane by default.
@@ -68,6 +92,7 @@ Lane: <lane>
 Question: <one falsifiable question>
 Scope: <exact paths/artifacts>
 Baseline: <target, toolchain, flags, ABI, ISR, map/list freshness; <=12 lines>
+Routing: <requested model/effort; one-line rationale; fallback>
 Constraints: read-only; no nested agents; candidates only
 References: <only relevant files/sections>
 ```
@@ -94,14 +119,18 @@ prevents a tempting false positive. No tutorial prose.
 
 1. Run preflight and relevant bundled scanners once.
 2. Build the baseline digest and select only evidence-backed lanes.
-3. Launch independent delegates together; inspect non-overlapping evidence
+3. Route each lane with the adaptive model/effort policy and record the
+   requested and actual settings.
+4. Launch independent delegates together; inspect non-overlapping evidence
    while they run.
-4. Merge by failure mechanism, not syntax or file.
-5. Re-read every promoted site and apply `promotion-gate.md`.
-6. Stop when new lanes produce only duplicates, lack a project-local anchor, or
+5. Merge by failure mechanism, not syntax or file.
+6. Re-read every promoted site and apply `promotion-gate.md`.
+7. Re-evaluate routing and escalate only where unresolved evidence can change
+   the result.
+8. Stop when new lanes produce only duplicates, lack a project-local anchor, or
    cannot alter severity, confidence, or residual risk.
-7. Report actual delegation, skipped lanes, and unresolved evidence needs in a
-   short synthesis block.
+9. Report actual delegation, model/effort fallbacks, skipped lanes, and
+   unresolved evidence needs in a short synthesis block.
 
 External research never promotes a finding by itself; it only sharpens a local
 hypothesis or verification method.
