@@ -1,6 +1,6 @@
 ---
 name: audit-z80
-description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or user-visible regressions. Adapts from a focused single-agent pass to independent parallel branches and targeted external research when scope, ambiguity, or risk justifies the cost.
+description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or user-visible regressions. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
 ---
 
 # Audit Z80
@@ -8,6 +8,24 @@ description: Evidence-first, read-only review of mixed Z80 ASM/C projects, espec
 Use this file as a lean dispatcher. Load only references selected by the current
 scope. Prefer context-efficient reads, searches, and shell output when the
 runtime provides them.
+
+## Workflow Core
+
+Apply the sibling `$workflow` skill at `../workflow/SKILL.md` as the execution
+control plane. Workflow owns effort, agent topology, dispatch, repair,
+verification, and integration; this skill owns audit modes, evidence gates,
+domain lanes, reporting, and its read-only contract. A workflow route never
+widens that contract. If the sibling skill is unavailable, report the exact
+limitation and continue directly without claiming delegated execution.
+
+## Runtime Portability
+
+- Resolve `SKILL_DIR` as the directory containing this file before invoking a
+  bundled script.
+- Use the Python 3 interpreter exposed by the host or explicitly provided by
+  the user; never assume a platform-specific path.
+- Invoke bundled scripts as `"$SKILL_DIR/scripts/<name>.py"` (or an equivalent
+  absolute path), never as a project-relative `scripts/<name>.py`.
 
 ## Modes
 
@@ -20,27 +38,28 @@ runtime provides them.
 - Focused modes: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
   `toolchain`, `copt`, `map`.
 
-For every real audit, read `references/hard-contract.md` and
-`references/dispatcher.md`. Read `references/agent-orchestration.md` only when
-more than one independent investigation lane is useful.
+For every real audit, read `references/hard-contract.md`,
+`references/dispatcher.md`, and `references/preflight.md`. Read
+`references/agent-orchestration.md` only when more than one independent
+investigation lane is useful.
 
-## Demand
+## Domain Demand
 
-Classify after preflight:
+Classify after preflight and pass the result to `$workflow` when it is in
+`auto`:
 
 - **Focused**: explicit files/functions, one boundary, and a concrete question.
-  Keep the main agent only.
+  A light route is normally sufficient.
 - **Standard**: two or more interacting domains, a fuzzy symptom, or a material
-  evidence gap. Use one independent delegate when available.
+  evidence gap. A medium route can isolate the highest-value uncertainty.
 - **Deep**: broad/full scope, high-impact corruption or timing risk, mixed
   source/generated evidence, several targets, contradictory artifacts, or an
-  explicit exhaustive request. Use parallel independent lanes up to useful
-  runtime capacity; add later waves only when the first wave changes the search
-  frontier.
+  explicit exhaustive request. A heavy route can investigate independent lanes.
 
-Unavailable agents reduce parallelism, not evidence standards. In `auto`, stop
-after risk-prioritized lanes cease changing the result. In explicit `full`,
-cover every applicable lane serially or state that the audit is incomplete.
+An explicit workflow level wins. Missing agents reduce parallelism, not evidence
+standards. In `auto`, stop after risk-prioritized lanes cease changing the
+result. In explicit `full`, cover every applicable lane or state that the audit
+is incomplete.
 
 ## First Actions
 
@@ -48,8 +67,8 @@ cover every applicable lane serially or state that the audit is incomplete.
 2. Parse scope and mode; narrow only on an explicit user limit.
 3. Build one project profile and one evidence digest.
 4. Select domain references from `references/dispatcher.md`.
-5. Select independent lanes from `references/agent-orchestration.md` when
-   demand is standard or deep.
+5. Select domain lanes from `references/agent-orchestration.md` and pass their
+   briefs to `$workflow` when demand is standard or deep.
 6. Read `references/external-research.md` only when a research trigger in
    `references/dispatcher.md` fires.
 7. Treat scripts, agents, prior knowledge, and web sources as candidate
@@ -58,8 +77,9 @@ cover every applicable lane serially or state that the audit is incomplete.
 ## Reference Map
 
 - Evidence and sandbox rules: `references/hard-contract.md`
+- Preflight and profile: `references/preflight.md`
 - Routing and scripts: `references/dispatcher.md`
-- Adaptive parallelism: `references/agent-orchestration.md`
+- Domain lanes for delegated analysis: `references/agent-orchestration.md`
 - External discovery: `references/external-research.md`
 - Promotion: `references/promotion-gate.md`
 - Reporting: `references/reporting.md`

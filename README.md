@@ -2,16 +2,16 @@
 
 **Languages:** English · [Español](README.es.md)
 
-Codex plugin with three complementary skills for analyzing Z80 projects,
-especially ZX Spectrum software written in assembly, C, or a mixture of both
-using z88dk or SDCC.
+Codex plugin with one standalone adaptive workflow and four complementary skills
+for analyzing and organizing Z80 projects, especially ZX Spectrum software
+written in assembly, C, or a mixture of both using z88dk or SDCC.
 
 The goal is not to produce generic lists of tricks. The skills inspect the
 current code and artifacts, adapt depth and parallelism to the actual risk, and
 clearly distinguish proven evidence, estimates, and hypotheses.
 
-> Evidence-first auditing, size reduction and multi-objective optimization for
-> Z80 and ZX Spectrum projects.
+> Adaptive execution plus evidence-first auditing, organization, size reduction,
+> and multi-objective optimization for Z80 and ZX Spectrum projects.
 
 ## Contents
 
@@ -32,13 +32,18 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 
 | Skill | Primary question | Result |
 |---|---|---|
+| `workflow` | What is the smallest sufficient execution level for this engineering task? | Light direct execution, a Sol-controlled medium stream, or flat heavy coordination with bounded Luna workers. |
 | `audit-z80` | Are there defects, corruption, ABI errors, ISR/memory/hardware risks, or regressions? | Findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
+| `organize-z80` | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
 | `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
 | `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
-The three skills overlap only where useful:
+`workflow` is independent of Z80 and can route any engineering task. The four
+Z80 skills overlap only where useful:
 
+- Use `workflow` directly for adaptive planning, implementation, and verification.
 - Use `audit-z80` for correctness and technical safety.
+- Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
 - Use `shrink-z80` for an exhaustive search focused exclusively on size.
 - Use `optimize-z80` to decide among competing objectives and prioritize the
   next experiments.
@@ -74,46 +79,19 @@ results are reproducible signals, not automatic verdicts.
 
 ## Adaptive and multi-agent execution
 
-The skills do not assume that subagents are available or launch a fixed roster.
-After a single preflight, they classify the workload:
+The standalone `workflow` skill is the shared execution core:
 
-| Workload | Strategy |
+| Level | Strategy |
 |---|---|
-| **Focused** | The primary agent answers a bounded question without delegation. |
-| **Standard** | The primary agent retains verification and, when capacity is available, one delegate investigates the most valuable independent uncertainty. |
-| **Deep** | As many useful and available independent lines of inquiry as possible run in parallel, normally with no more than three delegates per wave. |
+| **Light** | The main thread handles a bounded task directly. |
+| **Medium** | One persistent Sol controller plans and reviews one Luna execution stream. |
+| **Heavy** | One persistent Sol controller coordinates bounded independent Luna workers in a flat topology. |
 
-```mermaid
-flowchart LR
-    A["Request and scope"] --> B["Single preflight"]
-    B --> C{"Workload"}
-    C -->|Focused| D["Primary agent"]
-    C -->|Standard| E["Primary + one independent line"]
-    C -->|Deep| F["Independent lines in parallel"]
-    D --> G["Local verification"]
-    E --> G
-    F --> G
-    R["Targeted external research"] --> G
-    G --> H["Prioritized findings or candidates"]
-```
-
-Efficiency rules:
-
-- Capacity is reserved so that the primary agent retains the full context and
-  judges the evidence.
-- Each delegate receives the same immutable baseline, a falsifiable question,
-  and a narrow set of files or artifacts.
-- Branches are independent; they overlap only for deliberate adversarial
-  checking.
-- Deterministic scanners run once, and a summary—not the complete log—is shared.
-- The primary agent deduplicates, applies vetoes, verifies local anchors, and
-  retains responsibility for severity, accounting, and ranking.
-- A second wave opens only when a new bottleneck, contradiction, or concrete
-  verification question appears.
-- Analysis stops when new lines of inquiry only repeat candidates or can no
-  longer change the decision.
-- If subagents are unavailable, the lines that can still change the result are
-  examined serially. The evidence threshold is not lowered.
+In `auto`, each Z80 skill contributes `Focused`, `Standard`, or `Deep` domain
+signals after preflight. Workflow owns the route, dispatch, repair, verification,
+and integration; the domain skill keeps its evidence gates, lane definitions,
+output contract, and write restrictions. An explicit workflow level wins, but
+never grants an operation forbidden by the project or domain skill.
 
 ## Targeted external research
 
@@ -189,6 +167,25 @@ Read-only auditing for finding real defects and reproducible risks.
 The output puts findings that pass the promotion gate first. If none survive,
 it says so and identifies the most important residual risk instead of padding
 the report with weak observations.
+
+### `organize-z80`
+
+Evidence-first architecture and reorganization workflow for Z80 projects.
+
+**Coverage**
+
+- ownership, dependencies, mutable state, source layout, and runtime placement;
+- an optional persistent current, recommended, and verified-final project map;
+- pure ASM and mixed C/ASM seams, maps, symbols, generated inputs, and targets;
+- incremental migrations that preserve ABI, timing, banking, formats, and build contracts.
+
+**Modes**
+
+- `map`, `design`, `plan`, `apply`, and `review`, plus `help`.
+- Demand scales as `Focused`, `Standard`, or `Deep`; `apply` executes one approved, reversible slice only.
+
+It reports severity, confidence, organizational cost, validation evidence, and
+`NO REORGANIZATION NEEDED` when the current structure is already proportionate.
 
 ### `shrink-z80`
 
@@ -273,9 +270,13 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Requirements
 
 - Codex with plugin and skill support.
+- `workflow` Medium and Heavy require the runtime-provided
+  `workflow_orchestrator`, `explorer`, `executor_luna`, `tester`, `doc-writer`,
+  and `executor_sol` profiles. Missing requested profiles are reported; the
+  main session model is not substituted silently.
 - Git to clone and update the repository.
-- Python 3.9 or later for the helpers; Python 3.11 or later is recommended for
-  the complete TOML policy path in `optimize-z80`.
+- Python 3.9 or later for general helpers; Python 3.11 or later is required
+  whenever `optimize-z80` must parse or enforce a TOML policy.
 - z88dk or SDCC only when required by the project or a reproducible measurement.
 
 ### Initial installation
@@ -312,6 +313,13 @@ The skills are invoked through natural language. The more specific the target,
 objective, and available artifacts are, the more precise the prioritization
 will be.
 
+### Adaptive workflow
+
+```text
+Use workflow in auto mode to implement this change with the smallest sufficient
+execution level and preserve the repository's existing contracts.
+```
+
 ### Auditing
 
 ```text
@@ -322,6 +330,18 @@ Prioritize ABI, ISR, and memory; report only findings anchored in the current co
 ```text
 Use audit-z80 in full mode. Review the differences between the 48K and 128K targets,
 including paging, ROM, stack, interrupts, and generated artifacts.
+```
+
+### Organization
+
+```text
+Use organize-z80 in design mode to map ownership, dependencies, and placement in
+this mixed ASM/C project, then propose only the smallest justified boundary change.
+```
+
+```text
+Use organize-z80 in apply mode to execute this approved phase only; preserve
+symbol scopes, maps, ABI, and the existing rollback point.
 ```
 
 ### Size reduction
@@ -368,7 +388,12 @@ configuration, and recipe must belong to the same baseline.
 ## Safety and limitations
 
 - Normal analyses are read-only.
+- `workflow` never widens the permissions granted by a project or domain skill.
 - `audit-z80` and `shrink-z80` do not edit the project.
+- `organize-z80` edits source only in `apply` mode after an explicit request,
+  frozen baseline, approved boundary, one named slice, and rollback point; an
+  explicitly requested persistent-map update may edit only that document and
+  its routing pointer.
 - `optimize-z80` modifies only a disposable copy in `Experiment` mode and
   requires explicit approval.
 - The included scripts use the Python standard library, work with local files,
@@ -396,11 +421,19 @@ scripts/
   install_personal_marketplace.py
   run_in_worktree.py
 skills/
+  workflow/
+    SKILL.md
+    agents/openai.yaml
+    references/
   audit-z80/
     SKILL.md
     agents/openai.yaml
     references/
     scripts/
+  organize-z80/
+    SKILL.md
+    agents/openai.yaml
+    references/
   shrink-z80/
     SKILL.md
     agents/openai.yaml
@@ -414,14 +447,16 @@ skills/
     scripts/
 ```
 
-Each skill keeps its core instructions in `SKILL.md`, selective-loading details
-in `references/`, and reproducible analyzers in `scripts/`.
+Each skill keeps its core instructions in `SKILL.md` and selective-loading
+details in `references/`; skills with reproducible analyzers keep them in
+`scripts/`.
 
 ## Validation
 
 Included tests:
 
 ```sh
+python3 scripts/test_workflow_integration.py
 python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py

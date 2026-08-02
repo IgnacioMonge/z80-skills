@@ -1,12 +1,21 @@
 ---
 name: shrink-z80
-description: Evidence-first binary-size optimization for Z80 and ZX Spectrum projects, including mixed ASM/C built with z88dk or SDCC. Use to reduce linked code, data, BSS, stack pressure, resident payloads, banks, overlays, library pulls, generated code, and compressed assets. Adapts from a focused single-agent check to independent parallel lanes and targeted external research while ranking only locally evidenced net savings.
+description: Evidence-first binary-size optimization for Z80 and ZX Spectrum projects, including mixed ASM/C built with z88dk or SDCC. Use to reduce linked code, data, BSS, stack pressure, resident payloads, banks, overlays, library pulls, generated code, and compressed assets. Uses the shared workflow skill to scale execution while ranking only locally evidenced net savings.
 ---
 
 # Shrink Z80
 
 Use this file as a lean dispatcher. Measure before proposing savings and load
 only references selected by current evidence.
+
+## Workflow Core
+
+Apply the sibling `$workflow` skill at `../workflow/SKILL.md` as the execution
+control plane. Workflow owns effort, agent topology, dispatch, repair,
+verification, and integration; this skill owns size modes, byte evidence,
+domain lanes, accounting, ranking, and its read-only contract. A workflow route
+never widens that contract. If the sibling skill is unavailable, report the
+exact limitation and continue directly without claiming delegated execution.
 
 ## Runtime Portability
 
@@ -28,31 +37,36 @@ only references selected by current evidence.
 For every real pass, read `references/hard-contract.md` and
 `references/dispatcher.md`.
 
-## Demand
+## Domain Demand
 
-Classify after preflight:
+Classify after preflight and pass the result to `$workflow` when it is in
+`auto`:
 
 - **Focused**: one file/routine/asset/category and a known pressure target.
-  Keep the main agent only.
+  A light route is normally sufficient.
 - **Standard**: multiple plausible size mechanisms or uncertain linked impact.
-  Use one independent delegate when available.
+  A medium route can isolate the highest-value uncertainty.
 - **Deep**: broad scan, multi-target ceilings, banks/overlays, mixed source and
   generated artifacts, insufficient SAFE wins, or an explicit black-belt /
-  exhaustive request. Run useful high-yield lanes in parallel up to available
-  capacity; add a later wave only when new evidence justifies it.
+  exhaustive request. A heavy route can investigate independent high-yield
+  lanes.
 
-Unavailable agents reduce parallelism, not byte accounting or safety. Run only
-evidence-selected lanes, but an explicit broad `scan` must still cover every
-applicable high-yield lane or state that the pass is incomplete.
+An explicit workflow level wins. Missing agents reduce parallelism, not byte
+accounting or safety. An adaptive `Deep` pass may select only the two or three
+highest-payload lanes, but must record the remaining applicable lanes as
+skipped and explain why. An explicitly broad, exhaustive, or `diverge` pass
+takes precedence and must cover every applicable high-yield lane, or state that
+the pass is incomplete.
 
 ## First Actions
 
 1. Identify the exact pressure target: storage, linked CODE/DATA, resident
    memory, BSS/stack gap, bank/overlay ceiling, or a per-target reserve.
-2. Run `scripts/preflight_scan.py` and `scripts/artifact_freshness.py`; use
-   `scripts/map_summary.py` for selected maps.
+2. Run `python3 "$SKILL_DIR/scripts/preflight_scan.py"` and
+   `python3 "$SKILL_DIR/scripts/artifact_freshness.py"`; use
+   `python3 "$SKILL_DIR/scripts/map_summary.py"` for selected maps.
 3. Read `references/agent-orchestration.md` only when independent lanes add
-   value.
+   value, then pass selected briefs to `$workflow`.
 4. Attack SAFE high-impact mechanisms before micro or dark-art tricks.
 5. Read `references/external-research.md` only when a research trigger in
    `references/dispatcher.md` fires.
@@ -63,7 +77,7 @@ applicable high-yield lane or state that the pass is incomplete.
 
 - Evidence, worktrees, multi-target gate: `references/hard-contract.md`
 - Mode and script routing: `references/dispatcher.md`
-- Adaptive parallelism: `references/agent-orchestration.md`
+- Domain lanes for delegated analysis: `references/agent-orchestration.md`
 - SAFE attack order: `references/high-impact.md`
 - Rare/high-risk static techniques: `references/size-blackbook.md`,
   `references/size-playbook-extended.md`

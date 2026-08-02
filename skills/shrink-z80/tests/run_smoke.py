@@ -30,7 +30,8 @@ def main() -> int:
     dispatcher_text = (SKILL / "references" / "dispatcher.md").read_text(encoding="utf-8")
     agent_text = (SKILL / "agents" / "openai.yaml").read_text(encoding="utf-8")
     orchestration_text = (SKILL / "references" / "agent-orchestration.md").read_text(encoding="utf-8")
-    assert "Adaptive" in skill_text and "available" in skill_text + orchestration_text
+    assert "../workflow/SKILL.md" in skill_text
+    assert "## Workflow Boundary" in orchestration_text
     assert "C:/Program Files" not in skill_text + dispatcher_text
 
     byte_text = (SKILL / "references" / "z80-byte-evidence.md").read_text(encoding="utf-8")

@@ -26,7 +26,7 @@ For every C to ASM symbol in scope:
 - Verify parameter order and offsets from the real stack layout
 - Verify return register width: `L`, `HL`, or `DEHL`
 - Verify preservation of IX and IY against the current preflight profile
-- Cross-check exports and imports with `scripts/abi_inventory.py`
+- Cross-check exports and imports with `"$SKILL_DIR/scripts/abi_inventory.py"`
 - For every inline ASM block in C, list registers written or called helpers and verify the surrounding generated `.asm` keeps C temporaries safe
 - For `__z88dk_fastcall`, `__z88dk_callee`, `__smallc`, and `__sdcccall(0/1)`, cite the actual convention used before assigning stack offsets
 

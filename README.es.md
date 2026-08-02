@@ -2,17 +2,17 @@
 
 **Idiomas:** [English](README.md) · Español
 
-Plugin para Codex con tres skills complementarios para analizar proyectos Z80,
-especialmente software de ZX Spectrum escrito en ensamblador, C o una mezcla de
-ambos con z88dk o SDCC.
+Plugin para Codex con un workflow adaptativo independiente y cuatro skills
+complementarios para analizar y organizar proyectos Z80, especialmente software
+de ZX Spectrum escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
 
 El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
 el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
 riesgo real y distinguen claramente entre evidencia probada, estimaciones e
 hipótesis.
 
-> Evidence-first auditing, size reduction and multi-objective optimization for
-> Z80 and ZX Spectrum projects.
+> Ejecución adaptativa y análisis, organización, reducción de tamaño y
+> optimización multiobjetivo basados en evidencia para Z80 y ZX Spectrum.
 
 ## Contenido
 
@@ -33,13 +33,18 @@ hipótesis.
 
 | Skill | Pregunta principal | Resultado |
 |---|---|---|
+| `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa light, un flujo medium controlado por Sol o coordinación heavy plana con workers Luna acotados. |
 | `audit-z80` | ¿Hay defectos, corrupción, errores ABI, riesgos ISR/memoria/hardware o regresiones? | Hallazgos priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
+| `organize-z80` | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
 | `shrink-z80` | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
 | `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
 
-Los tres skills se solapan solo donde es útil:
+`workflow` es independiente de Z80 y puede dirigir cualquier tarea de
+ingeniería. Los cuatro skills Z80 se solapan solo donde es útil:
 
+- Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
 - Usa `audit-z80` para corrección y seguridad técnica.
+- Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
 - Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
   tamaño.
 - Usa `optimize-z80` para decidir entre objetivos que compiten entre sí y
@@ -77,47 +82,20 @@ Sus resultados son señales reproducibles, no veredictos automáticos.
 
 ## Ejecución adaptativa y multiagente
 
-Los skills no presuponen que existan subagentes ni lanzan un roster fijo. Tras
-un único preflight clasifican la demanda:
+El skill independiente `workflow` es el núcleo común de ejecución:
 
-| Demanda | Estrategia |
+| Nivel | Estrategia |
 |---|---|
-| **Focused** | El agente principal resuelve una pregunta acotada sin delegar. |
-| **Standard** | El principal conserva la verificación y, si hay capacidad, un delegado investiga la incertidumbre independiente más valiosa. |
-| **Deep** | Se ejecutan en paralelo tantas líneas independientes como sean útiles y estén disponibles; normalmente no más de tres delegados por oleada. |
+| **Light** | El hilo principal resuelve directamente una tarea acotada. |
+| **Medium** | Un controlador Sol persistente planifica y revisa un flujo de ejecución Luna. |
+| **Heavy** | Un controlador Sol persistente coordina workers Luna independientes y acotados en topología plana. |
 
-```mermaid
-flowchart LR
-    A["Petición y alcance"] --> B["Preflight único"]
-    B --> C{"Demanda"}
-    C -->|Focused| D["Agente principal"]
-    C -->|Standard| E["Principal + una línea independiente"]
-    C -->|Deep| F["Líneas independientes en paralelo"]
-    D --> G["Verificación local"]
-    E --> G
-    F --> G
-    R["Investigación externa dirigida"] --> G
-    G --> H["Hallazgos o candidatos priorizados"]
-```
-
-Reglas de eficiencia:
-
-- Se reserva capacidad para que el agente principal mantenga el contexto
-  completo y juzgue la evidencia.
-- Cada delegado recibe la misma línea base inmutable, una pregunta falsable y
-  un conjunto estrecho de archivos o artefactos.
-- Las ramas son independientes; solo se solapan para una comprobación
-  adversarial deliberada.
-- Los escáneres deterministas se ejecutan una vez y se comparte un resumen, no
-  el log completo.
-- El agente principal deduplica, aplica vetos, verifica anclas locales y conserva
-  la responsabilidad sobre severidad, contabilidad y ranking.
-- Una segunda oleada solo se abre si aparece un nuevo cuello de botella, una
-  contradicción o una pregunta de verificación concreta.
-- Se detiene el análisis cuando las nuevas líneas solo repiten candidatos o ya
-  no pueden cambiar la decisión.
-- Si no hay subagentes, se recorren serialmente las líneas que todavía pueden
-  alterar el resultado. El umbral de evidencia no se rebaja.
+En `auto`, cada skill Z80 aporta señales de dominio `Focused`, `Standard` o
+`Deep` después del preflight. Workflow controla ruta, despacho, reparación,
+verificación e integración; el skill de dominio conserva puertas de evidencia,
+definición de lanes, contrato de salida y restricciones de escritura. Un nivel
+explícito gana, pero nunca autoriza una operación prohibida por el proyecto o el
+skill de dominio.
 
 ## Investigación externa dirigida
 
@@ -194,6 +172,25 @@ reproducibles.
 La salida pone primero los hallazgos que superan la puerta de promoción. Si
 ninguno sobrevive, lo indica y señala el riesgo residual más importante en vez
 de rellenar el informe con observaciones débiles.
+
+### `organize-z80`
+
+Workflow de arquitectura y reorganización Z80 basado en evidencia.
+
+**Cobertura**
+
+- propiedad, dependencias, estado mutable, layout de fuentes y placement en runtime;
+- un mapa persistente opcional del estado actual, recomendado y final verificado;
+- seams ASM puro y C/ASM, mapas, símbolos, entradas generadas y targets;
+- migraciones incrementales que preservan ABI, timing, banking, formatos y contratos de build.
+
+**Modos**
+
+- `map`, `design`, `plan`, `apply` y `review`, además de `help`.
+- La demanda escala como `Focused`, `Standard` o `Deep`; `apply` ejecuta únicamente un slice aprobado y reversible.
+
+Informa severidad, confianza, coste organizativo, evidencia de validación y
+`NO REORGANIZATION NEEDED` cuando la estructura actual ya es proporcionada.
 
 ### `shrink-z80`
 
@@ -278,9 +275,14 @@ sí solos.
 ### Requisitos
 
 - Codex con soporte para plugins y skills.
+- Los niveles Medium y Heavy de `workflow` requieren los perfiles del runtime
+  `workflow_orchestrator`, `explorer`, `executor_luna`, `tester`, `doc-writer`
+  y `executor_sol`. Si falta un perfil solicitado, se informa del límite; el
+  modelo de la sesión principal no se sustituye silenciosamente.
 - Git para clonar y actualizar el repositorio.
-- Python 3.9 o posterior para los helpers; Python 3.11 o posterior es
-  recomendable para la ruta completa de políticas TOML de `optimize-z80`.
+- Python 3.9 o posterior para los helpers generales; Python 3.11 o posterior
+  es obligatorio cuando `optimize-z80` deba interpretar o aplicar una política
+  TOML.
 - z88dk o SDCC únicamente cuando el proyecto o una medición reproducible los
   requiera.
 
@@ -319,6 +321,13 @@ Los skills se invocan mediante lenguaje natural. Cuanto más concretos sean el
 target, el objetivo y los artefactos disponibles, más precisa será la
 priorización.
 
+### Workflow adaptativo
+
+```text
+Usa workflow en modo auto para implementar este cambio con el menor nivel de
+ejecución suficiente y conservar los contratos existentes del repositorio.
+```
+
 ### Auditoría
 
 ```text
@@ -329,6 +338,18 @@ Prioriza ABI, ISR y memoria; informa únicamente hallazgos anclados al código a
 ```text
 Usa audit-z80 en modo full. Revisa las diferencias entre los targets 48K y 128K,
 incluidos paging, ROM, stack, interrupciones y artefactos generados.
+```
+
+### Organización
+
+```text
+Usa organize-z80 en modo design para mapear propiedad, dependencias y placement
+en este proyecto mixto ASM/C; propone únicamente el menor cambio de frontera justificado.
+```
+
+```text
+Usa organize-z80 en modo apply para ejecutar solo esta fase aprobada; conserva
+scopes de símbolos, mapas, ABI y el punto de rollback existente.
 ```
 
 ### Reducción de tamaño
@@ -375,7 +396,12 @@ configuración y receta deben pertenecer a la misma línea base.
 ## Seguridad y límites
 
 - Los análisis normales son de solo lectura.
+- `workflow` nunca amplía los permisos concedidos por el proyecto o el skill de dominio.
 - `audit-z80` y `shrink-z80` no editan el proyecto.
+- `organize-z80` solo edita código en modo `apply` tras una petición explícita,
+  línea base congelada, frontera aprobada, un slice nombrado y rollback; una
+  actualización solicitada explícitamente del mapa persistente solo puede
+  editar ese documento y su puntero de carga.
 - `optimize-z80` solo modifica una copia desechable en modo `Experiment` y
   requiere aprobación explícita.
 - Los scripts incluidos usan la biblioteca estándar de Python, trabajan con
@@ -403,11 +429,19 @@ scripts/
   install_personal_marketplace.py
   run_in_worktree.py
 skills/
+  workflow/
+    SKILL.md
+    agents/openai.yaml
+    references/
   audit-z80/
     SKILL.md
     agents/openai.yaml
     references/
     scripts/
+  organize-z80/
+    SKILL.md
+    agents/openai.yaml
+    references/
   shrink-z80/
     SKILL.md
     agents/openai.yaml
@@ -421,14 +455,16 @@ skills/
     scripts/
 ```
 
-Cada skill mantiene las instrucciones centrales en `SKILL.md`, los detalles de
-carga selectiva en `references/` y los analizadores reproducibles en `scripts/`.
+Cada skill mantiene las instrucciones centrales en `SKILL.md` y los detalles
+de carga selectiva en `references/`; los skills con analizadores reproducibles
+los mantienen en `scripts/`.
 
 ## Validación
 
 Pruebas incluidas:
 
 ```sh
+python3 scripts/test_workflow_integration.py
 python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py

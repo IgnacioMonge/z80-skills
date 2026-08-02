@@ -20,10 +20,10 @@ Capture these items before a `full` audit:
 
 ## Use scripts early
 
-- Run `python3 scripts/preflight_scan.py <root>` when the build system or target contract is not obvious from a single file.
-- Run `python3 scripts/map_summary.py <mapfile-or-root>` if a `.map` or `.sym` exists.
-- Run `python3 scripts/abi_inventory.py <root>` for mixed C and ASM codebases.
-- Run `python3 scripts/z80_pattern_scan.py <root>` before finalizing any broad audit that includes inline ASM, overlays, RST8, screen timing, or hand ASM.
+- Run `python3 "$SKILL_DIR/scripts/preflight_scan.py" <root>` when the build system or target contract is not obvious from a single file.
+- Run `python3 "$SKILL_DIR/scripts/map_summary.py" <mapfile-or-root>` if a `.map` or `.sym` exists.
+- Run `python3 "$SKILL_DIR/scripts/abi_inventory.py" <root>` for mixed C and ASM codebases.
+- Run `python3 "$SKILL_DIR/scripts/z80_pattern_scan.py" <root>` before finalizing any broad audit that includes inline ASM, overlays, RST8, screen timing, or hand ASM.
 
 ## z88dk or SDCC heuristics
 

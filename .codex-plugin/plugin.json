@@ -1,7 +1,7 @@
 {
   "name": "z80-skills",
-  "version": "0.3.0+codex.20260727120612",
-  "description": "Adaptive, evidence-first audit, size, and optimization skills for ZX Spectrum Z80/C projects.",
+  "version": "0.5.0+codex.20260802",
+  "description": "Standalone adaptive workflow plus evidence-first audit, organization, size, and optimization skills for Z80/C projects.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
   },
@@ -13,25 +13,36 @@
     "sdcc",
     "z88dk",
     "audit",
+    "workflow",
+    "multi-agent",
     "size-optimization",
-    "performance"
+    "performance",
+    "architecture",
+    "code-organization",
+    "migration"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Z80 Skills \u2014 Adaptive Research",
-    "shortDescription": "Adaptive audit, shrink, and optimization for Z80/C.",
-    "longDescription": "Bundles audit-z80, shrink-z80, and optimize-z80 with adaptive parallel analysis, local evidence gates, and targeted external research for ZX Spectrum Z80/C codebases.",
+    "displayName": "Z80 Skills + Workflow",
+    "shortDescription": "Adaptive workflow and evidence-first Z80 engineering.",
+    "longDescription": "Bundles an independent workflow skill with audit-z80, organize-z80, shrink-z80, and optimize-z80. Workflow owns adaptive Sol/Luna execution; each Z80 skill retains its domain evidence, safety, and mutation contracts.",
     "developerName": "M. Ignacio Monge Garc\u00eda",
     "websiteURL": "https://github.com/IgnacioMonge/z80-skills",
     "category": "Productivity",
     "capabilities": [
       "Code review",
       "Static analysis",
-      "Optimization"
+      "Optimization",
+      "Planning",
+      "Multi-agent orchestration",
+      "Architecture",
+      "Refactoring"
     ],
     "brandColor": "#2F855A",
     "defaultPrompt": [
+      "Use workflow to select the smallest sufficient execution level for this engineering task.",
       "Use audit-z80 to review this Z80/C change.",
+      "Use organize-z80 to map this Z80/C project's ownership and identify the smallest safe organizational next step.",
       "Use shrink-z80 to find size wins in this build.",
       "Use optimize-z80 to find the best speed/RAM optimization path.",
       "Audit ABI, stack, ISR, memory, and map risks."

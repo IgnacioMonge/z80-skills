@@ -112,7 +112,7 @@ primary tree before claiming measured deltas.
 ## Tool Coverage Rule
 
 Do not invent tool commands. Map memory-contention checks to
-`scripts/contention_audit.py`; treat any unbundled size or CPU-detection helper
+`"$SKILL_DIR/scripts/contention_audit.py"`; treat any unbundled size or CPU-detection helper
 as a future idea, not a runnable command.
 
 Prefer this evidence stack when available:

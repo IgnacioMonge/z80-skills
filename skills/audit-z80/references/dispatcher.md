@@ -7,13 +7,13 @@ except `help`.
 
 1. **Profile once**
    - Read `preflight.md`.
-   - Run `scripts/preflight_scan.py` when target, flags, startup, or artifacts
-     are unclear.
-   - Run `scripts/map_summary.py` when `.map`/`.sym`, fixed RAM, overlays,
-     contention, or firmware addresses matter.
-   - Run `scripts/abi_inventory.py` for mixed C/ASM.
-   - Run `scripts/z80_pattern_scan.py` for broad ASM, ISR, timing, or unusual
-     control flow.
+   - Run `python3 "$SKILL_DIR/scripts/preflight_scan.py"` when target, flags,
+     startup, or artifacts are unclear.
+   - Run `python3 "$SKILL_DIR/scripts/map_summary.py"` when `.map`/`.sym`,
+     fixed RAM, overlays, contention, or firmware addresses matter.
+   - Run `python3 "$SKILL_DIR/scripts/abi_inventory.py"` for mixed C/ASM.
+   - Run `python3 "$SKILL_DIR/scripts/z80_pattern_scan.py"` for broad ASM,
+     ISR, timing, or unusual control flow.
    - Scanner output is a lead queue, never a finding.
 2. **Build a pressure map**
    - Locate C/ASM boundaries, inline/generated ASM, ISR/shared state, stack/BSS,

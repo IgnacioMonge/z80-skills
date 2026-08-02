@@ -2,12 +2,17 @@
 
 Measure only when a number can change the ranking. Use a detached disposable
 worktree in a safe host temporary directory; never modify the primary tree or
-its ignore files.
+its ignore files. Every command that builds, tests, measures, patches, or
+compares the disposable worktree must be launched through
+`<skill-dir>/../../scripts/run_in_worktree.py` with the primary and worktree
+roots; never use the temporary directory as the wrapper `cwd`.
 
 ## Baseline
 
 1. Capture primary branch, status, and diff as the contamination baseline.
-2. Create the worktree and run `scripts/preflight.py`.
+2. Create the worktree and run `"$SKILL_DIR/../../scripts/run_in_worktree.py"
+   --primary <primary-root> --worktree <worktree-root> -- python3
+   "$SKILL_DIR/scripts/preflight.py"`.
 3. Freeze compiler, assembler, linker, CRT/clib, flags, target, and fixture.
 4. Build the smallest target that produces the required fresh artifact.
 5. Record artifact path, command, before value, and uncertainty.
@@ -33,9 +38,11 @@ Requires explicit user approval.
 
 1. Change one main variable in the worktree.
 2. Rebuild the same target with the same fixture.
-3. Compare matching artifacts with `scripts/bincompare.py`, map/listing diff, or
-   the selected runtime measurement.
-4. Re-run `scripts/preflight.py --json` to confirm freshness.
+3. Compare matching artifacts with `"$SKILL_DIR/scripts/bincompare.py"`, a
+   map/listing diff, or the selected runtime measurement, again through the
+   shared runner.
+4. Re-run `"$SKILL_DIR/scripts/preflight.py" --json` through the shared runner
+   to confirm freshness.
 5. Run the narrowest behavior, ABI, interrupt, paging, model, and regression
    checks implicated by the candidate.
 6. Compare the primary tree with its captured baseline; a pre-existing dirty

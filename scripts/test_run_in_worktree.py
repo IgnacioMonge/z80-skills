@@ -14,7 +14,7 @@ RUNNER = Path(__file__).with_name("run_in_worktree.py")
 
 
 class RunInWorktreeTest(unittest.TestCase):
-    def test_all_skills_require_the_shared_runner(self) -> None:
+    def test_all_runner_backed_skills_require_the_shared_runner(self) -> None:
         root = RUNNER.parents[1]
         for skill in ("audit-z80", "shrink-z80", "optimize-z80"):
             contract = (

@@ -1,56 +1,15 @@
-# Adaptive Analysis Lanes
+# Optimization Domain Lanes
 
 Use this file only when preflight exposes more than one independent
 optimization question. The main agent remains cartographer, judge, policy
 enforcer, and auditor of record.
 
-## Capacity Negotiation
+## Workflow Boundary
 
-Inspect subagent capabilities and capacity actually exposed by the runtime. Do
-not assume a model name, role type, or fixed slot count.
-
-| Demand | Delegation |
-|---|---|
-| Focused | No delegate |
-| Standard | One delegate on the highest-uncertainty lane while the main agent analyzes another |
-| Deep | After reserving capacity for the main agent, run `min(useful independent lanes, available delegate capacity)` in parallel, normally no more than three delegates in one wave |
-
-Use a later wave only when the first wave reveals a new bottleneck, evidence
-conflict, or high-impact candidate needing independent challenge. Stop adding
-agents when outputs duplicate mechanisms or reread the same evidence.
-
-If subagents are unavailable, the main agent runs the highest-value lane and
-continues only while another lane can change the ranking. Do not create
-role-labelled serial monologues.
-
-If a spawn fails, times out, or capacity drops, keep completed results and do
-not relaunch the same brief unchanged. Cover locally only a missing lane that
-can still change the frontier, policy decision, or residual risk.
-
-## Adaptive Model and Effort Routing
-
-After preflight and the baseline digest, route every selected lane separately.
-Do not map lane names or demand classes to fixed model/effort pairs.
-
-1. Inspect the models and reasoning levels actually exposed by the runtime.
-2. Use the highest-capability available decision model at a high reasoning
-   tier, normally `high` or `xhigh`, to choose the routes. If the main agent
-   cannot provide that tier and explicit overrides are available, run one
-   read-only routing adviser before launching analysis delegates; the main
-   agent verifies its proposal. Reserve `max` for a contradictory or unusually
-   high-impact preflight, not as a default; never enable nested delegation.
-3. For each lane, assess ambiguity, cross-domain coupling, impact, evidence
-   freshness and determinism, context breadth, and verification burden.
-4. Select model capability for ambiguity, judgment, and context handling;
-   select reasoning effort independently for proof depth and checking. Use the
-   least costly setting likely to clear the evidence and policy gates.
-5. Record the requested model/effort, one-line rationale, and actual setting or
-   fallback. If an override requires a smaller context fork, pass the compact
-   baseline digest instead of full history.
-6. Re-evaluate after lane results. Escalate only for contradictions, missing
-   proof, low confidence, or a candidate that can change the frontier, policy
-   decision, or residual risk. Never rerun an unchanged brief merely at higher
-   effort.
+`$workflow` owns effort selection, capacity, model profiles, spawning, failure
+handling, and integration review. This reference supplies only Z80 optimization
+lanes and their evidence contracts. Give selected lane briefs to the workflow
+control plan; do not recreate a second router here.
 
 ## Selectable Lanes
 
@@ -88,7 +47,7 @@ Lane:
 Question:
 Scope:
 Baseline: <target, policy, toolchain, freshness, bottleneck; <=12 lines>
-Routing: <requested model/effort; one-line rationale; fallback>
+Control: <workflow level and assigned worker role>
 Constraints: read-only; no nested agents/builds; candidates only
 References: <only relevant files/sections>
 ```
@@ -111,21 +70,19 @@ exhaustive request when all can change the frontier:
 Add one rejected trap, or two for explicit exhaustive work, only when it would
 otherwise look attractive.
 
-## Main-Agent Sequence
+## Domain Integration Sequence
 
 1. Build policy/profile, freshness, bottleneck, and zone digest once.
 2. Select lanes by expected decision value, not role completeness.
-3. Route each lane with the adaptive model/effort policy and record the
-   requested and actual settings.
-4. Launch delegates together; analyze non-overlapping evidence concurrently.
-5. Merge by mechanism, apply vetoes, and score survivors.
-6. Adversarially review only the finalists.
-7. Re-evaluate routing and escalate only where unresolved evidence can change
-   the result.
-8. Stop when new work cannot change the top three experiments, confidence, or
+3. Give selected lane briefs to the `$workflow` control plan.
+4. Merge returned candidates by mechanism, apply vetoes, and score survivors.
+5. Adversarially review only the finalists.
+6. Ask workflow for another bounded lane only when unresolved evidence can
+   change the result.
+7. Stop when new work cannot change the top three experiments, confidence, or
    residual risk.
-9. Report actual delegation, model/effort fallbacks, and materially skipped
-   lanes in one short block.
+8. Report the actual workflow level and materially skipped lanes in one short
+   block.
 
 The research lane follows `external-research.md`; its sources never substitute
 for project-local proof.

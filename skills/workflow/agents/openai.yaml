@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflow"
+  short_description: "Adaptive Sol control with Luna workers"
+  default_prompt: "Use $workflow to route this task at the appropriate light, medium, or heavy level."

@@ -1,12 +1,32 @@
 ---
 name: optimize-z80
-description: Read-only strategy engine for optimizing Z80 and ZX Spectrum projects across size, speed, RAM, rendering, latency, banking, overlays, data layout, C-to-ASM, z88dk/SDCC codegen, ABI, toolchain, and model-specific hardware constraints. Adapts from focused single-agent triage to independent parallel analysis and targeted external research, then ranks only project-local, policy-compliant candidates with explicit validation.
+description: Read-only strategy engine for optimizing Z80 and ZX Spectrum projects across size, speed, RAM, rendering, latency, banking, overlays, data layout, C-to-ASM, z88dk/SDCC codegen, ABI, toolchain, and model-specific hardware constraints. Uses the shared workflow skill to scale execution, then ranks only project-local, policy-compliant candidates with explicit validation.
 ---
 
 # Optimize Z80
 
 Read `references/hard-contract.md` before promoting any candidate. The primary
 project tree remains read-only during analysis.
+
+## Workflow Core
+
+Apply the sibling `$workflow` skill at `../workflow/SKILL.md` as the execution
+control plane. Workflow owns effort, agent topology, dispatch, repair,
+verification, and integration; this skill owns optimization modes, policy and
+evidence gates, domain lanes, ranking, and mutation limits. A workflow route
+never widens those limits. If the sibling skill is unavailable, report the
+exact limitation and continue directly without claiming delegated execution.
+
+## Runtime Portability
+
+- Resolve `SKILL_DIR` as the directory containing this file before invoking a
+  bundled script.
+- Use the Python 3 interpreter exposed by the host or explicitly provided by
+  the user; never assume a platform-specific path.
+- Invoke bundled scripts through `"$SKILL_DIR/scripts/<name>.py"` (or an
+  equivalent absolute path), never a project-relative `scripts/<name>.py`.
+- Run every build, test, measurement, or experiment command against a
+  disposable worktree through `$SKILL_DIR/../../scripts/run_in_worktree.py`.
 
 ## Modes
 
@@ -26,21 +46,23 @@ This skill ranks cross-metric optimization strategy. Use `shrink-z80` for an
 exhaustive size-only harvest and `audit-z80` for correctness auditing; neither
 skill's private references are normative dependencies here.
 
-## Demand
+## Domain Demand
 
-Classify after preflight:
+Classify after preflight and pass the result to `$workflow` when it is in
+`auto`:
 
-- **Focused**: one zone, bottleneck, file, or candidate. Main agent only.
-- **Standard**: multiple plausible mechanisms or a material uncertainty. Use
-  one independent delegate when available.
+- **Focused**: one zone, bottleneck, file, or candidate. A light route is
+  normally sufficient.
+- **Standard**: multiple plausible mechanisms or a material uncertainty. A
+  medium route can isolate the highest-value uncertainty.
 - **Deep**: broad project, several active zones/targets, conflicting evidence,
-  high-risk timing/banking/ABI work, or an explicit exhaustive request. Run
-  independent high-value lanes in parallel up to available capacity; launch a
-  later wave only when the first wave changes the optimization frontier.
+  high-risk timing/banking/ABI work, or an explicit exhaustive request. A heavy
+  route can investigate independent high-value lanes.
 
-Unavailable agents reduce parallelism, not evidence or policy gates. A normal
-triage stops when new lanes cannot change the ranking; an explicit exhaustive
-request covers all applicable lanes serially or reports the limitation.
+An explicit workflow level wins. Missing agents reduce parallelism, not
+evidence or policy gates. A normal triage stops when new lanes cannot change
+the ranking; an explicit exhaustive request covers all applicable lanes or
+reports the limitation.
 
 ## Progressive Load
 
@@ -49,8 +71,8 @@ request covers all applicable lanes serially or reports the limitation.
    must be inferred.
 2. Core decision: the matching section of
    `references/optimization-paths.md`.
-3. Orchestration: `references/multiagent-roles.md` only when more than one
-   independent lane is useful.
+3. Domain lanes: `references/multiagent-roles.md` only when more than one
+   independent lane is useful; pass selected briefs to `$workflow`.
 4. Commands/measurement: `references/terminal-blockers.md` and
    `references/measurement.md` only when executing or measuring.
 5. Technique references only for observed zones:
@@ -65,16 +87,17 @@ request covers all applicable lanes serially or reports the limitation.
 8. `references/external-research.md` only when its trigger gate fires.
 9. `references/usage-examples.md` only when the user requests examples.
 
-Bundled helpers are evidence-selective: start with `scripts/preflight.py`; use
-`scripts/pattern_scan.py`, `scripts/asm_callgraph.py`, or
-`scripts/map_hotspots.py` only for the matching source/artifact signal;
-`scripts/contention_audit.py` and `scripts/tstate_estimate.py` only for timing;
-`scripts/bincompare.py` only for measurement; and
-`scripts/score_candidates.py` only after policy/target gates. Scanner and
-static timing/map estimates are candidate evidence, never `PROVEN` by
-themselves. On Python below 3.11, read TOML through the host and pass normalized
-`--target`/`--forbidden` values; enforce other policy constraints before the
-scorer rather than using its unavailable `--policy` path.
+Bundled helpers are evidence-selective: start with
+`"$SKILL_DIR/scripts/preflight.py"`; use the corresponding resolved paths for
+`pattern_scan.py`, `asm_callgraph.py`, `map_hotspots.py`,
+`contention_audit.py`, `tstate_estimate.py`, `bincompare.py`, and
+`score_candidates.py` only for the matching signal. Scanner and static
+timing/map estimates are candidate evidence, never `PROVEN` by themselves.
+Python 3.11+ is required whenever a TOML policy must be parsed or enforced;
+`score_candidates.py --policy` rejects older runtimes. On Python 3.9–3.10,
+run only policy-free paths or pass explicitly verified `--target` and
+`--forbidden` overrides, enforce any remaining constraints before scoring, and
+report that the TOML policy was not parsed.
 
 ## Workflow
 
@@ -83,7 +106,8 @@ scorer rather than using its unavailable `--policy` path.
 2. Choose triage or measurement; do not claim measured deltas from stale
    artifacts.
 3. Build a compact zone map and identify the actual bottleneck.
-4. Select only useful analysis lanes from `references/multiagent-roles.md`.
+4. Select only useful analysis lanes from `references/multiagent-roles.md` and
+   pass their briefs to `$workflow`.
 5. Generate candidates with current anchors.
 6. Apply policy/target vetoes before scoring.
 7. Merge duplicates and rank globally for the active bottleneck.
