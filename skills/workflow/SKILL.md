@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Route engineering work through a global adaptive workflow with light, medium, and heavy execution levels. Use when the user invokes `$workflow`, asks to use the workflow, requests a light/medium/heavy route, wants automatic effort selection, or wants a dedicated Sol control agent to coordinate Luna workers independently of the model used by the main session.
+description: Route engineering work through a portable adaptive workflow with light, medium, and heavy execution levels. Use when the user invokes `$workflow`, asks to use the workflow, requests a light/medium/heavy route, wants automatic effort selection, or wants a dedicated control agent to coordinate workers independently of the model used by the main session.
 ---
 
 # Workflow
@@ -52,21 +52,39 @@ When another skill names `$workflow` as its execution core:
 
 ## Control plane
 
-For Medium and Heavy, keep a flat agent topology so behavior does not depend on the main session's model:
+For Medium and Heavy, use the portable roles in
+[references/roles.md](references/roles.md) and keep a flat topology:
 
-1. Spawn one fresh `workflow_orchestrator` agent with `fork_turns="none"`. Its profile pins `gpt-5.6-sol`.
-2. Give it a self-contained task capsule containing the request, constraints, acceptance criteria, relevant project instructions, known evidence, and protected areas.
-3. Treat its response as the control plan. The main thread owns actual worker spawning, messages, waits, approvals, Git operations, and final user communication.
-4. Spawn Luna workers from the main thread using the installed named profiles. Keep the Sol controller alive.
-5. Return worker evidence to the same Sol controller through concise follow-ups. Let it issue the next dispatch, repair, completion, or blocker decision.
-6. Accept completion only after Sol reviews the gathered evidence and the main thread checks critical integration boundaries.
+1. Spawn a fresh built-in `default` agent with task name
+   `workflow_controller`, `fork_turns="none"`, and the controller contract in
+   `roles.md`. Prefer `gpt-5.6-sol` when the runtime accepts an explicit model.
+2. Give it a self-contained task capsule containing the request, constraints,
+   acceptance criteria, relevant project instructions, known evidence, and
+   protected areas.
+3. Treat its response as the control plan. The main thread owns worker
+   spawning, messages, waits, approvals, Git operations, and final user
+   communication.
+4. Spawn only documented built-in `worker`, `explorer`, or `default` agent
+   types with the inline role contract and preferred model from `roles.md`.
+5. Return worker evidence to the same controller through concise follow-ups.
+   Let it issue the next dispatch, repair, completion, or blocker decision.
+6. Accept completion only after the controller reviews the evidence and the
+   main thread checks critical integration boundaries.
 
-The Sol controller must not spawn grandchildren or edit production files. This preserves concurrency and avoids nested-agent routing and permission problems.
+The controller must not spawn descendants or edit production files. Task names
+identify workflow roles; they are not external custom-agent profiles.
 
 ## Run the route
 
 - **Light:** work directly; do not spawn agents.
-- **Medium:** read [references/medium.md](references/medium.md).
-- **Heavy:** read [references/heavy.md](references/heavy.md).
+- **Medium:** read [references/roles.md](references/roles.md), then
+  [references/medium.md](references/medium.md).
+- **Heavy:** read [references/roles.md](references/roles.md), then
+  [references/heavy.md](references/heavy.md).
 
-If the Sol controller or requested Luna profiles are unavailable, report the exact limitation. Do not silently substitute the main model or claim a requested model ran without child-thread or runtime evidence.
+If subagents are unavailable, report the exact limitation; an automatic route
+may fall back to Light, while an explicit Medium or Heavy request remains
+unfulfilled. If a preferred model is unavailable, use the runtime-selected
+subagent model only when the user did not explicitly request a model, and
+disclose that model pinning was lost. Never substitute an explicitly requested
+model or claim a model ran without child-thread or runtime evidence.

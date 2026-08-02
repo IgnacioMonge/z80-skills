@@ -16,6 +16,7 @@ ROUTE_FILES = (
     WORKFLOW / "references" / "medium.md",
     WORKFLOW / "references" / "heavy.md",
 )
+ROLES = WORKFLOW / "references" / "roles.md"
 
 
 class WorkflowIntegrationTest(unittest.TestCase):
@@ -23,6 +24,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         required = (
             WORKFLOW / "SKILL.md",
             WORKFLOW / "agents" / "openai.yaml",
+            ROLES,
             *ROUTE_FILES,
         )
         for path in required:
@@ -33,6 +35,15 @@ class WorkflowIntegrationTest(unittest.TestCase):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text())
         self.assertEqual((ROOT / manifest["skills"]).resolve(), ROOT / "skills")
         self.assertTrue(WORKFLOW.is_dir())
+
+    def test_workflow_uses_portable_builtin_agent_types(self) -> None:
+        roles = " ".join(ROLES.read_text(encoding="utf-8").split())
+        for agent_type in ("`default`", "`worker`", "`explorer`"):
+            self.assertIn(agent_type, roles)
+        self.assertIn("not external custom-agent profiles", " ".join(
+            (WORKFLOW / "SKILL.md").read_text(encoding="utf-8").split()
+        ))
+        self.assertNotIn("runtime-provided", roles)
 
     def test_z80_skills_delegate_without_widening_permissions(self) -> None:
         for name in Z80_SKILLS:

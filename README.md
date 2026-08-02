@@ -270,10 +270,10 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Requirements
 
 - Codex with plugin and skill support.
-- `workflow` Medium and Heavy require the runtime-provided
-  `workflow_orchestrator`, `explorer`, `executor_luna`, `tester`, `doc-writer`,
-  and `executor_sol` profiles. Missing requested profiles are reported; the
-  main session model is not substituted silently.
+- `workflow` Medium and Heavy require Codex subagents and use only the built-in
+  `default`, `worker`, and `explorer` agent types. Sol and Luna are preferred
+  models, not custom-profile dependencies; unavailable model pinning is handled
+  and disclosed according to the workflow contract.
 - Git to clone and update the repository.
 - Python 3.9 or later for general helpers; Python 3.11 or later is required
   whenever `optimize-z80` must parse or enforce a TOML policy.
@@ -281,8 +281,8 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 
 ### Initial installation
 
-The installer expects the repository to be located exactly at
-`~/plugins/z80-skills`.
+Clone the repository anywhere under your home directory. The checkout is the
+canonical source for all five skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -292,8 +292,10 @@ codex plugin add z80-skills@personal
 ```
 
 `install_personal_marketplace.py` creates or updates
-`~/.agents/plugins/marketplace.json`, preserves all other entries, and replaces
-only the entry named `z80-skills`.
+`~/.agents/plugins/marketplace.json`, points `z80-skills` at the actual checkout,
+preserves all other entries, and replaces only the entry named `z80-skills`.
+Do not maintain another authored copy under `~/.codex/skills/workflow`; the
+plugin already bundles `workflow` as its independent shared core.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.
@@ -301,11 +303,15 @@ task starts and does not update dynamically within an already open task.
 ### Updating
 
 ```sh
-git -C ~/plugins/z80-skills pull --ff-only
+cd /path/to/z80-skills
+git pull --ff-only
+python3 scripts/install_personal_marketplace.py
 codex plugin add z80-skills@personal
 ```
 
-After updating, open a new task again.
+Plugin changes update the committed manifest version so Codex creates a fresh
+installed copy. Never edit `~/.codex/plugins/cache` directly. After updating,
+open a new task again.
 
 ## Usage
 
@@ -457,6 +463,7 @@ Included tests:
 
 ```sh
 python3 scripts/test_workflow_integration.py
+python3 scripts/test_personal_marketplace.py
 python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py

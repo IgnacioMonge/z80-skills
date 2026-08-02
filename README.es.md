@@ -275,10 +275,10 @@ sí solos.
 ### Requisitos
 
 - Codex con soporte para plugins y skills.
-- Los niveles Medium y Heavy de `workflow` requieren los perfiles del runtime
-  `workflow_orchestrator`, `explorer`, `executor_luna`, `tester`, `doc-writer`
-  y `executor_sol`. Si falta un perfil solicitado, se informa del límite; el
-  modelo de la sesión principal no se sustituye silenciosamente.
+- Los niveles Medium y Heavy de `workflow` requieren subagentes de Codex y usan
+  únicamente los tipos integrados `default`, `worker` y `explorer`. Sol y Luna
+  son modelos preferidos, no dependencias de perfiles personalizados; cualquier
+  pérdida del modelo fijado se gestiona y declara según el contrato del workflow.
 - Git para clonar y actualizar el repositorio.
 - Python 3.9 o posterior para los helpers generales; Python 3.11 o posterior
   es obligatorio cuando `optimize-z80` deba interpretar o aplicar una política
@@ -288,8 +288,8 @@ sí solos.
 
 ### Primera instalación
 
-El instalador espera que el repositorio esté exactamente en
-`~/plugins/z80-skills`.
+Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
+checkout es la fuente canónica de los cinco skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -299,8 +299,10 @@ codex plugin add z80-skills@personal
 ```
 
 `install_personal_marketplace.py` crea o actualiza
-`~/.agents/plugins/marketplace.json`, conserva las demás entradas y sustituye
-solo la entrada llamada `z80-skills`.
+`~/.agents/plugins/marketplace.json`, apunta `z80-skills` al checkout real,
+conserva las demás entradas y sustituye solo la entrada llamada `z80-skills`.
+No mantengas otra copia editada en `~/.codex/skills/workflow`: el plugin ya
+incluye `workflow` como núcleo compartido independiente.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
 carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea
@@ -309,11 +311,15 @@ ya abierta.
 ### Actualización
 
 ```sh
-git -C ~/plugins/z80-skills pull --ff-only
+cd /ruta/a/z80-skills
+git pull --ff-only
+python3 scripts/install_personal_marketplace.py
 codex plugin add z80-skills@personal
 ```
 
-Después de actualizar, vuelve a abrir una tarea nueva.
+Los cambios del plugin actualizan la versión del manifiesto incluida en Git
+para que Codex cree una copia instalada nueva. No edites directamente
+`~/.codex/plugins/cache`. Después de actualizar, abre una tarea nueva.
 
 ## Uso
 
@@ -465,6 +471,7 @@ Pruebas incluidas:
 
 ```sh
 python3 scripts/test_workflow_integration.py
+python3 scripts/test_personal_marketplace.py
 python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py

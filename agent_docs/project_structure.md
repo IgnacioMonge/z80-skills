@@ -5,7 +5,9 @@
 scripts/
   install_personal_marketplace.py
   run_in_worktree.py             Shared disposable-worktree gate
+  test_personal_marketplace.py   Canonical-source installer tests
   test_run_in_worktree.py        Runner contract tests
+  test_workflow_integration.py   Workflow composition and portability tests
 skills/
   audit-z80/                     Read-only correctness audit
   organize-z80/                  Architecture and reorganization workflow
