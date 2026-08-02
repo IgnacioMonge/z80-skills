@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 PLUGIN_NAME = "z80-skills"
@@ -45,6 +47,26 @@ def marketplace_data(data: dict, source_path: str) -> dict:
     return data
 
 
+def write_marketplace(path: Path, data: dict) -> None:
+    temporary_path = None
+    try:
+        with NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            delete=False,
+        ) as handle:
+            handle.write(json.dumps(data, indent=2) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            temporary_path = Path(handle.name)
+        temporary_path.replace(path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
 def main() -> None:
     plugin_root = Path(__file__).resolve().parents[1]
     home = Path.home()
@@ -62,15 +84,19 @@ def main() -> None:
         data = {}
     data = marketplace_data(data, source_path)
 
-    marketplace_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    write_marketplace(marketplace_path, data)
     print(f"Updated {marketplace_path}")
     print(f"Source: {plugin_root}")
-    legacy_workflow = home / ".codex" / "skills" / "workflow" / "SKILL.md"
-    if legacy_workflow.exists():
-        print(
-            f"Warning: {legacy_workflow.parent} can shadow the bundled workflow; "
-            "move or remove it after verifying this plugin."
-        )
+    conflicting_workflows = (
+        home / ".agents" / "skills" / "workflow" / "SKILL.md",
+        home / ".codex" / "skills" / "workflow" / "SKILL.md",
+    )
+    for workflow in conflicting_workflows:
+        if workflow.exists():
+            print(
+                f"Warning: {workflow.parent} can conflict with the bundled workflow; "
+                "move or disable it after verifying this plugin."
+            )
     print(f"Run: codex plugin add {PLUGIN_NAME}@{data['name']}")
 
 

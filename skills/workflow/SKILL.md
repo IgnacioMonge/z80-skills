@@ -44,6 +44,15 @@ When another skill names `$workflow` as its execution core:
   contract, and mutation permissions.
 - Domain restrictions win. A workflow level never authorizes edits, builds,
   network access, or other effects forbidden by the domain skill or project.
+- Before any Medium or Heavy dispatch, classify the effective mutation boundary:
+  - **primary-tree read-only:** use only `explorer` or read-only `default`
+    roles; do not spawn an implementer.
+  - **disposable-worktree-only:** an executor may edit or build only inside a
+    verified, domain-gated disposable worktree, never the primary tree.
+  - **authorized primary-tree mutation:** an executor may edit and run checks
+    only within its assigned surface and effective authorization.
+  The most restrictive applicable user, project, or domain rule determines the
+  class.
 - In `auto`, treat domain `Focused`, `Standard`, and `Deep` classifications as
   inputs to light, medium, and heavy selection, not as a second control plane.
 - In `auto`, run the required domain preflight directly at Light, then announce

@@ -33,8 +33,11 @@ label for messaging and call counts; never pass it as a custom `agent_type`.
   bounded package cannot reasonably be handled by the default implementer.
 
 All permissions are the intersection of the role, project instructions,
-domain skill, parent sandbox, and user authorization. A role never widens a
-read-only, worktree-only, network, approval, or mutation boundary.
+domain skill, parent sandbox, and user authorization. Classify each assignment
+as **primary-tree read-only**, **disposable-worktree-only**, or **authorized
+primary-tree mutation** before spawning it. Investigators and verifiers remain
+read-only; implementers may write only in the classified surface. A role never
+widens a network, approval, or mutation boundary.
 
 If a preferred model is rejected, follow `SKILL.md` model fallback rules. The
 role contract remains identical regardless of model.

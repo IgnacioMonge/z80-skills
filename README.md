@@ -92,6 +92,9 @@ signals after preflight. Workflow owns the route, dispatch, repair, verification
 and integration; the domain skill keeps its evidence gates, lane definitions,
 output contract, and write restrictions. An explicit workflow level wins, but
 never grants an operation forbidden by the project or domain skill.
+Before dispatch, workflow classifies each surface as primary-tree read-only,
+disposable-worktree-only, or authorized primary-tree mutation and selects only
+roles that fit that boundary.
 
 ## Targeted external research
 
@@ -294,8 +297,9 @@ codex plugin add z80-skills@personal
 `install_personal_marketplace.py` creates or updates
 `~/.agents/plugins/marketplace.json`, points `z80-skills` at the actual checkout,
 preserves all other entries, and replaces only the entry named `z80-skills`.
-Do not maintain another authored copy under `~/.codex/skills/workflow`; the
-plugin already bundles `workflow` as its independent shared core.
+Do not maintain another authored copy under `~/.agents/skills/workflow` or the
+legacy `~/.codex/skills/workflow`; the plugin already bundles `workflow` as its
+independent shared core.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.

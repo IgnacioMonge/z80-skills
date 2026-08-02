@@ -96,6 +96,9 @@ verificación e integración; el skill de dominio conserva puertas de evidencia,
 definición de lanes, contrato de salida y restricciones de escritura. Un nivel
 explícito gana, pero nunca autoriza una operación prohibida por el proyecto o el
 skill de dominio.
+Antes del despacho, workflow clasifica cada superficie como solo lectura del
+árbol principal, exclusiva de un worktree desechable o mutación autorizada del
+árbol principal, y selecciona solo roles compatibles con esa frontera.
 
 ## Investigación externa dirigida
 
@@ -301,8 +304,9 @@ codex plugin add z80-skills@personal
 `install_personal_marketplace.py` crea o actualiza
 `~/.agents/plugins/marketplace.json`, apunta `z80-skills` al checkout real,
 conserva las demás entradas y sustituye solo la entrada llamada `z80-skills`.
-No mantengas otra copia editada en `~/.codex/skills/workflow`: el plugin ya
-incluye `workflow` como núcleo compartido independiente.
+No mantengas otra copia editada en `~/.agents/skills/workflow` ni en la ruta
+heredada `~/.codex/skills/workflow`: el plugin ya incluye `workflow` como núcleo
+compartido independiente.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
 carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea
