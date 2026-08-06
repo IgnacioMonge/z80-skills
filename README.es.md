@@ -2,17 +2,19 @@
 
 **Idiomas:** [English](README.md) · Español
 
-Plugin para Codex con un workflow adaptativo independiente y cuatro skills
-complementarios para analizar y organizar proyectos Z80, especialmente software
-de ZX Spectrum escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
+Plugin para Codex con un workflow adaptativo independiente y cinco skills
+complementarios para desarrollar, analizar y organizar proyectos Z80,
+especialmente software de ZX Spectrum escrito en ensamblador, C o una mezcla de
+ambos con z88dk o SDCC.
 
 El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
 el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
 riesgo real y distinguen claramente entre evidencia probada, estimaciones e
 hipótesis.
 
-> Ejecución adaptativa y análisis, organización, reducción de tamaño y
-> optimización multiobjetivo basados en evidencia para Z80 y ZX Spectrum.
+> Ejecución adaptativa, desarrollo dirigido por especificaciones, análisis,
+> organización, reducción de tamaño y optimización multiobjetivo basados en
+> evidencia para Z80 y ZX Spectrum.
 
 ## Contenido
 
@@ -34,15 +36,18 @@ hipótesis.
 | Skill | Pregunta principal | Resultado |
 |---|---|---|
 | `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa light, un flujo medium controlado por Sol o coordinación heavy plana con workers Luna acotados. |
+| `develop-z80` | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
 | `audit-z80` | ¿Hay defectos, corrupción, errores ABI, riesgos ISR/memoria/hardware o regresiones? | Hallazgos priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
 | `organize-z80` | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
 | `shrink-z80` | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
 | `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
 
 `workflow` es independiente de Z80 y puede dirigir cualquier tarea de
-ingeniería. Los cuatro skills Z80 se solapan solo donde es útil:
+ingeniería. Los cinco skills Z80 se solapan solo donde es útil:
 
 - Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
+- Usa `develop-z80` para llevar una idea de ZX o Next por especificación,
+  planificación, tareas, implementación y verificación.
 - Usa `audit-z80` para corrección y seguridad técnica.
 - Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
 - Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
@@ -140,6 +145,27 @@ Para proteger proyectos privados, las búsquedas usan únicamente firmas mínima
 normalizadas; nunca deben subir código privado ni identificadores del proyecto.
 
 ## Detalle de cada skill
+
+### `develop-z80`
+
+Desarrollo dirigido por especificaciones desde una idea inicial hasta código
+verificado. Da forma al concepto, define comportamiento observable, elige el
+perfil ZX/Next, planifica hitos ejecutables, crea tareas con dependencias,
+implementa las tareas listas y reconcilia cada criterio de aceptación con
+evidencia.
+
+El usuario no dirige esas fases. El skill deduce dónde empezar, avanza
+automáticamente y solo pregunta por decisiones de producto materiales o por la
+autorización que falte antes de modificar código de producto.
+
+El trabajo pequeño conserva un único dossier SDD en la conversación. Un proyecto
+de varias sesiones puede persistir ese mismo dossier en el repositorio en vez de
+dispersar idea, requisitos, plan, tareas y estado entre varios archivos.
+
+`auto` sigue siendo la experiencia normal; los techos opcionales `idea`, `spec`,
+`plan`, `tasks`, `implement` y `verify` permiten trabajo dirigido. Evidencia,
+decisiones de plataforma, formato del dossier y verificación por hitos se cargan
+progresivamente desde referencias separadas.
 
 ### `audit-z80`
 
@@ -292,7 +318,7 @@ sí solos.
 ### Primera instalación
 
 Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
-checkout es la fuente canónica de los cinco skills.
+checkout es la fuente canónica de los seis skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -336,6 +362,14 @@ priorización.
 ```text
 Usa workflow en modo auto para implementar este cambio con el menor nivel de
 ejecución suficiente y conservar los contratos existentes del repositorio.
+```
+
+### Desarrollo dirigido por especificaciones
+
+```text
+Usa develop-z80 para dirigir esta idea de juego para ZX Spectrum Next desde el
+concepto hasta una implementación verificada. Elige y ejecuta por mí las fases
+SDD; pregunta solo cuando falte una decisión de producto material.
 ```
 
 ### Auditoría
@@ -407,6 +441,9 @@ configuración y receta deben pertenecer a la misma línea base.
 
 - Los análisis normales son de solo lectura.
 - `workflow` nunca amplía los permisos concedidos por el proyecto o el skill de dominio.
+- `develop-z80` mantiene idea, especificación, planificación y desglose de tareas
+  en solo lectura; la primera edición greenfield también exige aceptación
+  explícita de la spec. Todo avance multihito queda acotado a la sesión actual.
 - `audit-z80` y `shrink-z80` no editan el proyecto.
 - `organize-z80` solo edita código en modo `apply` tras una petición explícita,
   línea base congelada, frontera aprobada, un slice nombrado y rollback; una
@@ -440,6 +477,10 @@ scripts/
   run_in_worktree.py
 skills/
   workflow/
+    SKILL.md
+    agents/openai.yaml
+    references/
+  develop-z80/
     SKILL.md
     agents/openai.yaml
     references/

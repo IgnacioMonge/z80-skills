@@ -9,6 +9,7 @@ scripts/
   test_run_in_worktree.py        Runner contract tests
   test_workflow_integration.py   Workflow composition and portability tests
 skills/
+  develop-z80/                   Idea-to-implementation SDD workflow
   audit-z80/                     Read-only correctness audit
   organize-z80/                  Architecture and reorganization workflow
   shrink-z80/                    Size-only analysis and analyzers
@@ -16,12 +17,14 @@ skills/
   workflow/                      Shared adaptive execution core
 ```
 
-Each skill owns its `SKILL.md`, `agents/openai.yaml`, and `references/`.
-Analyzer-bearing skills also own `scripts/`; `shrink-z80` additionally owns
-its smoke tests. The root README documents installation, usage, safety rules,
-repository structure, and validation commands.
+Each skill owns its `SKILL.md` and `agents/openai.yaml`; domain detail lives in
+`references/` only where progressive loading helps. Analyzer-bearing skills
+also own `scripts/`; `shrink-z80` additionally owns its smoke tests. The root
+README documents installation, usage, safety rules, repository structure, and
+validation commands.
 
-Ownership boundaries are intentionally explicit: audit handles correctness,
+Ownership boundaries are intentionally explicit: develop handles ideas,
+specification, planning, tasks, and implementation; audit handles correctness,
 organize handles structure, shrink handles size, optimize handles competing
 metrics, and workflow handles generic execution control. Domain evidence and
 safety gates remain in the specialized skills.

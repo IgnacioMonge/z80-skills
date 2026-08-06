@@ -7,7 +7,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / "skills" / "workflow"
-Z80_SKILLS = ("audit-z80", "organize-z80", "shrink-z80", "optimize-z80")
+DEVELOP = ROOT / "skills" / "develop-z80"
+Z80_SKILLS = (
+    "develop-z80",
+    "audit-z80",
+    "organize-z80",
+    "shrink-z80",
+    "optimize-z80",
+)
 ANALYSIS_SKILLS = ("audit-z80", "shrink-z80", "optimize-z80")
 LANE_FILES = (
     "skills/audit-z80/references/agent-orchestration.md",
@@ -105,6 +112,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
         apply_text = (organize / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("## Apply gate", apply_text)
         self.assertIn("Enter `apply` only when all conditions hold", apply_text)
+
+        develop_contract = (
+            DEVELOP / "references" / "hard-contract.md"
+        ).read_text(encoding="utf-8")
+        for boundary in (
+            "primary-tree read-only",
+            "disposable-worktree-only",
+            "authorized primary-tree mutation",
+        ):
+            self.assertIn(boundary, develop_contract)
+        self.assertIn("scripts/run_in_worktree.py", develop_contract)
 
     def test_skill_corpus_is_structurally_closed(self) -> None:
         for skill_dir in sorted((ROOT / "skills").iterdir()):

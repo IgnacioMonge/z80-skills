@@ -1,6 +1,6 @@
 # Project Overview
 
-Z80 Skills is a Codex plugin with four complementary domain skills for Z80 and
+Z80 Skills is a Codex plugin with five complementary domain skills for Z80 and
 ZX Spectrum projects written in assembly, C, or mixed C/ASM with z88dk or SDCC,
 plus a shared adaptive workflow core.
 
@@ -11,6 +11,9 @@ the main agent verifies and ranks them.
 
 The skills have distinct responsibilities:
 
+- `develop-z80`: specification-driven development from a ZX or Next idea through
+  autonomously managed specification, milestone, task, implementation, and
+  verification stages.
 - `audit-z80`: read-only correctness and risk auditing.
 - `organize-z80`: ownership, dependency, placement, and incremental
   reorganization; source edits are limited to an approved `apply` slice.
@@ -21,5 +24,7 @@ The skills have distinct responsibilities:
 - `workflow`: reusable Light, Medium, and Heavy execution control composed with
   the domain skills without replacing their evidence and safety gates.
 
-Normal analysis keeps the primary tree read-only. Measurement and experiments
-use detached disposable worktrees and the shared runner contract.
+Normal analysis keeps the primary tree read-only. `develop-z80` and an approved
+`organize-z80 apply` slice may edit it within their explicit mutation gates;
+measurement and experiments use detached disposable worktrees and the shared
+runner contract.

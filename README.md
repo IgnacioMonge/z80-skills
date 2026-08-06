@@ -2,16 +2,18 @@
 
 **Languages:** English · [Español](README.es.md)
 
-Codex plugin with one standalone adaptive workflow and four complementary skills
-for analyzing and organizing Z80 projects, especially ZX Spectrum software
-written in assembly, C, or a mixture of both using z88dk or SDCC.
+Codex plugin with one standalone adaptive workflow and five complementary
+skills for developing, analyzing, and organizing Z80 projects, especially ZX
+Spectrum software written in assembly, C, or a mixture of both using z88dk or
+SDCC.
 
 The goal is not to produce generic lists of tricks. The skills inspect the
 current code and artifacts, adapt depth and parallelism to the actual risk, and
 clearly distinguish proven evidence, estimates, and hypotheses.
 
-> Adaptive execution plus evidence-first auditing, organization, size reduction,
-> and multi-objective optimization for Z80 and ZX Spectrum projects.
+> Adaptive execution plus specification-driven development, evidence-first
+> auditing, organization, size reduction, and multi-objective optimization for
+> Z80 and ZX Spectrum projects.
 
 ## Contents
 
@@ -33,15 +35,18 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 | Skill | Primary question | Result |
 |---|---|---|
 | `workflow` | What is the smallest sufficient execution level for this engineering task? | Light direct execution, a Sol-controlled medium stream, or flat heavy coordination with bounded Luna workers. |
+| `develop-z80` | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
 | `audit-z80` | Are there defects, corruption, ABI errors, ISR/memory/hardware risks, or regressions? | Findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
 | `organize-z80` | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
 | `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
 | `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
-`workflow` is independent of Z80 and can route any engineering task. The four
+`workflow` is independent of Z80 and can route any engineering task. The five
 Z80 skills overlap only where useful:
 
 - Use `workflow` directly for adaptive planning, implementation, and verification.
+- Use `develop-z80` to take a ZX or Next idea through specification, planning,
+  tasks, implementation, and verification.
 - Use `audit-z80` for correctness and technical safety.
 - Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
 - Use `shrink-z80` for an exhaustive search focused exclusively on size.
@@ -136,6 +141,26 @@ To protect private projects, searches use only minimal normalized signatures;
 they must never upload private code or project identifiers.
 
 ## Skill details
+
+### `develop-z80`
+
+Specification-driven development from an initial idea to verified code. It
+shapes the concept, defines observable behavior, chooses the ZX/Next platform
+profile, plans runnable milestones, creates dependency-aware tasks, implements
+ready tasks, and reconciles every acceptance criterion with evidence.
+
+The user does not operate those stages. The skill infers where to begin,
+advances automatically, and asks only for material product decisions or missing
+authorization before product-code mutation.
+
+Small work keeps one SDD dossier in the conversation. Multi-session projects
+can persist the same single dossier in the repository instead of scattering
+idea, requirements, plan, tasks, and status across several files.
+
+`auto` remains the normal experience; optional `idea`, `spec`, `plan`, `tasks`,
+`implement`, and `verify` ceilings support targeted work. Evidence, platform
+decisions, dossier format, and milestone verification load progressively from
+separate references.
 
 ### `audit-z80`
 
@@ -285,7 +310,7 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Initial installation
 
 Clone the repository anywhere under your home directory. The checkout is the
-canonical source for all five skills.
+canonical source for all six skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -328,6 +353,14 @@ will be.
 ```text
 Use workflow in auto mode to implement this change with the smallest sufficient
 execution level and preserve the repository's existing contracts.
+```
+
+### Specification-driven development
+
+```text
+Use develop-z80 to lead this ZX Spectrum Next game idea from concept to verified
+implementation. Choose and run the SDD stages for me; ask only when a material
+product decision is missing.
 ```
 
 ### Auditing
@@ -399,6 +432,9 @@ configuration, and recipe must belong to the same baseline.
 
 - Normal analyses are read-only.
 - `workflow` never widens the permissions granted by a project or domain skill.
+- `develop-z80` keeps idea, specification, planning, and task breakdown
+  read-only; its first greenfield product-code edit also requires explicit spec
+  acceptance. Any multi-milestone auto-advance is bounded to the current session.
 - `audit-z80` and `shrink-z80` do not edit the project.
 - `organize-z80` edits source only in `apply` mode after an explicit request,
   frozen baseline, approved boundary, one named slice, and rollback point; an
@@ -432,6 +468,10 @@ scripts/
   run_in_worktree.py
 skills/
   workflow/
+    SKILL.md
+    agents/openai.yaml
+    references/
+  develop-z80/
     SKILL.md
     agents/openai.yaml
     references/

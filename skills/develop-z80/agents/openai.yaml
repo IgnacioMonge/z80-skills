@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop Z80"
+  short_description: "Autonomous SDD for ZX and Next ideas"
+  default_prompt: "Use $develop-z80 to lead this ZX or Next idea from concept to verified code; run the SDD lifecycle and ask only for material product decisions."
