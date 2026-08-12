@@ -330,9 +330,11 @@ codex plugin add z80-skills@personal
 `install_personal_marketplace.py` crea o actualiza
 `~/.agents/plugins/marketplace.json`, apunta `z80-skills` al checkout real,
 conserva las demás entradas y sustituye solo la entrada llamada `z80-skills`.
-No mantengas otra copia editada en `~/.agents/skills/workflow` ni en la ruta
-heredada `~/.codex/skills/workflow`: el plugin ya incluye `workflow` como núcleo
-compartido independiente.
+No mantengas copias ni junctions de ningún skill incluido bajo
+`~/.agents/skills` ni en la ruta heredada `~/.codex/skills`: el plugin ya
+incluye todos los skills, el workflow compartido y el runner de worktrees. Los
+alias heredados pueden saltarse la raíz del plugin y romper la resolución de
+rutas compartidas.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
 carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea

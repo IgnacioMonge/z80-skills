@@ -28,6 +28,9 @@ Do not claim PROVEN deltas if any is true:
 
 - `git log --all` can fail on broken tool refs. Use branch-local logs or explicit refs.
 - Shell wrappers can break path translation. Use absolute executables if needed.
+- Skill catalog paths can be symlink or junction aliases. Canonicalize the
+  discovered `SKILL.md` before deriving the shared runner; never report the
+  runner absent from the logical alias alone.
 - Builds can outlive tool timeout. Check processes and artifacts before retry.
 - Huge logs can flood context. Summarize with search/scripts.
 - Missing `.lst/.sym` is not fatal, but it caps confidence.
@@ -35,6 +38,8 @@ Do not claim PROVEN deltas if any is true:
 - Use an available read-only web/search tool when `external-research.md`
   triggers. Package installs or executing downloaded code remain out of scope
   without approval.
+- Preflight is `scripts/preflight.py`; do not invent a preflight Markdown
+  reference.
 
 ## Self-Tuning Output
 

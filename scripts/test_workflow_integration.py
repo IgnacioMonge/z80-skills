@@ -61,6 +61,27 @@ class WorkflowIntegrationTest(unittest.TestCase):
         ))
         self.assertNotIn("runtime-provided", roles)
 
+    def test_workflow_avoids_serial_controller_overhead(self) -> None:
+        skill = (WORKFLOW / "SKILL.md").read_text(encoding="utf-8")
+        roles = ROLES.read_text(encoding="utf-8")
+        medium = (WORKFLOW / "references" / "medium.md").read_text(
+            encoding="utf-8"
+        )
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(
+            encoding="utf-8"
+        )
+        combined = "\n".join((skill, roles, medium, heavy))
+
+        self.assertNotIn("workflow_controller", combined)
+        self.assertIn("main thread as the controller", skill)
+        self.assertIn("Work directly in the main thread; do not spawn agents.", medium)
+        self.assertIn(
+            "at least two concrete, bounded, independent workstreams",
+            combined,
+        )
+        self.assertIn('reasoning_effort="medium"', roles)
+        self.assertIn("Raise effort to `high` or `max`", roles)
+
     def test_z80_skills_delegate_without_widening_permissions(self) -> None:
         for name in Z80_SKILLS:
             skill = ROOT / "skills" / name / "SKILL.md"
@@ -123,6 +144,24 @@ class WorkflowIntegrationTest(unittest.TestCase):
         ):
             self.assertIn(boundary, develop_contract)
         self.assertIn("scripts/run_in_worktree.py", develop_contract)
+
+    def test_optimize_runtime_paths_are_structurally_resolvable(self) -> None:
+        skill_file = ROOT / "skills" / "optimize-z80" / "SKILL.md"
+        skill = skill_file.read_text(encoding="utf-8")
+
+        self.assertIn("following symlinks and Windows junctions", skill)
+        self.assertIn("sole preflight entry point", skill)
+        self.assertNotIn("references/preflight.md", skill)
+        self.assertTrue(
+            (skill_file.parent / "scripts" / "preflight.py").is_file()
+        )
+
+        canonical_skill_dir = skill_file.resolve(strict=True).parent
+        runner = (
+            canonical_skill_dir / ".." / ".." / "scripts" / "run_in_worktree.py"
+        ).resolve(strict=True)
+        self.assertEqual(runner, (ROOT / "scripts" / "run_in_worktree.py").resolve())
+        self.assertTrue(runner.is_file())
 
     def test_skill_corpus_is_structurally_closed(self) -> None:
         for skill_dir in sorted((ROOT / "skills").iterdir()):

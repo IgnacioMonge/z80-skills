@@ -89,8 +89,8 @@ The standalone `workflow` skill is the shared execution core:
 | Level | Strategy |
 |---|---|
 | **Light** | The main thread handles a bounded task directly. |
-| **Medium** | One persistent Sol controller plans and reviews one Luna execution stream. |
-| **Heavy** | One persistent Sol controller coordinates bounded independent Luna workers in a flat topology. |
+| **Medium** | The main thread handles one ordered multi-step stream directly. |
+| **Heavy** | The main thread coordinates bounded independent workers in a flat topology. |
 
 In `auto`, each Z80 skill contributes `Focused`, `Standard`, or `Deep` domain
 signals after preflight. Workflow owns the route, dispatch, repair, verification,
@@ -322,9 +322,10 @@ codex plugin add z80-skills@personal
 `install_personal_marketplace.py` creates or updates
 `~/.agents/plugins/marketplace.json`, points `z80-skills` at the actual checkout,
 preserves all other entries, and replaces only the entry named `z80-skills`.
-Do not maintain another authored copy under `~/.agents/skills/workflow` or the
-legacy `~/.codex/skills/workflow`; the plugin already bundles `workflow` as its
-independent shared core.
+Do not maintain copies or junctions for any bundled skill under
+`~/.agents/skills` or the legacy `~/.codex/skills`; the plugin already bundles
+the complete skill set, shared workflow, and worktree runner. Legacy aliases
+can bypass the plugin root and break shared-path resolution.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.

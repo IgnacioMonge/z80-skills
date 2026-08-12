@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Route engineering work through a portable adaptive workflow with light, medium, and heavy execution levels. Use when the user invokes `$workflow`, asks to use the workflow, requests a light/medium/heavy route, wants automatic effort selection, or wants a dedicated control agent to coordinate workers independently of the model used by the main session.
+description: Route engineering work through a portable adaptive workflow with light, medium, and heavy execution levels. Use when the user invokes `$workflow`, asks to use the workflow, requests a light/medium/heavy route, wants automatic effort selection, or wants bounded parallel workers coordinated by the main agent.
 ---
 
 # Workflow
@@ -14,8 +14,8 @@ Accept `$workflow light|medium|heavy|auto`, `effort=light|medium|heavy`, and equ
 When no level is explicit, choose the smallest sufficient level:
 
 - **Light:** explanation, diagnosis, review, lookup, or small localized change with straightforward verification.
-- **Medium:** cohesive multi-step or multi-file work benefiting from Sol planning and one Luna execution stream.
-- **Heavy:** broad or cross-cutting work with at least two independent packages, meaningful parallelism, or independent verification.
+- **Medium:** cohesive multi-step or multi-file work that one agent can complete in an ordered stream with proportionate verification.
+- **Heavy:** broad or cross-cutting work with at least two concrete, bounded, independent workstreams where parallelism or independent comparison materially improves speed or required coverage.
 
 Prefer the lower level when borderline. Change level only when evidence materially changes scope; announce the change and reason. These are workflow levels, not model reasoning-effort settings.
 
@@ -44,7 +44,7 @@ When another skill names `$workflow` as its execution core:
   contract, and mutation permissions.
 - Domain restrictions win. A workflow level never authorizes edits, builds,
   network access, or other effects forbidden by the domain skill or project.
-- Before any Medium or Heavy dispatch, classify the effective mutation boundary:
+- Before any Heavy dispatch, classify the effective mutation boundary:
   - **primary-tree read-only:** use only `explorer` or read-only `default`
     roles; do not spawn an implementer.
   - **disposable-worktree-only:** an executor may edit or build only inside a
@@ -59,41 +59,42 @@ When another skill names `$workflow` as its execution core:
   the selected level after classification. Do not report that normal selection
   as an escalation.
 
-## Control plane
+## Heavy control plane
 
-For Medium and Heavy, use the portable roles in
+For Heavy, use the portable roles in
 [references/roles.md](references/roles.md) and keep a flat topology:
 
-1. Spawn a fresh built-in `default` agent with task name
-   `workflow_controller`, `fork_turns="none"`, and the controller contract in
-   `roles.md`. Prefer `gpt-5.6-sol` when the runtime accepts an explicit model.
-2. Give it a self-contained task capsule containing the request, constraints,
-   acceptance criteria, relevant project instructions, known evidence, and
-   protected areas.
-3. Treat its response as the control plan. The main thread owns worker
-   spawning, messages, waits, approvals, Git operations, and final user
-   communication.
-4. Spawn only documented built-in `worker`, `explorer`, or `default` agent
-   types with the inline role contract and preferred model from `roles.md`.
-5. Return worker evidence to the same controller through concise follow-ups.
-   Let it issue the next dispatch, repair, completion, or blocker decision.
-6. Accept completion only after the controller reviews the evidence and the
-   main thread checks critical integration boundaries.
+1. Keep the main thread as the controller; do not spawn a separate planning or
+   controller agent.
+2. Spawn only when at least two concrete, bounded, independent workstreams can
+   proceed concurrently or independent comparison is required.
+3. Start independent workers together. Use at most two by default; add a third
+   only for a genuinely separate workstream.
+4. Give every worker a self-contained task capsule containing the objective,
+   exact scope and inputs, constraints, acceptance criteria, protected areas,
+   required evidence or artifact, and stop condition.
+5. Assign one owner to each mutable file set. Parallel implementers may write
+   only to disjoint surfaces.
+6. Continue useful main-thread work before waiting, then integrate worker
+   evidence once at the smallest shared boundary.
+7. Run deterministic checks before adding an independent verifier. Add one only
+   when risk, uncertainty, or required coverage justifies the extra call.
 
-The controller must not spawn descendants or edit production files. Task names
-identify workflow roles; they are not external custom-agent profiles.
+Use only documented built-in `worker`, `explorer`, or `default` types.
+Task names identify workflow roles; they are not external custom-agent profiles.
 
 ## Run the route
 
 - **Light:** work directly; do not spawn agents.
-- **Medium:** read [references/roles.md](references/roles.md), then
-  [references/medium.md](references/medium.md).
+- **Medium:** read [references/medium.md](references/medium.md), then work
+  directly; do not spawn agents.
 - **Heavy:** read [references/roles.md](references/roles.md), then
-  [references/heavy.md](references/heavy.md).
+  [references/heavy.md](references/heavy.md); spawn only when the Heavy dispatch
+  gate holds.
 
-If subagents are unavailable, report the exact limitation; an automatic route
-may fall back to Light, while an explicit Medium or Heavy request remains
-unfulfilled. If a preferred model is unavailable, use the runtime-selected
-subagent model only when the user did not explicitly request a model, and
-disclose that model pinning was lost. Never substitute an explicitly requested
-model or claim a model ran without child-thread or runtime evidence.
+If subagents are unavailable, continue directly unless the user explicitly
+required multi-agent execution; then report the exact limitation. If a preferred
+model is unavailable, use the runtime-selected subagent model only when the user
+did not explicitly request a model, and disclose that model pinning was lost.
+Never substitute an explicitly requested model or claim a model ran without
+child-thread or runtime evidence.

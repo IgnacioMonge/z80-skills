@@ -19,14 +19,21 @@ exact limitation and continue directly without claiming delegated execution.
 
 ## Runtime Portability
 
-- Resolve `SKILL_DIR` as the directory containing this file before invoking a
-  bundled script.
+- Treat the catalog path to this file as an alias. Canonicalize the `SKILL.md`
+  path while following symlinks and Windows junctions (for example,
+  `Path(<skill-file>).resolve(strict=True)`), then set `SKILL_DIR` to its
+  parent. Never derive shared paths from an uncanonicalized catalog path.
 - Use the Python 3 interpreter exposed by the host or explicitly provided by
   the user; never assume a platform-specific path.
 - Invoke bundled scripts through `"$SKILL_DIR/scripts/<name>.py"` (or an
   equivalent absolute path), never a project-relative `scripts/<name>.py`.
-- Run every build, test, measurement, or experiment command against a
-  disposable worktree through `$SKILL_DIR/../../scripts/run_in_worktree.py`.
+- `"$SKILL_DIR/scripts/preflight.py"` is the sole preflight entry point. Do not
+  infer a preflight Markdown reference.
+- Resolve `RUNNER` from canonical `SKILL_DIR` as
+  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` and verify that it is a file.
+  A missing path below the logical catalog alias is not proof that the runner
+  is absent. Run every build, test, measurement, or experiment command against
+  a disposable worktree through `RUNNER`.
 
 ## Modes
 

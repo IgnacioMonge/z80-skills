@@ -36,8 +36,12 @@ defaults change only when the user explicitly requests that change.
      files, or project configuration merely to host it.
   3. Run builds/patches **only** there. Invoke every sandbox build, test,
      measurement, or patch command from an allowed directory with the host
-     Python interpreter and
-     `<skill-dir>/../../scripts/run_in_worktree.py`, passing
+     Python interpreter. First canonicalize the discovered `SKILL.md` path by
+     following symlinks and Windows junctions, derive `<skill-dir>` from its
+     physical parent, and verify
+     `<skill-dir>/../../scripts/run_in_worktree.py` exists. A missing runner
+     below an uncanonicalized catalog alias is not evidence that the packaged
+     runner is absent. Invoke the verified runner, passing
      `--primary <primary-root> --worktree <worktree-root> -- <command>`.
      Never pass the temporary directory as a wrapper `cwd`: a rejected,
      substituted, or unverifiable `cwd` is a hard failure, never permission to

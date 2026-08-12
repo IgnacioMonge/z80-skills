@@ -2,17 +2,19 @@
 
 Measure only when a number can change the ranking. Use a detached disposable
 worktree in a safe host temporary directory; never modify the primary tree or
-its ignore files. Every command that builds, tests, measures, patches, or
-compares the disposable worktree must be launched through
-`<skill-dir>/../../scripts/run_in_worktree.py` with the primary and worktree
-roots; never use the temporary directory as the wrapper `cwd`.
+its ignore files. Canonicalize the discovered `SKILL.md` path by following
+symlinks and Windows junctions, set `SKILL_DIR` to its physical parent, and
+verify `RUNNER` at `"$SKILL_DIR/../../scripts/run_in_worktree.py"`. Do not
+declare the runner missing from an uncanonicalized catalog alias. Every command
+that builds, tests, measures, patches, or compares the disposable worktree must
+be launched through `RUNNER` with the primary and worktree roots; never use the
+temporary directory as the wrapper `cwd`.
 
 ## Baseline
 
 1. Capture primary branch, status, and diff as the contamination baseline.
-2. Create the worktree and run `"$SKILL_DIR/../../scripts/run_in_worktree.py"
-   --primary <primary-root> --worktree <worktree-root> -- python3
-   "$SKILL_DIR/scripts/preflight.py"`.
+2. Create the worktree and run `RUNNER --primary <primary-root> --worktree
+   <worktree-root> -- python3 "$SKILL_DIR/scripts/preflight.py"`.
 3. Freeze compiler, assembler, linker, CRT/clib, flags, target, and fixture.
 4. Build the smallest target that produces the required fresh artifact.
 5. Record artifact path, command, before value, and uncertainty.
