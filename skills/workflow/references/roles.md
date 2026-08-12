@@ -30,6 +30,17 @@ is only a stable label for messaging and call counts; never pass it as a custom
 - **Exceptional implementer:** use only when the main thread explains why the
   bounded package cannot reasonably be handled by the default implementer.
 
+## Upward report contract
+
+Keep each worker's final report within 250 words and describe the knowledge
+delta, not the activity transcript: status, outcome, contract changes,
+invalidated assumptions, verification evidence, residual risk, decision
+required, and exact references. Use `Decision required: none` explicitly when
+appropriate. Keep raw logs, large diffs, diagnostics, inventories, and verbose
+test output in the retained worker thread or a referenced artifact. The main
+thread opens that detail only for a material contradiction, uncertainty, or
+high-risk integration boundary.
+
 All permissions are the intersection of the role, project instructions,
 domain skill, parent sandbox, and user authorization. Classify each assignment
 as **primary-tree read-only**, **disposable-worktree-only**, or **authorized

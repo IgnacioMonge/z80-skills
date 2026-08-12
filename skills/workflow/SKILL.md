@@ -75,8 +75,10 @@ For Heavy, use the portable roles in
    required evidence or artifact, and stop condition.
 5. Assign one owner to each mutable file set. Parallel implementers may write
    only to disjoint surfaces.
-6. Continue useful main-thread work before waiting, then integrate worker
-   evidence once at the smallest shared boundary.
+6. While workers run, advance only unassigned architecture, contract, and
+   integration work. Do not duplicate delegated discovery, diagnostics,
+   implementation, or checks. Integrate worker reports once at the smallest
+   shared boundary.
 7. Run deterministic checks before adding an independent verifier. Add one only
    when risk, uncertainty, or required coverage justifies the extra call.
 
