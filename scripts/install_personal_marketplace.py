@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 
 
 PLUGIN_NAME = "z80-skills"
+SKILL_LOCATIONS = (Path(".agents/skills"), Path(".codex/skills"))
 
 
 def marketplace_source_path(plugin_root: Path, home: Path) -> str:
@@ -67,6 +68,27 @@ def write_marketplace(path: Path, data: dict) -> None:
             temporary_path.unlink(missing_ok=True)
 
 
+def bundled_skill_names(plugin_root: Path) -> tuple[str, ...]:
+    skills_root = plugin_root / "skills"
+    return tuple(
+        sorted(
+            skill_dir.name
+            for skill_dir in skills_root.iterdir()
+            if skill_dir.is_dir() and (skill_dir / "SKILL.md").is_file()
+        )
+    )
+
+
+def conflicting_skill_paths(
+    home: Path, skill_names: tuple[str, ...]
+) -> tuple[Path, ...]:
+    return tuple(
+        home / root / skill / "SKILL.md"
+        for root in SKILL_LOCATIONS
+        for skill in skill_names
+    )
+
+
 def main() -> None:
     plugin_root = Path(__file__).resolve().parents[1]
     home = Path.home()
@@ -87,15 +109,12 @@ def main() -> None:
     write_marketplace(marketplace_path, data)
     print(f"Updated {marketplace_path}")
     print(f"Source: {plugin_root}")
-    conflicting_workflows = (
-        home / ".agents" / "skills" / "workflow" / "SKILL.md",
-        home / ".codex" / "skills" / "workflow" / "SKILL.md",
-    )
-    for workflow in conflicting_workflows:
-        if workflow.exists():
+    skill_names = bundled_skill_names(plugin_root)
+    for conflict in conflicting_skill_paths(home, skill_names):
+        if conflict.exists():
             print(
-                f"Warning: {workflow.parent} can conflict with the bundled workflow; "
-                "move or disable it after verifying this plugin."
+                f"Warning: {conflict.parent} can conflict with the namespaced "
+                "plugin; move or disable this duplicate before opening a new task."
             )
     print(f"Run: codex plugin add {PLUGIN_NAME}@{data['name']}")
 

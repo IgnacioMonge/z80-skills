@@ -322,10 +322,15 @@ codex plugin add z80-skills@personal
 `install_personal_marketplace.py` creates or updates
 `~/.agents/plugins/marketplace.json`, points `z80-skills` at the actual checkout,
 preserves all other entries, and replaces only the entry named `z80-skills`.
-Do not maintain copies or junctions for any bundled skill under
-`~/.agents/skills` or the legacy `~/.codex/skills`; the plugin already bundles
-the complete skill set, shared workflow, and worktree runner. Legacy aliases
-can bypass the plugin root and break shared-path resolution.
+Do not maintain authored copies, symlinks, or junctions for any bundled skill
+under `~/.agents/skills/<skill-name>` or the legacy
+`~/.codex/skills/<skill-name>`.
+Those copies can shadow the namespaced plugin and omit package-level files such
+as `scripts/run_in_worktree.py`; copying individual directories from `skills/`
+is not a complete installation. The plugin already bundles all six skills,
+including `workflow` as its independent shared core. The installer warns when
+it finds one of these duplicate locations; move or disable it before opening a
+new Codex task.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.

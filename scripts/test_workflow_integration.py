@@ -15,6 +15,7 @@ Z80_SKILLS = (
     "shrink-z80",
     "optimize-z80",
 )
+ALL_SKILLS = (*Z80_SKILLS, "workflow")
 ANALYSIS_SKILLS = ("audit-z80", "shrink-z80", "optimize-z80")
 LANE_FILES = (
     "skills/audit-z80/references/agent-orchestration.md",
@@ -164,7 +165,14 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertTrue(runner.is_file())
 
     def test_skill_corpus_is_structurally_closed(self) -> None:
-        for skill_dir in sorted((ROOT / "skills").iterdir()):
+        skill_dirs = sorted(
+            skill_dir for skill_dir in (ROOT / "skills").iterdir()
+            if skill_dir.is_dir()
+        )
+        self.assertEqual(
+            [skill_dir.name for skill_dir in skill_dirs], sorted(ALL_SKILLS)
+        )
+        for skill_dir in skill_dirs:
             skill = skill_dir / "SKILL.md"
             text = skill.read_text(encoding="utf-8")
             frontmatter = re.match(r"\A---\n(.*?)\n---\n", text, re.DOTALL)

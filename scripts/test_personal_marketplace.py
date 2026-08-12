@@ -57,7 +57,31 @@ class PersonalMarketplaceTest(unittest.TestCase):
             self.assertEqual(marketplace.read_text(encoding="utf-8"), "original\n")
             self.assertFalse(list(marketplace.parent.glob(".marketplace.json.*")))
 
-    def test_main_preserves_catalog_and_warns_for_both_skill_locations(self) -> None:
+    def test_bundled_skill_names_come_from_complete_skill_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin_root = Path(tmp)
+            skills = plugin_root / "skills"
+            for name in ("workflow", "audit-z80"):
+                skill = skills / name
+                skill.mkdir(parents=True)
+                (skill / "SKILL.md").write_text("---\n", encoding="utf-8")
+            (skills / "incomplete").mkdir()
+            (skills / ".DS_Store").write_text("metadata", encoding="utf-8")
+
+            names = INSTALLER.bundled_skill_names(plugin_root)
+
+            self.assertEqual(names, ("audit-z80", "workflow"))
+            self.assertEqual(
+                INSTALLER.conflicting_skill_paths(Path("/home/example"), names),
+                (
+                    Path("/home/example/.agents/skills/audit-z80/SKILL.md"),
+                    Path("/home/example/.agents/skills/workflow/SKILL.md"),
+                    Path("/home/example/.codex/skills/audit-z80/SKILL.md"),
+                    Path("/home/example/.codex/skills/workflow/SKILL.md"),
+                ),
+            )
+
+    def test_main_preserves_catalog_and_warns_for_bundled_duplicates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
             marketplace = home / ".agents" / "plugins" / "marketplace.json"
@@ -74,12 +98,12 @@ class PersonalMarketplaceTest(unittest.TestCase):
                 encoding="utf-8",
             )
             conflicts = (
-                home / ".agents" / "skills" / "workflow" / "SKILL.md",
+                home / ".agents" / "skills" / "audit-z80" / "SKILL.md",
                 home / ".codex" / "skills" / "workflow" / "SKILL.md",
             )
             for conflict in conflicts:
                 conflict.parent.mkdir(parents=True)
-                conflict.write_text("---\nname: workflow\n---\n", encoding="utf-8")
+                conflict.write_text("---\n", encoding="utf-8")
 
             with (
                 mock.patch.object(INSTALLER.Path, "home", return_value=home),
