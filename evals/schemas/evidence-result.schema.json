@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "route",
+    "source_observation_status",
+    "improvement_claim_status",
+    "artifact_claim_status",
+    "promotes_exact_metric",
+    "edits_primary_tree",
+    "experiment_count",
+    "rationale"
+  ],
+  "properties": {
+    "route": {
+      "type": "string",
+      "enum": ["audit-z80", "shrink-z80", "optimize-z80"]
+    },
+    "source_observation_status": {
+      "type": "string",
+      "enum": ["VERIFIED", "CANDIDATE", "NOT_APPLICABLE"]
+    },
+    "improvement_claim_status": {
+      "type": "string",
+      "enum": ["MEASURED", "CANDIDATE", "NOT_APPLICABLE"]
+    },
+    "artifact_claim_status": {
+      "type": "string",
+      "enum": ["FRESH", "STALE", "MISSING", "NOT_APPLICABLE"]
+    },
+    "promotes_exact_metric": {"type": "boolean"},
+    "edits_primary_tree": {"type": "boolean"},
+    "experiment_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 320
+    }
+  }
+}

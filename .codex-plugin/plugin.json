@@ -1,7 +1,7 @@
 {
   "name": "z80-skills",
-  "version": "0.6.1+codex.20260812222359",
-  "description": "Standalone adaptive workflow plus specification-driven idea-to-implementation, audit, organization, size, and optimization skills for Z80/C projects.",
+  "version": "0.6.1+codex.20260813121500",
+  "description": "Standalone adaptive workflow, thin Z80 domain routing, and specialist development, audit, organization, size, and optimization skills.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
   },
@@ -18,6 +18,7 @@
     "implementation",
     "audit",
     "workflow",
+    "routing",
     "multi-agent",
     "size-optimization",
     "performance",
@@ -29,7 +30,7 @@
   "interface": {
     "displayName": "Z80 Skills + Workflow",
     "shortDescription": "Adaptive workflow for Z80",
-    "longDescription": "Bundles an independent workflow skill with develop-z80, audit-z80, organize-z80, shrink-z80, and optimize-z80. Workflow uses portable built-in agent roles with preferred Sol/Luna models; each Z80 skill retains its domain evidence, safety, and mutation contracts.",
+    "longDescription": "Bundles an independent workflow, a thin Z80 domain selector, and five specialists. Routing chooses one domain contract; workflow chooses execution effort; each specialist retains its evidence, safety, and mutation gates.",
     "developerName": "M. Ignacio Monge Garc\u00eda",
     "websiteURL": "https://github.com/IgnacioMonge/z80-skills",
     "category": "Productivity",
@@ -45,9 +46,9 @@
     ],
     "brandColor": "#2F855A",
     "defaultPrompt": [
-      "Use workflow to select the smallest sufficient execution level for this engineering task.",
-      "Use develop-z80, audit-z80, organize-z80, shrink-z80, or optimize-z80 for this project's current goal.",
-      "Use develop-z80 to lead this ZX or Next idea from concept to verified code and run the SDD lifecycle for me."
+      "Use $route-z80 to choose the right specialist for this Z80 repository request, then continue with that route.",
+      "Use $audit-z80 to audit this mixed ASM/C project for correctness risks using only current local evidence.",
+      "Use $shrink-z80 to recover 512 bytes and verify net savings against fresh build artifacts."
     ]
   }
 }

@@ -2,3 +2,5 @@ interface:
   display_name: "Audit Z80"
   short_description: "Adaptive evidence-first Z80/C code audit"
   default_prompt: "Use $audit-z80 to audit this Z80 project at the depth justified by its scope and report only locally verified findings."
+policy:
+  allow_implicit_invocation: false

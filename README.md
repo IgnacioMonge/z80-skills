@@ -2,10 +2,10 @@
 
 **Languages:** English · [Español](README.es.md)
 
-Codex plugin with one standalone adaptive workflow and five complementary
-skills for developing, analyzing, and organizing Z80 projects, especially ZX
-Spectrum software written in assembly, C, or a mixture of both using z88dk or
-SDCC.
+Codex plugin with one standalone adaptive workflow, one thin domain selector,
+and five complementary skills for developing, analyzing, and organizing Z80
+projects, especially ZX Spectrum software written in assembly, C, or a mixture
+of both using z88dk or SDCC.
 
 The goal is not to produce generic lists of tricks. The skills inspect the
 current code and artifacts, adapt depth and parallelism to the actual risk, and
@@ -35,18 +35,21 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 | Skill | Primary question | Result |
 |---|---|---|
 | `workflow` | What is the smallest sufficient execution level for this engineering task? | Light direct execution, a Sol-controlled medium stream, or flat heavy coordination with bounded Luna workers. |
+| `route-z80` | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
 | `develop-z80` | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
 | `audit-z80` | Are there defects, corruption, ABI errors, ISR/memory/hardware risks, or regressions? | Findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
 | `organize-z80` | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
 | `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
 | `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
-`workflow` is independent of Z80 and can route any engineering task. The five
-Z80 skills overlap only where useful:
+`workflow` is independent of Z80 and routes execution effort. `route-z80`
+selects a domain only when the goal is genuinely ambiguous. The five specialist
+skills overlap only where useful:
 
 - Use `workflow` directly for adaptive planning, implementation, and verification.
-- Use `develop-z80` to take a ZX or Next idea through specification, planning,
-  tasks, implementation, and verification.
+- Use `route-z80` to choose one specialist, without loading all candidates.
+- Use `develop-z80` only for an explicit product initiative or an existing SDD
+  dossier, not for routine fixes or isolated repository features.
 - Use `audit-z80` for correctness and technical safety.
 - Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
 - Use `shrink-z80` for an exhaustive search focused exclusively on size.
@@ -141,6 +144,13 @@ To protect private projects, searches use only minimal normalized signatures;
 they must never upload private code or project identifiers.
 
 ## Skill details
+
+### `route-z80`
+
+Thin domain dispatch for ambiguous Z80 requests. It selects one primary
+specialist from the requested result, or plain `workflow` for an ordinary fix,
+review, refactor, test, build, or documentation change. It does not choose
+Light, Medium, or Heavy and does not load every candidate skill.
 
 ### `develop-z80`
 
@@ -310,7 +320,7 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Initial installation
 
 Clone the repository anywhere under your home directory. The checkout is the
-canonical source for all six skills.
+canonical source for all seven skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -327,10 +337,16 @@ under `~/.agents/skills/<skill-name>` or the legacy
 `~/.codex/skills/<skill-name>`.
 Those copies can shadow the namespaced plugin and omit package-level files such
 as `scripts/run_in_worktree.py`; copying individual directories from `skills/`
-is not a complete installation. The plugin already bundles all six skills,
-including `workflow` as its independent shared core. The installer warns when
+is not a complete installation. The plugin already bundles all seven skills,
+including `route-z80` and `workflow`. The installer warns when
 it finds one of these duplicate locations; move or disable it before opening a
 new Codex task.
+
+Only `route-z80` participates in implicit Z80-domain selection. The five
+specialists remain available through explicit `$develop-z80`, `$audit-z80`,
+`$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
+`route-z80` loads only the selected sibling. This keeps routine repository work
+on plain `workflow` and avoids injecting every specialist description.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.
@@ -359,6 +375,13 @@ will be.
 ```text
 Use workflow in auto mode to implement this change with the smallest sufficient
 execution level and preserve the repository's existing contracts.
+```
+
+### Z80 domain routing
+
+```text
+Use route-z80 to choose the single relevant specialist for this Z80 repository
+request, or use plain workflow if no specialist evidence contract is needed.
 ```
 
 ### Specification-driven development
@@ -469,14 +492,25 @@ README.md
 README.es.md
 .codex-plugin/
   plugin.json
+evals/
+  baseline.json
+  routing.jsonl
+  evidence.jsonl
+  fixtures/
+  schemas/
 scripts/
   install_personal_marketplace.py
+  run_behavior_evals.py
   run_in_worktree.py
+  test_behavior_evals.py
 skills/
   workflow/
     SKILL.md
     agents/openai.yaml
     references/
+  route-z80/
+    SKILL.md
+    agents/openai.yaml
   develop-z80/
     SKILL.md
     agents/openai.yaml
@@ -518,10 +552,32 @@ python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
 python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
+python3 scripts/test_behavior_evals.py
 ```
 
 The plugin manifest and the front matter of each skill should also be validated
 before publishing a new version.
+
+Behavior evals are intentionally separate from unit tests. Validate their
+datasets without using a model:
+
+```sh
+python3 scripts/run_behavior_evals.py --dry-run
+```
+
+After installing the same plugin version shown in `.codex-plugin/plugin.json`,
+run the labelled routing and evidence suites in fresh, read-only Codex sessions:
+
+```sh
+python3 scripts/run_behavior_evals.py --suite evals/routing.jsonl
+python3 scripts/run_behavior_evals.py --suite evals/evidence.jsonl
+```
+
+The runner refuses a stale installed plugin version unless explicitly
+overridden, records per-route precision and recall, and writes ignored JSON
+results under `evals/results/`. `evals/baseline.json` keeps the small,
+non-sensitive verified summary and distinguishes full runs from targeted
+repair replays.
 
 ## License
 

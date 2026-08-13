@@ -2,3 +2,5 @@ interface:
   display_name: "Organize Z80"
   short_description: "Sustainable Z80 code and memory organization"
   default_prompt: "Use $organize-z80 to map this Z80 project's ownership and identify the smallest safe organizational next step."
+policy:
+  allow_implicit_invocation: false

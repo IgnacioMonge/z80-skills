@@ -1,0 +1,5 @@
+; fixture artifact
+; source_revision=old-before-copy-loop-change
+; artifact_revision=build-001
+CODE  32768  96
+DATA  32864  8

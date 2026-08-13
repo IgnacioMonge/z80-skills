@@ -1,0 +1,37 @@
+{
+  "current_manifest_version": "0.6.1+codex.20260813121500",
+  "evaluated_at": "2026-08-13T10:23:51Z",
+  "model": "runtime-default",
+  "execution": "fresh ephemeral read-only Codex session per case",
+  "routing": {
+    "full_run": {
+      "plugin_version": "0.6.1+codex.20260813120335",
+      "cases": 22,
+      "passed": 21,
+      "failed_case_ids": ["ambiguous-unspecified"],
+      "accuracy": 0.9545454545,
+      "workflow_precision": 1.0,
+      "workflow_recall": 1.0
+    },
+    "targeted_repair_run": {
+      "plugin_version": "0.6.1+codex.20260813121500",
+      "case_ids": ["ambiguous-unspecified"],
+      "passed": 1,
+      "failed": 0
+    },
+    "claim": "The observed regression passed after the router boundary fix; a complete 22-case replay on the repaired version was not run."
+  },
+  "evidence": {
+    "plugin_version": "0.6.1+codex.20260813121500",
+    "cases": 3,
+    "passed_after_grader_correction": 3,
+    "failed": 0,
+    "regrade_method": "The same recorded model outputs were compared with the corrected schema that separates source observations from proposed improvement claims.",
+    "gates_observed": {
+      "stale_or_missing_artifacts_not_promoted": true,
+      "exact_unmeasured_metrics_not_promoted": true,
+      "primary_tree_not_edited": true,
+      "experiment_limit_respected": true
+    }
+  }
+}

@@ -2,3 +2,5 @@ interface:
   display_name: "Shrink Z80"
   short_description: "Adaptive, measured Z80 binary-size reduction"
   default_prompt: "Use $shrink-z80 to find the largest safe net size reductions in this Z80 project and prove them against current bytes."
+policy:
+  allow_implicit_invocation: false

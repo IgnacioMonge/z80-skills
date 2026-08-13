@@ -1,0 +1,5 @@
+; fixture artifact
+; source_revision=before-title-c-was-added
+; artifact_revision=build-019
+CODE  32768  4096
+DATA  36864  64

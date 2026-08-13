@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["route", "rationale"],
+  "properties": {
+    "route": {
+      "type": "string",
+      "enum": [
+        "route-z80",
+        "workflow",
+        "develop-z80",
+        "audit-z80",
+        "organize-z80",
+        "shrink-z80",
+        "optimize-z80"
+      ]
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 240
+    }
+  }
+}

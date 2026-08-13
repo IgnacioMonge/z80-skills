@@ -1,6 +1,6 @@
 ---
 name: develop-z80
-description: Specification-driven product and engineering workflow for turning a Z80, ZX Spectrum, or ZX Spectrum Next idea into a verified implementation. Use when exploring or defining a game, demo, tool, feature, or port; choosing classic ZX versus Next targets; writing functional and technical specifications; planning milestones and architecture; breaking work into dependency-aware tasks; implementing an authorized milestone or task; tracking multi-session progress; or validating the finished result against explicit product and technical acceptance criteria.
+description: Specification-driven lifecycle for starting or resuming a complete Z80, ZX Spectrum, or ZX Spectrum Next product initiative—application, game, demo, tool, or port—from an explicit idea through accepted specification, milestones, implementation, and verification. Use when the user explicitly invokes develop-z80, asks to design or build a complete product or deliberate vertical slice, requests an SDD dossier or milestone plan, or resumes an existing develop-z80 dossier or task. Do not use for routine bug fixes, isolated repository features, refactors, reviews, maintenance, build/test/documentation fixes, or internal architecture proposals; use workflow or the relevant specialist unless the user explicitly places the work under an active product dossier.
 ---
 
 # Develop Z80
@@ -8,6 +8,20 @@ description: Specification-driven product and engineering workflow for turning a
 Lead the user from idea to verified code without requiring SDD knowledge or
 workflow commands. Keep one source of truth and stop scope growth at playable or
 otherwise inspectable product checkpoints.
+
+## Activation Boundary
+
+Enter this lifecycle only for an explicit product initiative or an existing
+develop dossier. Repository language, a Z80 target, or generic verbs such as
+plan, design, implement, feature, and verify are not sufficient activation.
+Route ordinary maintenance and bounded repository changes through `$workflow`;
+use `audit-z80`, `organize-z80`, `shrink-z80`, or `optimize-z80` only when their
+specialist question is the requested result.
+
+Once explicitly activated for a product, keep this skill as the product
+contract across its dossier and milestones. Execute its individual engineering
+steps through `$workflow` without treating each fix or proposal as a fresh
+develop-z80 activation.
 
 ## Workflow Core
 
@@ -56,8 +70,8 @@ otherwise label the assumption and continue.
 Classify after the initial concept and project inspection, then pass the signal
 to `$workflow` when project route policy permits automatic selection:
 
-- **Focused**: one bounded feature or task, one target, and one milestone. Light
-  normally suffices.
+- **Focused**: one bounded task or milestone already governed by the active
+  product dossier, with one target. Light normally suffices.
 - **Standard**: one vertical slice crossing several components or one material
   platform unknown. Medium can own one cohesive stream.
 - **Deep**: a greenfield product spanning several domains or milestones,

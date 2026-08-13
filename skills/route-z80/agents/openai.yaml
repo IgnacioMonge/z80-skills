@@ -1,0 +1,6 @@
+interface:
+  display_name: "Route Z80"
+  short_description: "Choose the right Z80 specialist"
+  default_prompt: "Use $route-z80 to choose the one relevant Z80 specialist or plain $workflow for this task."
+policy:
+  allow_implicit_invocation: true

@@ -8,13 +8,15 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / "skills" / "workflow"
 DEVELOP = ROOT / "skills" / "develop-z80"
-Z80_SKILLS = (
+ROUTER = ROOT / "skills" / "route-z80"
+Z80_DOMAIN_SKILLS = (
     "develop-z80",
     "audit-z80",
     "organize-z80",
     "shrink-z80",
     "optimize-z80",
 )
+Z80_SKILLS = ("route-z80", *Z80_DOMAIN_SKILLS)
 ALL_SKILLS = (*Z80_SKILLS, "workflow")
 ANALYSIS_SKILLS = ("audit-z80", "shrink-z80", "optimize-z80")
 LANE_FILES = (
@@ -84,7 +86,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("Raise effort to `high` or `max`", roles)
 
     def test_z80_skills_delegate_without_widening_permissions(self) -> None:
-        for name in Z80_SKILLS:
+        for name in Z80_DOMAIN_SKILLS:
             skill = ROOT / "skills" / name / "SKILL.md"
             text = skill.read_text(encoding="utf-8")
             self.assertIn("../workflow/SKILL.md", text)
@@ -209,15 +211,56 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertLessEqual(len(interface["defaultPrompt"]), 3)
         for prompt in interface["defaultPrompt"]:
             self.assertLessEqual(len(prompt), 128)
-        for name in Z80_SKILLS:
-            self.assertTrue(
-                any(name in prompt for prompt in interface["defaultPrompt"]), name
+            self.assertRegex(prompt, r"^Use \$[a-z0-9-]+ ")
+        self.assertTrue(any(
+            "$route-z80" in prompt for prompt in interface["defaultPrompt"]
+        ))
+        self.assertFalse(any(
+            sum(f"${name}" in prompt for name in Z80_DOMAIN_SKILLS) > 1
+            for prompt in interface["defaultPrompt"]
+        ))
+
+    def test_only_router_is_implicitly_invoked_for_z80_domains(self) -> None:
+        for name in Z80_DOMAIN_SKILLS:
+            metadata = (
+                ROOT / "skills" / name / "agents" / "openai.yaml"
+            ).read_text(encoding="utf-8")
+            self.assertRegex(
+                metadata,
+                r"(?m)^policy:\n  allow_implicit_invocation: false$",
+                name,
             )
+
+        router_metadata = (
+            ROUTER / "agents" / "openai.yaml"
+        ).read_text(encoding="utf-8")
+        self.assertRegex(
+            router_metadata,
+            r"(?m)^policy:\n  allow_implicit_invocation: true$",
+        )
 
     def test_project_routes_and_auto_preflight_take_precedence(self) -> None:
         text = " ".join((WORKFLOW / "SKILL.md").read_text(encoding="utf-8").split())
         self.assertIn("project instructions define route names", text)
         self.assertIn("run the required domain preflight directly at Light", text)
+
+    def test_z80_domain_router_is_thin_and_develop_is_opt_in(self) -> None:
+        router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
+        develop = (DEVELOP / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = re.match(r"\A---\n(.*?)\n---\n", develop, re.DOTALL)
+        self.assertIsNotNone(frontmatter)
+        description = frontmatter.group(1)
+
+        for name in (*Z80_DOMAIN_SKILLS, "workflow"):
+            self.assertIn(f"../{name}/SKILL.md", router)
+        self.assertIn("Select one primary route", router)
+        self.assertIn("load every sibling `SKILL.md`", router)
+        self.assertIn("ordinary bounded fix", router)
+        self.assertIn("remain in `route-z80`", router)
+        self.assertIn("appear together as alternatives", router)
+        self.assertIn("not sufficient activation", develop)
+        self.assertIn("Do not use for routine bug fixes", description)
+        self.assertNotIn("game, demo, tool, feature, or port", description)
 
     def test_domain_lane_files_do_not_duplicate_the_router(self) -> None:
         for relative in LANE_FILES:
