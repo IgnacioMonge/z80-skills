@@ -39,6 +39,7 @@ correctness, organize handles structure, shrink handles size, optimize handles
 competing metrics, and workflow handles generic execution control. Domain
 evidence and safety gates remain in the specialized skills.
 
-Project workflow instructions live in `AGENTS.md`; durable context is under
-`agent_docs/`, including the heavy-route procedure in
-`agent_docs/workflows/heavy_route.md`.
+Repository instructions live in `AGENTS.md`; durable project context is kept
+under `agent_docs/`. The canonical adaptive workflow lives under
+`skills/workflow/` and is loaded only when invoked or composed by another
+skill.
