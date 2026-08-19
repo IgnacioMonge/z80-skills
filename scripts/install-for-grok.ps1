@@ -9,10 +9,10 @@
     1. Copies the seven Grok-compatible skills into ~/.grok/skills (repo = canonical on name conflict)
     2. Copies run_in_worktree.py into each skill that needs disposable worktrees
     3. Rewrites ../../scripts/run_in_worktree.py paths for the flat Grok layout
-    4. Applies the Grok workflow overlay (spawn_subagent, lean-ctx, Windows python)
+    4. Derives Grok workflow adaptations from the canonical workflow sources
     5. Patches domain SKILL.md Runtime Portability notes for Grok Build
 
-  Does NOT modify ./skills sources. Overlay lives in scripts/grok-overlay/.
+  Does NOT modify ./skills sources.
 
 .PARAMETER Dest
   Destination skills root. Default: $HOME/.grok/skills
@@ -41,7 +41,6 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $SkillsSrc = Join-Path $RepoRoot "skills"
-$OverlayRoot = Join-Path $PSScriptRoot "grok-overlay"
 $SharedScript = Join-Path $RepoRoot "scripts\run_in_worktree.py"
 
 $SkillNames = @(
@@ -128,25 +127,117 @@ function Patch-WorktreePaths([string]$DestRoot) {
     }
 }
 
-function Apply-WorkflowOverlay([string]$DestRoot) {
-    $overlay = Join-Path $OverlayRoot "workflow"
-    Assert-Path (Join-Path $overlay "SKILL.md") "Grok workflow overlay"
-    $dst = Join-Path $DestRoot "workflow"
-    Copy-Item -LiteralPath (Join-Path $overlay "SKILL.md") -Destination (Join-Path $dst "SKILL.md") -Force
-    $refSrc = Join-Path $overlay "references"
-    $refDst = Join-Path $dst "references"
-    New-Item -ItemType Directory -Path $refDst -Force | Out-Null
-    foreach ($name in @("roles.md", "medium.md", "heavy.md")) {
-        $from = Join-Path $refSrc $name
-        Assert-Path $from "overlay $name"
-        Copy-Item -LiteralPath $from -Destination (Join-Path $refDst $name) -Force
-    }
-    Write-Host "    workflow overlay applied"
-}
-
 function Set-TextFile([string]$Path, [string]$Text) {
     $utf8NoBom = New-Object System.Text.UTF8Encoding $false
     [System.IO.File]::WriteAllText($Path, $Text, $utf8NoBom)
+}
+
+function Patch-WorkflowForGrok([string]$DestRoot) {
+    $workflow = Join-Path $DestRoot "workflow"
+    $skillPath = Join-Path $workflow "SKILL.md"
+    $rolesPath = Join-Path $workflow "references\roles.md"
+    $heavyPath = Join-Path $workflow "references\heavy.md"
+    foreach ($path in @($skillPath, $rolesPath, $heavyPath)) {
+        Assert-Path $path "canonical workflow input"
+    }
+
+    $skill = [System.IO.File]::ReadAllText($skillPath)
+    $nl = if ($skill.Contains("`r`n")) { "`r`n" } else { "`n" }
+    if ($skill -notmatch '(?m)^## Host runtime \(Grok Build\)$') {
+        $hostSection = @(
+            '## Host runtime (Grok Build)',
+            '',
+            '- Spawn workers with `spawn_subagent`; use the mappings in `references/roles.md`.',
+            '- Prefer lean-ctx tools for read, search, and shell work when available.',
+            '- On Windows, invoke `python` or the interpreter named by the user; do not',
+            '  hardcode `python3` paths.',
+            '- Domain Z80 skills and `workflow` live as siblings under `~/.grok/skills/`.'
+        ) -join $nl
+        $skill = $skill.Replace('## Select effort', "$hostSection$nl$nl## Select effort")
+    }
+    $portableTypes = @(
+        'Use only documented built-in `worker`, `explorer`, or `default` types.',
+        'Task names identify workflow roles; they are not external custom-agent profiles.'
+    ) -join $nl
+    $grokTypes = @(
+        'Use only the Grok host mappings documented in `references/roles.md`.',
+        'Task labels identify workflow roles; they are not external custom-agent profiles.'
+    ) -join $nl
+    $skill = $skill.Replace($portableTypes, $grokTypes)
+    Set-TextFile -Path $skillPath -Text $skill
+
+    $roles = [System.IO.File]::ReadAllText($rolesPath)
+    $nl = if ($roles.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $rolesPrefix = @(
+        '# Portable Agent Roles (Grok Build)',
+        '',
+        'Use Grok''s `spawn_subagent` tool. Role behavior comes from the',
+        'self-contained task capsule, not from custom profiles.',
+        '',
+        '| Workflow role | Task label | `subagent_type` | `capability_mode` | Isolation |',
+        '| --- | --- | --- | --- | --- |',
+        '| Investigator | `explorer` | `explore` | `read-only` | `none` |',
+        '| Implementer | `executor` | `general-purpose` | `read-write` or `all` | boundary-dependent |',
+        '| Verifier | `verifier` | `general-purpose` | `read-only` or `execute` | `none` |',
+        '| Exceptional implementer | `sol_executor` | `general-purpose` | `all` | boundary-dependent |',
+        '',
+        '## Spawn rules (Grok)',
+        '',
+        '- Call `spawn_subagent` with a fresh, self-contained task capsule.',
+        '- Put the workflow role in `description`; prefer `background: true` and collect',
+        '  results with `get_command_or_subagent_output`.',
+        '- Do not pass `model` unless the user explicitly requested one.',
+        '- Map Codex `explorer` to `explore`, and `worker` or `default` to',
+        '  `general-purpose`. A fresh spawn replaces `fork_turns="none"`.',
+        '- For disposable-worktree-only mutation, require `isolation="worktree"` or',
+        '  another verified disposable worktree.'
+    ) -join $nl
+    $roles = [regex]::Replace(
+        $roles,
+        '(?s)\A# Portable Agent Roles.*?\r?\n## Capsule contracts',
+        "$rolesPrefix$nl$nl## Capsule contracts",
+        1
+    )
+    Set-TextFile -Path $rolesPath -Text $roles
+
+    $heavy = [System.IO.File]::ReadAllText($heavyPath)
+    $nl = if ($heavy.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $oldReadOnly = @(
+        '- **primary-tree read-only:** use only `explorer` or read-only `default` roles;',
+        '  do not spawn `executor` or `sol_executor` for that surface.'
+    ) -join $nl
+    $newReadOnly = @(
+        '- **primary-tree read-only:** use only `explore` or read-only `general-purpose` roles;',
+        '  do not spawn `executor` or `sol_executor` for that surface.'
+    ) -join $nl
+    $heavy = $heavy.Replace($oldReadOnly, $newReadOnly)
+    $oldRoles = @(
+        '- `explorer`: built-in `explorer`, read-only investigation.',
+        '- `executor`: built-in `worker`, default implementation.',
+        '- `verifier`: built-in `default`, independent verification and failure analysis.',
+        '- `sol_executor`: built-in `worker`, exceptional implementation only when the',
+        '  normal implementer cannot reasonably own the package; at most one.'
+    ) -join $nl
+    $newRoles = @(
+        '- `explorer`: `explore`, read-only investigation.',
+        '- `executor`: write-capable `general-purpose`, default implementation.',
+        '- `verifier`: read-only or execute-only `general-purpose`, independent verification.',
+        '- `sol_executor`: full-capability `general-purpose`, exceptional implementation only',
+        '  when the normal implementer cannot reasonably own the package; at most one.'
+    ) -join $nl
+    $heavy = $heavy.Replace($oldRoles, $newRoles)
+    $oldSpawn = @(
+        '3. Spawn each worker with `fork_turns="none"` and a self-contained capsule of',
+        '   at most 400 words.'
+    ) -join $nl
+    $newSpawn = @(
+        '3. Spawn each worker through `spawn_subagent` with a fresh, self-contained',
+        '   capsule of at most 400 words.'
+    ) -join $nl
+    $heavy = $heavy.Replace($oldSpawn, $newSpawn)
+    Set-TextFile -Path $heavyPath -Text $heavy
+
+    Write-Host "    workflow adapted from canonical sources"
 }
 
 function Patch-SkillMarkdown([string]$SkillMd) {
@@ -275,9 +366,7 @@ Write-Host "    repo: $RepoRoot"
 Write-Host "    dest: $Dest"
 
 Assert-Path $SkillsSrc "skills/"
-Assert-Path $OverlayRoot "scripts/grok-overlay/"
 Assert-Path $SharedScript "scripts/run_in_worktree.py"
-Assert-Path (Join-Path $OverlayRoot "workflow\SKILL.md") "grok-overlay/workflow/SKILL.md"
 
 New-Item -ItemType Directory -Path $Dest -Force | Out-Null
 
@@ -302,8 +391,8 @@ Copy-RunInWorktree -DestRoot $Dest
 Write-Step "Rewriting worktree script paths for flat Grok layout"
 Patch-WorktreePaths -DestRoot $Dest
 
-Write-Step "Applying Grok workflow overlay"
-Apply-WorkflowOverlay -DestRoot $Dest
+Write-Step "Adapting canonical workflow for Grok"
+Patch-WorkflowForGrok -DestRoot $Dest
 
 Write-Step "Patching domain Runtime Portability for Grok"
 Patch-DomainPortability -DestRoot $Dest
@@ -322,7 +411,17 @@ foreach ($name in $SkillNames) {
 }
 $wf = Join-Path $Dest "workflow\SKILL.md"
 if (-not (Select-String -Path $wf -Pattern 'Host runtime \(Grok Build\)' -Quiet)) {
-    throw "Workflow overlay missing Grok host section — install incomplete"
+    throw "Workflow adaptation missing Grok host section — install incomplete"
+}
+$workflowChecks = @(
+    @{ Path = $wf; Pattern = 'Do not duplicate delegated discovery' },
+    @{ Path = (Join-Path $Dest "workflow\references\heavy.md"); Pattern = '## Direct repair loop' },
+    @{ Path = (Join-Path $Dest "workflow\references\roles.md"); Pattern = 'within 250 words' }
+)
+foreach ($check in $workflowChecks) {
+    if (-not (Select-String -LiteralPath $check.Path -Pattern $check.Pattern -SimpleMatch -Quiet)) {
+        throw "Canonical workflow contract missing after Grok adaptation: $($check.Pattern)"
+    }
 }
 $wt = Join-Path $Dest "optimize-z80\scripts\run_in_worktree.py"
 Assert-Path $wt "optimize-z80/scripts/run_in_worktree.py"

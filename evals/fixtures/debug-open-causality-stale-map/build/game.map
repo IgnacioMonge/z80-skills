@@ -1,0 +1,5 @@
+; fixture artifact -- stale by construction
+; source_revision=before-renderer-timing-change
+; artifact_revision=build-017
+BLITTER  32768  144
+SPRITES  32912  256

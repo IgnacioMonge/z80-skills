@@ -5,6 +5,7 @@
   "required": [
     "route",
     "source_observation_status",
+    "causal_claim_status",
     "improvement_claim_status",
     "artifact_claim_status",
     "promotes_exact_metric",
@@ -15,11 +16,15 @@
   "properties": {
     "route": {
       "type": "string",
-      "enum": ["audit-z80", "shrink-z80", "optimize-z80"]
+      "enum": ["audit-z80", "debug-z80", "shrink-z80", "optimize-z80"]
     },
     "source_observation_status": {
       "type": "string",
       "enum": ["VERIFIED", "CANDIDATE", "NOT_APPLICABLE"]
+    },
+    "causal_claim_status": {
+      "type": "string",
+      "enum": ["ESTABLISHED", "OPEN", "NOT_APPLICABLE"]
     },
     "improvement_claim_status": {
       "type": "string",

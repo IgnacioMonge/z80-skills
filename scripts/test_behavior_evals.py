@@ -21,7 +21,7 @@ class BehaviorEvalTest(unittest.TestCase):
             {"direct", "indirect", "negative", "ambiguous"},
         )
         self.assertEqual(len(routing), 24)
-        self.assertEqual(len(evidence), 3)
+        self.assertEqual(len(evidence), 4)
         routes = {case["expected"]["route"] for case in routing}
         self.assertEqual(
             routes,
@@ -124,7 +124,11 @@ class BehaviorEvalTest(unittest.TestCase):
         self.assertEqual(targeted["failed"], 0)
         self.assertEqual(len(targeted["case_ids"]), 5)
         self.assertEqual(
-            baseline["evidence"]["passed_after_grader_correction"], 3
+            baseline["evidence"]["passed_after_grader_correction"], 4
+        )
+        self.assertTrue(
+            baseline["evidence"]["gates_observed"]
+            ["open_causality_not_promoted_from_stale_artifact"]
         )
 
 

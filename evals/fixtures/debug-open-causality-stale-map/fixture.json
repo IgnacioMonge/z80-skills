@@ -1,0 +1,7 @@
+{
+  "current_source_revision": "sprite-repro-current",
+  "artifact_source_revision": "before-renderer-timing-change",
+  "artifact_freshness": "stale",
+  "failure_status": "reproduced",
+  "causal_status": "open"
+}

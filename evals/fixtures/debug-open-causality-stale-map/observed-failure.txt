@@ -1,0 +1,9 @@
+Observed on ZX Spectrum Next emulator and hardware:
+
+- Reproduction: scroll right while the masked sprite crosses an 8-pixel boundary.
+- Result: one intermittent corrupted scanline; no crash.
+- Current source revision: sprite-repro-current.
+- Causal ownership: open. The blitter, interrupt timing, and buffer placement
+  remain viable hypotheses.
+- The available map predates the renderer timing change and cannot establish
+  current buffer placement or promote overlap to the root cause.

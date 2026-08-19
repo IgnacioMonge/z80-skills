@@ -1,7 +1,7 @@
 {
-  "current_manifest_version": "0.6.1+codex.20260819154645",
-  "evaluated_at": "2026-08-13T10:23:51Z",
-  "model": "runtime-default",
+  "current_manifest_version": "0.6.1+codex.20260819161808",
+  "evaluated_at": "2026-08-19T16:16:33Z",
+  "model": "mixed; see suite records",
   "execution": "fresh ephemeral read-only Codex session per case",
   "routing": {
     "full_run": {
@@ -41,18 +41,22 @@
       "model": "gpt-5.6-sol",
       "passed": 24,
       "failed": 0,
-      "accuracy": 1.0
+      "accuracy": 1.0,
+      "post_run_delta": "Only evidence fixtures/schema, Grok installer derivation, tests, eval metadata, and the cachebuster changed after this suite; routing skill inputs are unchanged."
     },
     "claim": "The current 24-case routing suite passed on gpt-5.6-sol, including three debug-z80 positives and seven workflow boundaries."
   },
   "evidence": {
-    "plugin_version": "0.6.1+codex.20260813121500",
-    "cases": 3,
-    "passed_after_grader_correction": 3,
+    "plugin_version": "0.6.1+codex.20260819154645",
+    "evaluated_at": "2026-08-19T16:16:33Z",
+    "model": "runtime-default",
+    "cases": 4,
+    "passed_after_grader_correction": 4,
     "failed": 0,
-    "regrade_method": "The same recorded model outputs were compared with the corrected schema that separates source observations from proposed improvement claims.",
+    "regrade_method": "All four recorded outputs were schema-valid and regraded after removing a non-debug causal-status expectation. The debug case still requires causal_claim_status OPEN.",
     "gates_observed": {
       "stale_or_missing_artifacts_not_promoted": true,
+      "open_causality_not_promoted_from_stale_artifact": true,
       "exact_unmeasured_metrics_not_promoted": true,
       "primary_tree_not_edited": true,
       "experiment_limit_respected": true
