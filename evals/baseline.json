@@ -1,6 +1,6 @@
 {
-  "current_manifest_version": "0.6.1+codex.20260819161808",
-  "evaluated_at": "2026-08-19T16:16:33Z",
+  "current_manifest_version": "0.6.1+codex.20260819164121",
+  "evaluated_at": "2026-08-19T16:42:34Z",
   "model": "mixed; see suite records",
   "execution": "fresh ephemeral read-only Codex session per case",
   "routing": {
@@ -42,7 +42,7 @@
       "passed": 24,
       "failed": 0,
       "accuracy": 1.0,
-      "post_run_delta": "Only evidence fixtures/schema, Grok installer derivation, tests, eval metadata, and the cachebuster changed after this suite; routing skill inputs are unchanged."
+      "post_run_delta": "After this suite, debug causal detail moved behind a progressive reference without changing its frontmatter or router gate; workflow metadata, analyzer internals, installers, tests, docs, eval metadata, and cachebusters also changed. Route-selection descriptions and router decision rules are unchanged."
     },
     "claim": "The current 24-case routing suite passed on gpt-5.6-sol, including three debug-z80 positives and seven workflow boundaries."
   },
@@ -54,6 +54,14 @@
     "passed_after_grader_correction": 4,
     "failed": 0,
     "regrade_method": "All four recorded outputs were schema-valid and regraded after removing a non-debug causal-status expectation. The debug case still requires causal_claim_status OPEN.",
+    "targeted_current_debug_run": {
+      "plugin_version": "0.6.1+codex.20260819164121",
+      "evaluated_at": "2026-08-19T16:42:34Z",
+      "model": "runtime-default",
+      "case_ids": ["debug-open-causality-stale-map"],
+      "passed": 1,
+      "failed": 0
+    },
     "gates_observed": {
       "stale_or_missing_artifacts_not_promoted": true,
       "open_causality_not_promoted_from_stale_artifact": true,

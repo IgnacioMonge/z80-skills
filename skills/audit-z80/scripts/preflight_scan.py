@@ -1,44 +1,23 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
-TEXT_EXTS = {
-    ".asm",
-    ".c",
-    ".h",
-    ".i",
-    ".inc",
-    ".lst",
-    ".map",
-    ".mk",
-    ".opt",
-    ".ps1",
-    ".rul",
-    ".s",
-    ".sym",
-    ".sh",
-    ".txt",
-    ".bat",
-    ".cmd",
-    ".cfg",
-    ".json",
-    ".toml",
-    ".yaml",
-    ".yml",
-    ".def",
-    ".z80",
-    ".a80",
-    ".mac",
-    ".bas",
-}
-TOP_LEVEL_FILES = {"Makefile", "makefile", "build.sh", "build.ps1", "CMakeLists.txt"}
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import (  # noqa: E402
+    EXCLUDE_DIRS,
+    TEXT_EXTS,
+    collect_pattern_hits,
+    rel_path,
+    resolve_scope,
+)
+
 PREFERRED_DIRS = ("src", "asm", "include", "overlay")
 ARTIFACT_DIRS = ("build", "out", "obj", "gen", "generated", "dist")
-SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
-MAX_BYTES = 2_000_000
 
 PATTERNS = {
     "toolchain": [
@@ -128,68 +107,25 @@ def recognized_dirs(root: Path) -> list[Path]:
     return [root / name for name in (*PREFERRED_DIRS, *ARTIFACT_DIRS) if (root / name).exists()]
 
 
-def skip_path(path: Path, root: Path) -> bool:
-    try:
-        parts = path.relative_to(root).parts
-    except ValueError:
-        parts = path.parts
-    return any(part in SKIP_DIRS for part in parts)
-
-
-def text_files(root: Path):
-    if root.is_file():
-        if root.suffix.lower() in TEXT_EXTS and root.stat().st_size <= MAX_BYTES:
-            yield root
-        return
-    for path in root.rglob("*"):
-        if skip_path(path, root) or not path.is_file():
-            continue
-        if path.name in TOP_LEVEL_FILES or path.suffix.lower() in TEXT_EXTS:
-            if path.stat().st_size <= MAX_BYTES:
-                yield path
-
-
-def find_artifacts(root: Path, suffix: str) -> list[Path]:
-    return sorted(p for p in root.rglob(f"*{suffix}") if not skip_path(p, root))
-
-
-def collect_hits(root: Path, patterns: list[str], limit: int = 8) -> list[str]:
-    hits: list[str] = []
-    compiled = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
-    for path in text_files(root):
-        try:
-            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except OSError:
-            continue
-        for lineno, line in enumerate(lines, start=1):
-            if len(line) > 300:
-                continue
-            if any(regex.search(line) for regex in compiled):
-                rel = path.relative_to(root)
-                hits.append(f"{rel}:{lineno}: {line.strip()}")
-                if len(hits) >= limit:
-                    return hits
-    return hits
-
-
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-    files = list(text_files(root))
-    recognized = recognized_dirs(root)
+    scope = resolve_scope(root, TEXT_EXTS)
+    files = scope.files
+    recognized = recognized_dirs(root) if root.is_dir() else []
     print(f"root: {root}")
     print("dirs_scanned: .")
-    print("recognized_dirs: " + (", ".join(str(p.relative_to(root)) for p in recognized) if recognized else "none"))
-    print("dirs_skipped: " + ", ".join(sorted(SKIP_DIRS)))
+    print("recognized_dirs: " + (", ".join(rel_path(p, scope.base) for p in recognized) if recognized else "none"))
+    print("dirs_skipped: " + ", ".join(sorted(EXCLUDE_DIRS)))
     print(f"text_files_scanned: {len(files)}")
     for suffix in (".map", ".lst", ".sym", ".opt", ".rul"):
-        matches = find_artifacts(root, suffix)
+        matches = sorted(path for path in files if path.suffix.lower() == suffix)
         print(f"{suffix} files: {len(matches)}")
         for path in matches[:5]:
-            print(f"  - {path.relative_to(root)}")
+            print(f"  - {rel_path(path, scope.base)}")
 
     for section, patterns in PATTERNS.items():
         print(f"\n[{section}]")
-        hits = collect_hits(root, patterns)
+        hits = collect_pattern_hits(files, scope.base, patterns, limit=8)
         if not hits:
             print("  none")
             continue

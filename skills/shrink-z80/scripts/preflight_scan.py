@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
-from scan_common import BINARY_ARTIFACT_EXTS, BUILD_EXTS, TEXT_EXTS, read_text_lines, rel_path, resolve_scope, print_scope
+from scan_common import (
+    BINARY_ARTIFACT_EXTS,
+    BUILD_EXTS,
+    TEXT_EXTS,
+    collect_pattern_hits,
+    print_scope,
+    rel_path,
+    resolve_scope,
+)
 
 PATTERNS = {
     "build_flags": [
@@ -22,25 +29,6 @@ PATTERNS = {
     ],
 }
 ARTIFACT_EXTS = {".map", ".lst", ".lis", ".sym", ".opt", ".rul", ".rel", ".ihx", ".lk", ".noi", ".mem"}
-
-
-def collect_hits(scope, patterns: list[str], limit: int = 20) -> list[str]:
-    hits: list[str] = []
-    compiled = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
-    for path in scope.files:
-        if path.suffix.lower() in BINARY_ARTIFACT_EXTS:
-            continue
-        lines, skipped = read_text_lines(path)
-        if skipped:
-            continue
-        for lineno, line in enumerate(lines, start=1):
-            if len(line) > 300:
-                continue
-            if any(regex.search(line) for regex in compiled):
-                hits.append(f"{rel_path(path, scope.base)}:{lineno}: {line.strip()}")
-                if len(hits) >= limit:
-                    return hits
-    return hits
 
 
 def main() -> int:
@@ -73,7 +61,13 @@ def main() -> int:
 
     for section, patterns in PATTERNS.items():
         print(f"\n[{section}]")
-        hits = collect_hits(scope, patterns)
+        hits = collect_pattern_hits(
+            scope.files,
+            scope.base,
+            patterns,
+            limit=20,
+            excluded_exts=BINARY_ARTIFACT_EXTS,
+        )
         if not hits:
             print("  none")
             continue

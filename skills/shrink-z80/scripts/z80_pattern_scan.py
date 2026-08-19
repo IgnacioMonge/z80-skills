@@ -4,23 +4,14 @@ from __future__ import annotations
 import re
 import sys
 from collections import Counter, defaultdict
-from dataclasses import dataclass
 from pathlib import Path
 
 from scan_common import (
-    ASM_EXTS, C_EXTS, LISTING_EXTS, TEXT_EXTS, call_targets, is_unconditional_exit, unconditional_call_targets,
-    parse_byte_payload, rel_path, resolve_target_scope, source_kind, split_label, print_scope,
+    ASM_EXTS, C_EXTS, Hit, LISTING_EXTS, TEXT_EXTS, add_hit, call_targets,
+    is_unconditional_exit, parse_byte_payload, print_pattern_hits, print_scope,
+    rel_path, resolve_target_scope, source_kind, split_label, strip_line_comment,
+    unconditional_call_targets,
 )
-
-
-
-@dataclass
-class Hit:
-    path: Path
-    line_no: int
-    text: str
-    note: str
-
 
 PATTERNS: dict[str, tuple[str, str]] = {
     "block-repeat-op": (
@@ -184,21 +175,9 @@ CASE_RE = re.compile(r"\bcase\b")
 DB_LONG_RE = re.compile(r"\b(d[bef][bms]?|db|defb)\b\s+(.+)", re.IGNORECASE)
 
 
-def strip_comment(line: str) -> str:
-    out = line.split(";", 1)[0]
-    out = out.split("//", 1)[0]
-    return out.rstrip()
-
-
 def rel(path: Path, root: Path) -> str:
     base = root.parent if root.is_file() else root
     return rel_path(path, base)
-
-def add_hit(
-    hits: dict[str, list[Hit]], key: str, path: Path, line_no: int, text: str, note: str
-) -> None:
-    hits[key].append(Hit(path, line_no, text.strip(), note))
-
 
 def normalise_asm(line: str) -> str | None:
     stripped = " ".join(line.lower().replace("\t", " ").split())
@@ -468,7 +447,7 @@ def scan_file(
         (name, re.compile(pattern, re.IGNORECASE), threshold)
         for name, (pattern, _note, threshold) in LOW_SIGNAL_PATTERNS.items()
     ]
-    clean = [strip_comment(line) for line in lines]
+    clean = [strip_line_comment(line) for line in lines]
     joined = "\n".join(clean)
     suffix = path.suffix.lower()
     is_asm = suffix in ASM_EXTS
@@ -563,17 +542,6 @@ def scan_file(
         scan_asm_data(path, lines, clean, hits)
     if is_c:
         scan_c_structure(path, lines, clean, hits)
-
-
-def print_hits(root: Path, hits: dict[str, list[Hit]]) -> None:
-    for key in sorted(hits):
-        items = hits[key]
-        print(f"\n[{key}] count={len(items)}")
-        for hit in items[:24]:
-            print(f"  [{source_kind(hit.path, root.parent if root.is_file() else root)}] {rel(hit.path, root)}:{hit.line_no}: {hit.text}")
-        print(f"  note: {items[0].note}")
-        if len(items) > 24:
-            print(f"  ... {len(items) - 24} more")
 
 
 def print_low_signal_aggregate(root: Path, low_signal: dict[Path, Counter[str]]) -> None:
@@ -693,7 +661,7 @@ def main() -> int:
             ">=2 decompressor families in scope — delete-all-but-one candidate (H26); single family is decoder-present only",
         )
 
-    print_hits(root, hits)
+    print_pattern_hits(root, hits, include_source_kind=True)
     print_low_signal_aggregate(root, low_signal)
     print_repeated_sequences(root, repeated_sequences)
     print_repeated_tails(root, repeated_tails)

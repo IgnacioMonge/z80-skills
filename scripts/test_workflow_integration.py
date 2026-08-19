@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import ast
 import json
 from pathlib import Path
 import re
@@ -289,6 +290,80 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("The causal owner is genuinely unknown", debug)
         self.assertIn("hand the known-cause fix to `$workflow`", debug)
         self.assertIn("Do not use for root-cause diagnosis", audit)
+
+    def test_debug_uses_progressive_causal_reference(self) -> None:
+        debug_path = ROOT / "skills" / "debug-z80" / "SKILL.md"
+        debug = debug_path.read_text(encoding="utf-8")
+        causal = (
+            debug_path.parent / "references" / "causal-method.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertLess(len(debug), 6500)
+        self.assertNotIn("## Z80 Symptom Router", debug)
+        self.assertIn("references/causal-method.md", debug)
+        self.assertIn("## Z80 Symptom Router", causal)
+        self.assertIn("## Causal Loop", causal)
+
+    def test_runtime_portability_covers_worktree_skills(self) -> None:
+        for name in ("debug-z80", "develop-z80"):
+            text = (ROOT / "skills" / name / "SKILL.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("## Runtime Portability", text)
+            self.assertIn("SKILL_DIR", text)
+            self.assertIn("Python 3 interpreter", text)
+            self.assertIn("../../scripts/run_in_worktree.py", text)
+
+    def test_every_skill_declares_invocation_policy(self) -> None:
+        for name in ALL_SKILLS:
+            metadata = (
+                ROOT / "skills" / name / "agents" / "openai.yaml"
+            ).read_text(encoding="utf-8")
+            self.assertRegex(
+                metadata,
+                r"(?m)^policy:\n  allow_implicit_invocation: (?:true|false)$",
+                name,
+            )
+
+    def test_audit_and_shrink_share_scanner_mechanics(self) -> None:
+        common = ROOT / "skills" / "shrink-z80" / "scripts" / "scan_common.py"
+        common_tree = ast.parse(common.read_text(encoding="utf-8"))
+        common_defs = {
+            node.name
+            for node in common_tree.body
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+        }
+        self.assertTrue({
+            "Hit",
+            "collect_pattern_hits",
+            "fmt_hex",
+            "load_symbol_table",
+            "print_pattern_hits",
+        }.issubset(common_defs))
+
+        forbidden = {
+            "collect_hits",
+            "fmt_hex",
+            "Hit",
+            "load_symbols",
+            "parse_symbol_line",
+            "print_hits",
+            "strip_comment",
+            "text_files",
+        }
+        for skill in ("audit-z80", "shrink-z80"):
+            scripts = ROOT / "skills" / skill / "scripts"
+            for name in ("map_summary.py", "preflight_scan.py", "z80_pattern_scan.py"):
+                path = scripts / name
+                text = path.read_text(encoding="utf-8")
+                tree = ast.parse(text)
+                local_defs = {
+                    node.name
+                    for node in tree.body
+                    if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+                }
+                self.assertIn("from scan_common import", text, path)
+                self.assertFalse(local_defs & forbidden, (path, local_defs & forbidden))
 
     def test_domain_lane_files_do_not_duplicate_the_router(self) -> None:
         for relative in LANE_FILES:

@@ -4,25 +4,32 @@ from __future__ import annotations
 import re
 import sys
 from collections import Counter, defaultdict
-from dataclasses import dataclass
 from pathlib import Path
 
-TEXT_EXTS = {".asm", ".s", ".inc", ".c", ".h", ".i", ".map", ".opt", ".lst", ".rul", ".sym"}
-TOP_LEVEL_FILES = {"Makefile", "makefile"}
-SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
-MAX_BYTES = 2_000_000
-SKIPPED_TOO_LARGE: list[Path] = []
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import (  # noqa: E402
+    ASM_EXTS,
+    C_EXTS,
+    EXCLUDE_DIRS,
+    Hit,
+    LISTING_EXTS,
+    add_hit,
+    conditional_call,
+    explicit_label,
+    print_pattern_hits,
+    read_text_lines,
+    rel_path,
+    resolve_scope,
+    strip_line_comment,
+)
+
+PATTERN_EXTS = ASM_EXTS | C_EXTS | LISTING_EXTS | {
+    ".map", ".opt", ".rul", ".sym"
+}
 CONDITIONS = {"z", "nz", "c", "nc", "m", "p", "pe", "po"}
-ASM_EXTS = {".asm", ".s", ".inc", ".opt", ".lst"}
-C_EXTS = {".c", ".h", ".i"}
-
-
-@dataclass
-class Hit:
-    path: Path
-    line_no: int
-    text: str
-    note: str
 
 
 PATTERNS: dict[str, tuple[str, str]] = {
@@ -100,7 +107,6 @@ PATTERNS: dict[str, tuple[str, str]] = {
     ),
 }
 
-CALL_RE = re.compile(r"\bcall\s+((?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
 RET_UNCOND_RE = re.compile(r"^\s*ret[imn]?\s*$", re.IGNORECASE)
 JUMP_RE = re.compile(r"^\s*(jp|jr)\s+(.+)$", re.IGNORECASE)
 DI_RE = re.compile(r"\bdi\b", re.IGNORECASE)
@@ -129,7 +135,6 @@ FLAG_NEUTRAL_RE = re.compile(
 INC_DEC_RE = re.compile(r"^\s*(?:inc|dec)\s+", re.IGNORECASE)
 BLOCK_RE = re.compile(r"\b(ldir|lddr|cpir|cpdr|inir|indr|otir|otdr)\b", re.IGNORECASE)
 LD_BC_ZERO_RE = re.compile(r"\bld\s+bc\s*,\s*(?:0|\$0|#0|0x0)\b", re.IGNORECASE)
-LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):(?:\s*(.*))?$")
 LOOP_RE = re.compile(r"\b(for|while)\s*\(", re.IGNORECASE)
 STRLEN_RE = re.compile(r"\bstrlen\s*\(", re.IGNORECASE)
 INLINE_ASM_START_RE = re.compile(r"\b__asm\b|#asm\b", re.IGNORECASE)
@@ -183,52 +188,8 @@ def apply_level(hits: dict[str, list[Hit]], level: str) -> dict[str, list[Hit]]:
     return defaultdict(list, {key: value for key, value in hits.items() if key in keep})
 
 
-def skip_path(path: Path, root: Path) -> bool:
-    try:
-        parts = path.relative_to(root).parts
-    except ValueError:
-        parts = path.parts
-    return any(part in SKIP_DIRS for part in parts)
-
-
-def iter_text_files(root: Path):
-    if root.is_file():
-        if root.suffix.lower() in TEXT_EXTS and root.stat().st_size <= MAX_BYTES:
-            yield root
-        return
-    for path in root.rglob("*"):
-        if skip_path(path, root) or not path.is_file():
-            continue
-        if path.name not in TOP_LEVEL_FILES and path.suffix.lower() not in TEXT_EXTS:
-            continue
-        if path.stat().st_size > MAX_BYTES:
-            SKIPPED_TOO_LARGE.append(path)
-            continue
-        yield path
-
-
-def strip_comment(line: str) -> str:
-    out = line.split(";", 1)[0]
-    out = out.split("//", 1)[0]
-    return out.rstrip()
-
-
 def rel(path: Path, root: Path) -> str:
-    try:
-        return str(path.relative_to(root))
-    except ValueError:
-        return str(path)
-
-
-def add_hit(
-    hits: dict[str, list[Hit]], key: str, path: Path, line_no: int, text: str, note: str
-) -> None:
-    hits[key].append(Hit(path, line_no, text.strip(), note))
-
-
-def split_label(line: str) -> tuple[str, str] | None:
-    match = LABEL_RE.match(line.strip())
-    return (match.group(1), match.group(2) or "") if match else None
+    return rel_path(path, root)
 
 
 def directive_symbols(line: str, regex: re.Pattern[str]) -> list[str]:
@@ -244,13 +205,6 @@ def exported_labels(clean: list[str]) -> set[str]:
     for line in clean:
         labels.update(directive_symbols(line, EXPORT_RE))
     return labels
-
-
-def parse_call(line: str) -> tuple[str, bool] | None:
-    match = CALL_RE.search(line)
-    if not match:
-        return None
-    return match.group(2), bool(match.group(1))
 
 
 def is_uncond_jump(line: str) -> bool:
@@ -282,7 +236,7 @@ def starts_new_label(line: str, label: str) -> bool:
 
 
 def is_nonlocal_exit_after_pop(line: str) -> bool:
-    call = parse_call(line)
+    call = conditional_call(line)
     return is_boundary_transfer(line) or (call is not None and not call[1])
 
 
@@ -331,7 +285,7 @@ def scan_asm_structure(
         if not stripped:
             continue
 
-        label = split_label(stripped)
+        label = explicit_label(stripped)
         if label is not None:
             if label[0] in exports or current_label == "(file-scope)" or (
                 previous_code is not None
@@ -590,24 +544,26 @@ def scan_file(
     root: Path, path: Path, hits: dict[str, list[Hit]], calls: Counter[str]
 ) -> None:
     try:
-        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        lines, skipped = read_text_lines(path)
     except OSError:
+        return
+    if skipped:
         return
 
     compiled = [
         (name, re.compile(pattern, re.IGNORECASE), note)
         for name, (pattern, note) in PATTERNS.items()
     ]
-    clean = [strip_comment(line) for line in lines]
+    clean = [strip_line_comment(line) for line in lines]
     suffix = path.suffix.lower()
-    is_asm = suffix in ASM_EXTS
+    is_asm = suffix in ASM_EXTS | LISTING_EXTS
     is_c = suffix in C_EXTS
 
     for idx, line in enumerate(clean):
         for name, regex, note in compiled:
             if regex.search(line):
                 add_hit(hits, name, path, idx + 1, lines[idx], note)
-        call = parse_call(line) if is_asm else None
+        call = conditional_call(line) if is_asm else None
         if call is not None:
             target, conditional = call
             calls[target] += 1
@@ -630,22 +586,19 @@ def scan_file(
         scan_c_structure(root, path, lines, clean, hits)
 
 
-def print_hits(root: Path, hits: dict[str, list[Hit]]) -> None:
-    for key in sorted(hits):
-        items = hits[key]
-        print(f"\n[{key}] count={len(items)}")
-        for hit in items[:24]:
-            print(f"  {rel(hit.path, root)}:{hit.line_no}: {hit.text}")
-        print(f"  note: {items[0].note}")
-        if len(items) > 24:
-            print(f"  ... {len(items) - 24} more")
-
-
 def main() -> int:
     level, root = parse_args(sys.argv[1:])
     hits: dict[str, list[Hit]] = defaultdict(list)
     calls: Counter[str] = Counter()
-    files = list(iter_text_files(root))
+    scope = resolve_scope(root, PATTERN_EXTS)
+    files: list[Path] = []
+    skipped_too_large: list[Path] = []
+    for path in scope.files:
+        _, skipped = read_text_lines(path)
+        if skipped:
+            skipped_too_large.append(path)
+        else:
+            files.append(path)
     for path in files:
         scan_file(root, path, hits, calls)
 
@@ -654,12 +607,12 @@ def main() -> int:
     print(f"level: {level}")
     print(f"files_scanned: {len(files)}")
     print("dirs_scanned: .")
-    print("dirs_skipped: " + ", ".join(sorted(SKIP_DIRS)))
-    print("files_skipped_too_large: " + (str(len(SKIPPED_TOO_LARGE)) if SKIPPED_TOO_LARGE else "0"))
-    for path in SKIPPED_TOO_LARGE[:20]:
+    print("dirs_skipped: " + ", ".join(sorted(EXCLUDE_DIRS)))
+    print("files_skipped_too_large: " + (str(len(skipped_too_large)) if skipped_too_large else "0"))
+    for path in skipped_too_large[:20]:
         print(f"  {rel(path, root)} {path.stat().st_size} bytes")
     print("purpose: adversarial hints only; every item needs local proof before reporting")
-    print_hits(root, hits)
+    print_pattern_hits(root, hits)
 
     repeated = [] if level == "high" else [
         (target, count) for target, count in calls.most_common(32) if count >= 3

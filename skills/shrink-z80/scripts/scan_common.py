@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,7 +14,7 @@ HOST_ONLY_DIRS = {"tools", "scripts", "tests", "test", "host", "client", "pc"}
 EXCLUDE_DIRS = {
     ".git", ".hg", ".svn", ".venv", "venv", "env", "node_modules", "target",
     "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox", ".cache",
-    ".worktrees", ".codex-safety", ".aider.tags.cache.v4",
+    ".worktrees", ".codex-safety", ".aider.tags.cache.v4", "third_party", "vendor",
 }
 SOURCE_EXTS = {".c", ".h", ".i", ".asm", ".s", ".inc", ".opt", ".rul"}
 C_EXTS = {".c", ".h", ".i"}
@@ -22,7 +23,11 @@ LISTING_EXTS = {".lst", ".lis"}
 TEXT_BUILD_EXTS = {".map", ".sym", ".rel", ".ihx", ".lk", ".noi", ".mem"}
 BINARY_ARTIFACT_EXTS = {".bin", ".tap", ".sna", ".tzx", ".scr", ".ovl"}
 BUILD_EXTS = TEXT_BUILD_EXTS | BINARY_ARTIFACT_EXTS
-TEXT_EXTS = SOURCE_EXTS | LISTING_EXTS | TEXT_BUILD_EXTS | {".mk", ".txt", ".ps1", ".sh", ".bat", ".cmd", ".json", ".yaml", ".yml", ".cmake", ".cfg", ".conf", ".ini"}
+TEXT_EXTS = SOURCE_EXTS | LISTING_EXTS | TEXT_BUILD_EXTS | {
+    ".mk", ".txt", ".ps1", ".sh", ".bat", ".cmd", ".json", ".yaml",
+    ".yml", ".cmake", ".cfg", ".conf", ".ini", ".toml", ".def", ".z80",
+    ".a80", ".mac", ".bas",
+}
 GENERATED_DIRS = {"build", "obj", "out", "gen", "generated", "tmp"}
 DIST_DIRS = {"dist", "release", "releases"}
 TEXT_FILE_SIZE_LIMIT = 2_000_000
@@ -42,6 +47,35 @@ UNCOND_EXIT_RE = re.compile(
     r"^\s*(?:ret\s*$|jp\s+(?!(?:z|nz|c|nc|m|p|pe|po)\s*,)[^,;]+|jr\s+(?!(?:z|nz|c|nc)\s*,)[^,;]+)\b",
     re.IGNORECASE,
 )
+EXPLICIT_LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):(?:\s*(.*))?$")
+CONDITIONAL_CALL_RE = re.compile(
+    r"\bcall\s+((?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?"
+    r"([A-Za-z_.$?@][\w.$?@]*)",
+    re.IGNORECASE,
+)
+ADDRESS_TOKEN = (
+    r"(?:\$[0-9A-Fa-f]+|#[0-9A-Fa-f]+|0x[0-9A-Fa-f]+|"
+    r"[0-9A-Fa-f]+h|[0-9A-Fa-f]{4,})"
+)
+MAP_SYMBOL_RE = re.compile(rf"^(\S+)\s*=\s*({ADDRESS_TOKEN})\s*;")
+SYM_ADDR_NAME_RE = re.compile(
+    rf"^({ADDRESS_TOKEN})\s+([A-Za-z_.$?@][\w.$?@]*)\b"
+)
+SYM_NAME_ADDR_RE = re.compile(
+    rf"^([A-Za-z_.$?@][\w.$?@]*)\s+(?:=\s*)?({ADDRESS_TOKEN})\b"
+)
+SYM_EQU_RE = re.compile(
+    rf"^([A-Za-z_.$?@][\w.$?@]*):?\s+EQU\s+({ADDRESS_TOKEN})\b",
+    re.IGNORECASE,
+)
+
+
+@dataclass
+class Hit:
+    path: Path
+    line_no: int
+    text: str
+    note: str
 
 @dataclass
 class Scope:
@@ -57,6 +91,55 @@ def rel_path(path: Path, base: Path) -> str:
         return str(path.relative_to(base))
     except ValueError:
         return str(path)
+
+
+def strip_line_comment(line: str) -> str:
+    return line.split(";", 1)[0].split("//", 1)[0].rstrip()
+
+
+def add_hit(
+    hits: dict[str, list[Hit]],
+    key: str,
+    path: Path,
+    line_no: int,
+    text: str,
+    note: str,
+) -> None:
+    hits[key].append(Hit(path, line_no, text.strip(), note))
+
+
+def print_pattern_hits(
+    root: Path,
+    hits: dict[str, list[Hit]],
+    *,
+    include_source_kind: bool = False,
+    limit: int = 24,
+) -> None:
+    base = root.parent if root.is_file() else root
+    shown_base = base if include_source_kind else root
+    for key in sorted(hits):
+        items = hits[key]
+        print(f"\n[{key}] count={len(items)}")
+        for hit in items[:limit]:
+            prefix = f"[{source_kind(hit.path, base)}] " if include_source_kind else ""
+            print(
+                f"  {prefix}{rel_path(hit.path, shown_base)}:{hit.line_no}: {hit.text}"
+            )
+        print(f"  note: {items[0].note}")
+        if len(items) > limit:
+            print(f"  ... {len(items) - limit} more")
+
+
+def explicit_label(line: str) -> tuple[str, str] | None:
+    match = EXPLICIT_LABEL_RE.match(line.strip())
+    return (match.group(1), match.group(2) or "") if match else None
+
+
+def conditional_call(line: str) -> tuple[str, bool] | None:
+    match = CONDITIONAL_CALL_RE.search(line)
+    if not match:
+        return None
+    return match.group(2), bool(match.group(1))
 
 
 def is_excluded(path: Path) -> bool:
@@ -213,6 +296,110 @@ def read_text_lines(path: Path, max_bytes: int = TEXT_FILE_SIZE_LIMIT) -> tuple[
         return path.read_text(encoding="utf-8", errors="ignore").splitlines(), False
     except OSError:
         return [], True
+
+
+def collect_pattern_hits(
+    files: list[Path],
+    base: Path,
+    patterns: list[str],
+    *,
+    limit: int,
+    excluded_exts: set[str] | None = None,
+) -> list[str]:
+    hits: list[str] = []
+    compiled = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+    excluded_exts = excluded_exts or set()
+    for path in files:
+        if path.suffix.lower() in excluded_exts:
+            continue
+        lines, skipped = read_text_lines(path)
+        if skipped:
+            continue
+        for lineno, line in enumerate(lines, start=1):
+            if len(line) > 300:
+                continue
+            if any(regex.search(line) for regex in compiled):
+                hits.append(f"{rel_path(path, base)}:{lineno}: {line.strip()}")
+                if len(hits) >= limit:
+                    return hits
+    return hits
+
+
+def parse_address(
+    value: str,
+    default_hex: bool = False,
+    sym_base: str = "auto",
+) -> tuple[int, str]:
+    raw = value.strip().lower()
+    if raw.startswith(("$", "#")):
+        return int(raw[1:], 16), "hex"
+    if raw.startswith("0x"):
+        return int(raw[2:], 16), "hex"
+    if raw.endswith("h"):
+        return int(raw[:-1], 16), "hex"
+    if re.search(r"[a-f]", raw):
+        return int(raw, 16), "hex"
+    if default_hex:
+        return int(raw, 16), "hex-default"
+    if sym_base == "hex":
+        return int(raw, 16), "hex-forced"
+    if sym_base == "decimal":
+        return int(raw, 10), "decimal-forced"
+    if re.fullmatch(r"\d{4}", raw):
+        return int(raw, 10), "ambiguous-plain-numeric"
+    return int(raw, 10), "decimal"
+
+
+def parse_symbol_line(
+    line: str,
+    sym_base: str = "auto",
+) -> tuple[str, int, str, str] | None:
+    line = line.strip()
+    if not line or line.startswith((";", "#")):
+        return None
+    match = MAP_SYMBOL_RE.match(line)
+    if match:
+        addr, base = parse_address(match.group(2), default_hex=True)
+        return match.group(1), addr, "map-equals", base
+    match = SYM_EQU_RE.match(line)
+    if match:
+        addr, base = parse_address(match.group(2), sym_base=sym_base)
+        return match.group(1), addr, "sym-equ", base
+    match = SYM_ADDR_NAME_RE.match(line)
+    if match:
+        addr, base = parse_address(match.group(1), sym_base=sym_base)
+        return match.group(2), addr, "sym-addr-name", base
+    match = SYM_NAME_ADDR_RE.match(line)
+    if match:
+        addr, base = parse_address(match.group(2), sym_base=sym_base)
+        return match.group(1), addr, "sym-name-addr", base
+    return None
+
+
+def load_symbol_table(
+    symbol_path: Path,
+    sym_base: str = "auto",
+) -> tuple[dict[str, int], Counter[str], Counter[str], dict[str, set[int]]]:
+    symbols: dict[str, int] = {}
+    formats: Counter[str] = Counter()
+    bases: Counter[str] = Counter()
+    duplicates: dict[str, set[int]] = {}
+    for line in symbol_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        parsed = parse_symbol_line(line, sym_base)
+        if parsed is None:
+            continue
+        name, addr, fmt, base = parsed
+        if name in symbols and symbols[name] != addr:
+            duplicates.setdefault(name, {symbols[name]}).add(addr)
+        else:
+            symbols.setdefault(name, addr)
+        formats[fmt] += 1
+        bases[base] += 1
+    return symbols, formats, bases, duplicates
+
+
+def fmt_hex(value: int | None) -> str:
+    return "n/a" if value is None else f"${value:04X}"
 
 
 def parse_byte_payload(payload: str) -> list[int]:

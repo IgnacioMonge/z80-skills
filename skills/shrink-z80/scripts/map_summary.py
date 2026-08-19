@@ -5,7 +5,8 @@ import argparse
 import re
 from pathlib import Path
 
-SYMBOL_RE = re.compile(r"^(\S+)\s*=\s*\$([0-9A-Fa-f]+)\s*;")
+from scan_common import fmt_hex, load_symbol_table
+
 IMPORTANT = [
     "__CODE_head",
     "__CODE_tail",
@@ -57,19 +58,6 @@ def map_candidates(path: Path) -> list[Path]:
     if path.is_file():
         return [path] if path.suffix.lower() == ".map" else []
     return sorted(path.rglob("*.map"))
-
-
-def load_symbols(map_path: Path) -> dict[str, int]:
-    symbols: dict[str, int] = {}
-    for line in map_path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        match = SYMBOL_RE.match(line)
-        if match:
-            symbols[match.group(1)] = int(match.group(2), 16)
-    return symbols
-
-
-def fmt_hex(value: int | None) -> str:
-    return "n/a" if value is None else f"${value:04X}"
 
 
 def section_tail(symbols: dict[str, int], name: str) -> int | None:
@@ -312,7 +300,7 @@ def print_multi_map_matrix(rows: list[dict[str, object]]) -> None:
     )
 
 def print_one(map_path: Path) -> dict[str, object]:
-    symbols = load_symbols(map_path)
+    symbols = load_symbol_table(map_path)[0]
     print(f"map: {map_path}")
     try:
         st = map_path.stat()

@@ -3,15 +3,14 @@ from __future__ import annotations
 
 import re
 import sys
-from collections import Counter
 from pathlib import Path
 
-ADDR_TOKEN = r"(?:\$[0-9A-Fa-f]+|#[0-9A-Fa-f]+|0x[0-9A-Fa-f]+|[0-9A-Fa-f]+h|[0-9A-Fa-f]{4,})"
-MAP_SYMBOL_RE = re.compile(rf"^(\S+)\s*=\s*({ADDR_TOKEN})\s*;")
-SYM_ADDR_NAME_RE = re.compile(rf"^({ADDR_TOKEN})\s+([A-Za-z_.$?@][\w.$?@]*)\b")
-SYM_NAME_ADDR_RE = re.compile(rf"^([A-Za-z_.$?@][\w.$?@]*)\s+(?:=\s*)?({ADDR_TOKEN})\b")
-SYM_EQU_RE = re.compile(rf"^([A-Za-z_.$?@][\w.$?@]*):?\s+EQU\s+({ADDR_TOKEN})\b", re.IGNORECASE)
-SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import fmt_hex, is_excluded, load_symbol_table  # noqa: E402
+
 IMPORTANT = [
     "__CODE_head", "__CODE_tail", "__CODE_size", "__DATA_head", "__DATA_tail", "__DATA_size",
     "__BSS_head", "__BSS_tail", "__BSS_END_tail", "__BSS_UNINITIALIZED_tail", "CRT_STACK_SIZE",
@@ -37,40 +36,11 @@ def parse_args(argv: list[str]) -> tuple[str, Path]:
     return sym_base, Path(args[0] if args else ".").resolve()
 
 
-def skipped(path: Path, root: Path) -> bool:
-    try:
-        parts = path.relative_to(root).parts
-    except ValueError:
-        parts = path.parts
-    return any(part in SKIP_DIRS for part in parts)
-
-
-def parse_addr(value: str, default_hex: bool = False, sym_base: str = "auto") -> tuple[int, str]:
-    raw = value.strip().lower()
-    if raw.startswith(("$", "#")):
-        return int(raw[1:], 16), "hex"
-    if raw.startswith("0x"):
-        return int(raw[2:], 16), "hex"
-    if raw.endswith("h"):
-        return int(raw[:-1], 16), "hex"
-    if re.search(r"[a-f]", raw):
-        return int(raw, 16), "hex"
-    if default_hex:
-        return int(raw, 16), "hex-default"
-    if sym_base == "hex":
-        return int(raw, 16), "hex-forced"
-    if sym_base == "decimal":
-        return int(raw, 10), "decimal-forced"
-    if re.fullmatch(r"\d{4}", raw):
-        return int(raw, 10), "ambiguous-plain-numeric"
-    return int(raw, 10), "decimal"
-
-
 def pick_symbol_file(path: Path) -> tuple[Path, list[Path], str]:
     if path.is_file():
         return path, [path], "explicit file"
-    maps = sorted(p for p in path.rglob("*.map") if not skipped(p, path))
-    syms = sorted(p for p in path.rglob("*.sym") if not skipped(p, path))
+    maps = sorted(p for p in path.rglob("*.map") if not is_excluded(p))
+    syms = sorted(p for p in path.rglob("*.sym") if not is_excluded(p))
     candidates = maps + syms
     if not candidates:
         raise FileNotFoundError(f"no .map or .sym file found under {path}")
@@ -81,52 +51,6 @@ def pick_symbol_file(path: Path) -> tuple[Path, list[Path], str]:
     if len(syms) > 1:
         raise SystemExit("multiple .sym files found; pass the intended symbol artifact explicitly")
     return syms[0], candidates, "only .sym outside skipped dirs"
-
-
-def parse_symbol_line(line: str, sym_base: str) -> tuple[str, int, str, str] | None:
-    line = line.strip()
-    if not line or line.startswith((";", "#")):
-        return None
-    match = MAP_SYMBOL_RE.match(line)
-    if match:
-        addr, base = parse_addr(match.group(2), default_hex=True)
-        return match.group(1), addr, "map-equals", base
-    match = SYM_EQU_RE.match(line)
-    if match:
-        addr, base = parse_addr(match.group(2), sym_base=sym_base)
-        return match.group(1), addr, "sym-equ", base
-    match = SYM_ADDR_NAME_RE.match(line)
-    if match:
-        addr, base = parse_addr(match.group(1), sym_base=sym_base)
-        return match.group(2), addr, "sym-addr-name", base
-    match = SYM_NAME_ADDR_RE.match(line)
-    if match:
-        addr, base = parse_addr(match.group(2), sym_base=sym_base)
-        return match.group(1), addr, "sym-name-addr", base
-    return None
-
-
-def load_symbols(symbol_path: Path, sym_base: str) -> tuple[dict[str, int], Counter[str], Counter[str], dict[str, set[int]]]:
-    symbols: dict[str, int] = {}
-    formats: Counter[str] = Counter()
-    bases: Counter[str] = Counter()
-    duplicates: dict[str, set[int]] = {}
-    for line in symbol_path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        parsed = parse_symbol_line(line, sym_base)
-        if parsed is None:
-            continue
-        name, addr, fmt, base = parsed
-        if name in symbols and symbols[name] != addr:
-            duplicates.setdefault(name, {symbols[name]}).add(addr)
-        else:
-            symbols.setdefault(name, addr)
-        formats[fmt] += 1
-        bases[base] += 1
-    return symbols, formats, bases, duplicates
-
-
-def fmt_hex(value: int | None) -> str:
-    return "n/a" if value is None else f"${value:04X}"
 
 
 def symbol_spans(symbols: dict[str, int]) -> list[tuple[str, int, int]]:
@@ -150,7 +74,7 @@ def first_symbol(symbols: dict[str, int], *names: str) -> int | None:
 def main() -> int:
     sym_base, target = parse_args(sys.argv[1:])
     symbol_path, candidates, selected_reason = pick_symbol_file(target)
-    symbols, formats, bases, duplicates = load_symbols(symbol_path, sym_base)
+    symbols, formats, bases, duplicates = load_symbol_table(symbol_path, sym_base)
     ambiguous = "ambiguous-plain-numeric" in bases
     print(f"symbol_file: {symbol_path}")
     print(f"selected_reason: {selected_reason}")

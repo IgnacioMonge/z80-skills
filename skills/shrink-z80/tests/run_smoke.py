@@ -244,26 +244,27 @@ def main() -> int:
         assert "Multi-Target Gate" in rep
 
         # --- P3: freshness per-unit + net checker ---
-        (root / "pkg_a").mkdir()
-        (root / "pkg_b").mkdir()
-        (root / "pkg_a" / "Makefile").write_text("all:\n", encoding="ascii")
-        (root / "pkg_b" / "Makefile").write_text("all:\n", encoding="ascii")
-        (root / "pkg_a" / "a.c").write_text("int a(void){return 1;}\n", encoding="ascii")
-        (root / "pkg_b" / "b.c").write_text("int b(void){return 2;}\n", encoding="ascii")
-        (root / "pkg_a" / "a.map").write_text("__CODE_head = $8000 ;\n", encoding="ascii")
+        per_unit = root / "per_unit"
+        (per_unit / "pkg_a").mkdir(parents=True)
+        (per_unit / "pkg_b").mkdir()
+        (per_unit / "pkg_a" / "Makefile").write_text("all:\n", encoding="ascii")
+        (per_unit / "pkg_b" / "Makefile").write_text("all:\n", encoding="ascii")
+        (per_unit / "pkg_a" / "a.c").write_text("int a(void){return 1;}\n", encoding="ascii")
+        (per_unit / "pkg_b" / "b.c").write_text("int b(void){return 2;}\n", encoding="ascii")
+        (per_unit / "pkg_a" / "a.map").write_text("__CODE_head = $8000 ;\n", encoding="ascii")
         base = time.time() - 100
-        os.utime(root / "pkg_a" / "Makefile", (base, base))
-        os.utime(root / "pkg_b" / "Makefile", (base, base))
-        os.utime(root / "pkg_a" / "a.c", (base, base))
-        os.utime(root / "pkg_a" / "a.map", (base + 10, base + 10))
+        os.utime(per_unit / "pkg_a" / "Makefile", (base, base))
+        os.utime(per_unit / "pkg_b" / "Makefile", (base, base))
+        os.utime(per_unit / "pkg_a" / "a.c", (base, base))
+        os.utime(per_unit / "pkg_a" / "a.map", (base + 10, base + 10))
         # Make only pkg_b source newer so global mode would stale pkg_a.
-        (root / "pkg_b" / "b.c").write_text("int b(void){return 3;}\n", encoding="ascii")
-        os.utime(root / "pkg_b" / "b.c", (base + 20, base + 20))
-        out = run(str(SKILL / "scripts" / "artifact_freshness.py"), str(root), "--mode", "per-unit")
+        (per_unit / "pkg_b" / "b.c").write_text("int b(void){return 3;}\n", encoding="ascii")
+        os.utime(per_unit / "pkg_b" / "b.c", (base + 20, base + 20))
+        out = run(str(SKILL / "scripts" / "artifact_freshness.py"), str(per_unit), "--mode", "per-unit")
         assert "mode: per-unit" in out
         assert "[global_mode_info]" in out
         assert "pkg_a" in out and "FRESH" in out
-        out = run(str(SKILL / "scripts" / "artifact_freshness.py"), str(root / "pkg_a"), "--mode", "per-unit")
+        out = run(str(SKILL / "scripts" / "artifact_freshness.py"), str(per_unit / "pkg_a"), "--mode", "per-unit")
         assert "verdict: FRESH" in out
 
         staged = root / "staged"

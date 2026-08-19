@@ -32,6 +32,16 @@ and mutation gates. A workflow route never widens those gates. If the sibling
 skill is unavailable, report the limitation and continue directly without
 claiming delegated execution.
 
+## Runtime Portability
+
+- Canonicalize the catalog path to this `SKILL.md` while following symlinks and
+  Windows junctions, then set `SKILL_DIR` to its parent.
+- Use the Python 3 interpreter exposed by the host or explicitly provided by
+  the user; never assume a platform-specific executable or path.
+- Resolve `RUNNER` from canonical `SKILL_DIR` as
+  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` and verify that it is a file
+  before any disposable command. Invoke it by absolute path.
+
 ## Modes
 
 - `auto` (default): infer the earliest incomplete stage and progress to the

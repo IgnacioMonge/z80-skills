@@ -397,6 +397,28 @@ Los cambios del plugin actualizan la versión del manifiesto incluida en Git
 para que Codex cree una copia instalada nueva. No edites directamente
 `~/.codex/plugins/cache`. Después de actualizar, abre una tarea nueva.
 
+### Grok Build y sincronización con Claude
+
+En Windows, instala los ocho skills en Grok Build con las adaptaciones del host
+derivadas de las fuentes canónicas de `workflow`:
+
+```powershell
+pwsh -File .\scripts\install-for-grok.ps1
+```
+
+El instalador incluye `route-z80`, guarda por defecto una copia con timestamp de
+los skills existentes en el destino, incluye el runner de worktrees desechables
+y parchea únicamente las copias instaladas. Añade `-SyncClaude` para copiar
+también los mismos ocho árboles canónicos, sin adaptaciones Grok, a
+`~/.claude/skills`:
+
+```powershell
+pwsh -File .\scripts\install-for-grok.ps1 -SyncClaude
+```
+
+Usa `-SkipBackup` solo con destinos de prueba desechables. Abre una tarea nueva
+de Grok o Claude después de instalar para recargar su catálogo de skills.
+
 ## Uso
 
 Los skills se invocan mediante lenguaje natural. Cuanto más concretos sean el
@@ -542,6 +564,7 @@ evals/
   fixtures/
   schemas/
 scripts/
+  install-for-grok.ps1
   install_personal_marketplace.py
   run_behavior_evals.py
   run_in_worktree.py
@@ -594,6 +617,7 @@ Pruebas incluidas:
 
 ```sh
 python3 scripts/test_workflow_integration.py
+python3 scripts/test_workflow_context_efficiency.py
 python3 scripts/test_personal_marketplace.py
 python3 scripts/test_run_in_worktree.py
 python3 skills/audit-z80/scripts/smoke_test.py
