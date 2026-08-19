@@ -158,6 +158,13 @@ def manifest_version() -> str:
     return manifest["version"]
 
 
+def resolve_codex_bin(command: str) -> str:
+    resolved = shutil.which(command)
+    if resolved is None:
+        raise FileNotFoundError(f"Codex executable not found: {command}")
+    return resolved
+
+
 def installed_version(codex_bin: str) -> str | None:
     result = subprocess.run(
         [codex_bin, "plugin", "list"],
@@ -219,9 +226,11 @@ def run_case(
         ]
         if model:
             command.extend(("--model", model))
-        command.append(evaluation_prompt(case))
+        prompt = evaluation_prompt(case)
+        command.append("-")
         result = subprocess.run(
             command,
+            input=prompt,
             text=True,
             capture_output=True,
             timeout=timeout,
@@ -277,6 +286,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    try:
+        codex_bin = resolve_codex_bin(args.codex_bin)
+    except FileNotFoundError as exc:
+        raise SystemExit(str(exc)) from exc
     suites = tuple(path.resolve() for path in args.suite) if args.suite else DEFAULT_SUITES
     cases: list[dict[str, Any]] = []
     for suite in suites:
@@ -294,7 +307,7 @@ def main() -> int:
         return 0
 
     authored_version = manifest_version()
-    active_version = installed_version(args.codex_bin)
+    active_version = installed_version(codex_bin)
     if active_version != authored_version and not args.allow_version_mismatch:
         raise SystemExit(
             f"installed {PLUGIN_NAME} version {active_version!r} does not match "
@@ -304,7 +317,7 @@ def main() -> int:
     records: list[dict[str, Any]] = []
     for index, case in enumerate(cases, 1):
         print(f"[{index}/{len(cases)}] {case['id']}", flush=True)
-        records.append(run_case(case, args.codex_bin, args.model, args.timeout))
+        records.append(run_case(case, codex_bin, args.model, args.timeout))
 
     report = {
         "created_at": datetime.now(timezone.utc).isoformat(),

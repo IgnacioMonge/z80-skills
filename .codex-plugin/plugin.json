@@ -1,7 +1,7 @@
 {
   "name": "z80-skills",
-  "version": "0.6.1+codex.20260813121500",
-  "description": "Standalone adaptive workflow, thin Z80 domain routing, and specialist development, audit, organization, size, and optimization skills.",
+  "version": "0.6.1+codex.20260819154645",
+  "description": "Standalone adaptive workflow, thin Z80 routing, and specialist development, debugging, audit, organization, size, and optimization skills.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
   },
@@ -16,6 +16,7 @@
     "sdd",
     "product-development",
     "implementation",
+    "root-cause-debugging",
     "audit",
     "workflow",
     "routing",
@@ -30,12 +31,13 @@
   "interface": {
     "displayName": "Z80 Skills + Workflow",
     "shortDescription": "Adaptive workflow for Z80",
-    "longDescription": "Bundles an independent workflow, a thin Z80 domain selector, and five specialists. Routing chooses one domain contract; workflow chooses execution effort; each specialist retains its evidence, safety, and mutation gates.",
+    "longDescription": "Bundles an independent workflow, a thin Z80 domain selector, and six specialists. Routing separates unresolved observed failures, broad audits, known-cause fixes, and other domain work; workflow chooses execution effort.",
     "developerName": "M. Ignacio Monge Garc\u00eda",
     "websiteURL": "https://github.com/IgnacioMonge/z80-skills",
     "category": "Productivity",
     "capabilities": [
       "Code implementation",
+      "Root-cause debugging",
       "Code review",
       "Static analysis",
       "Optimization",
@@ -47,7 +49,7 @@
     "brandColor": "#2F855A",
     "defaultPrompt": [
       "Use $route-z80 to choose the right specialist for this Z80 repository request, then continue with that route.",
-      "Use $audit-z80 to audit this mixed ASM/C project for correctness risks using only current local evidence.",
+      "Use $debug-z80 to isolate and repair the unknown cause of this observed Z80 failure.",
       "Use $shrink-z80 to recover 512 bytes and verify net savings against fresh build artifacts."
     ]
   }

@@ -3,7 +3,7 @@
 **Idiomas:** [English](README.md) · Español
 
 Plugin para Codex con un workflow adaptativo independiente, un selector de
-dominio ligero y cinco skills complementarios para desarrollar, analizar y
+dominio ligero y seis skills complementarios para desarrollar, depurar, analizar y
 organizar proyectos Z80, especialmente software de ZX Spectrum escrito en
 ensamblador, C o una mezcla de ambos con z88dk o SDCC.
 
@@ -12,8 +12,8 @@ el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
 riesgo real y distinguen claramente entre evidencia probada, estimaciones e
 hipótesis.
 
-> Ejecución adaptativa, desarrollo dirigido por especificaciones, análisis,
-> organización, reducción de tamaño y optimización multiobjetivo basados en
+> Ejecución adaptativa, desarrollo dirigido por especificaciones, depuración
+> causal, análisis, organización, reducción de tamaño y optimización multiobjetivo basados en
 > evidencia para Z80 y ZX Spectrum.
 
 ## Contenido
@@ -38,20 +38,22 @@ hipótesis.
 | `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa light, un flujo medium controlado por Sol o coordinación heavy plana con workers Luna acotados. |
 | `route-z80` | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
 | `develop-z80` | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
-| `audit-z80` | ¿Hay defectos, corrupción, errores ABI, riesgos ISR/memoria/hardware o regresiones? | Hallazgos priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
+| `debug-z80` | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
+| `audit-z80` | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
 | `organize-z80` | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
 | `shrink-z80` | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
 | `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
 
 `workflow` es independiente de Z80 y selecciona el esfuerzo de ejecución.
 `route-z80` selecciona dominio únicamente cuando el objetivo es realmente
-ambiguo. Los cinco skills especialistas se solapan solo donde es útil:
+ambiguo. Los seis skills especialistas se solapan solo donde es útil:
 
 - Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
 - Usa `route-z80` para elegir un especialista sin cargar todos los candidatos.
 - Usa `develop-z80` solo para una iniciativa explícita de producto o un dossier
   SDD existente, no para fixes ordinarios ni features aisladas del repositorio.
-- Usa `audit-z80` para corrección y seguridad técnica.
+- Usa `debug-z80` para un fallo observado cuyo owner causal sigue sin conocerse.
+- Usa `audit-z80` para revisión preventiva o amplia de corrección en solo lectura.
 - Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
 - Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
   tamaño.
@@ -152,7 +154,7 @@ normalizadas; nunca deben subir código privado ni identificadores del proyecto.
 ### `route-z80`
 
 Dispatcher de dominio ligero para peticiones Z80 ambiguas. Selecciona un único
-especialista según el resultado solicitado, o `workflow` para un fix, revisión,
+especialista según el resultado solicitado, o `workflow` para un fix de causa conocida, revisión,
 refactor, test, build o cambio documental ordinario. No decide entre Light,
 Medium y Heavy ni carga todos los skills candidatos.
 
@@ -177,10 +179,31 @@ dispersar idea, requisitos, plan, tareas y estado entre varios archivos.
 decisiones de plataforma, formato del dossier y verificación por hitos se cargan
 progresivamente desde referencias separadas.
 
+### `debug-z80`
+
+Depuración causal acotada por evidencia para un fallo observado cuya causa aún
+no está establecida. Acepta crashes, salida incorrecta, fallos de build/link,
+no determinismo, regresiones, divergencia hardware/emulador y reparaciones
+fallidas; rechaza fixes de causa conocida, auditorías especulativas y mejoras
+sin comportamiento fallido.
+
+El skill conserva la modalidad: un diagnóstico permanece en solo lectura; una
+petición de diagnosticar y corregir solo cruza la puerta de reparación cuando
+una hipótesis falsable identifica owner y check de aceptación. Builds, sondas,
+mediciones y fixes candidatos se ejecutan en un worktree desechable verificado.
+La edición del árbol principal queda limitada a la reparación probada y exige
+autorización previa del usuario.
+
+Su router de síntomas Z80 parte de la frontera mínima pertinente: primer
+diagnóstico de build, ABI C/ASM y stack, orden de ISR, restauración de banco o
+página, código generado, delta entre targets o supuesto de hardware/emulador.
+Devuelve `NOT_DEBUGGING`, `READY_TO_FIX`, `NEEDS_EVIDENCE`, `EXTERNAL` o `FIXED`
+en vez de un catálogo de causas plausibles.
+
 ### `audit-z80`
 
-Auditoría de solo lectura para encontrar defectos reales y riesgos
-reproducibles.
+Auditoría preventiva o amplia de solo lectura para encontrar defectos reales y
+riesgos reproducibles sin convertir un fallo observado en un escaneo general.
 
 **Cobertura**
 
@@ -328,7 +351,7 @@ sí solos.
 ### Primera instalación
 
 Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
-checkout es la fuente canónica de los siete skills.
+checkout es la fuente canónica de los ocho skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -345,16 +368,16 @@ ningún skill incluido bajo `~/.agents/skills/<skill-name>` ni en la ruta
 heredada `~/.codex/skills/<skill-name>`. Esas copias pueden ocultar el plugin
 con namespace y omitir archivos del paquete como `scripts/run_in_worktree.py`;
 copiar directorios individuales desde `skills/` no constituye una instalación
-completa. El plugin ya incluye los siete skills, incluidos `route-z80` y
+completa. El plugin ya incluye los ocho skills, incluidos `route-z80` y
 `workflow`. El instalador avisa si encuentra una de estas
 ubicaciones duplicadas; muévela o desactívala antes de abrir una tarea nueva de
 Codex.
 
-Solo `route-z80` participa en la selección implícita de dominio Z80. Los cinco
+Solo `route-z80` participa en la selección implícita de dominio Z80. Los seis
 especialistas siguen disponibles mediante invocación explícita de
-`$develop-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
+`$develop-z80`, `$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
 después de decidir, `route-z80` carga únicamente el hermano seleccionado. Así el
-trabajo ordinario permanece en `workflow` y no se inyectan las cinco
+trabajo ordinario permanece en `workflow` y no se inyectan las seis
 descripciones especialistas.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
@@ -400,6 +423,14 @@ del repositorio Z80, o workflow si no hace falta un contrato especialista.
 Usa develop-z80 para dirigir esta idea de juego para ZX Spectrum Next desde el
 concepto hasta una implementación verificada. Elige y ejecuta por mí las fases
 SDD; pregunta solo cuando falte una decisión de producto material.
+```
+
+### Depuración de causa raíz
+
+```text
+Usa debug-z80 para aislar por qué este build 128K falla al volver de la ISR. No
+edites hasta que un check discriminante identifique el owner causal; entonces
+aplica y verifica el fix mínimo.
 ```
 
 ### Auditoría
@@ -474,6 +505,8 @@ configuración y receta deben pertenecer a la misma línea base.
 - `develop-z80` mantiene idea, especificación, planificación y desglose de tareas
   en solo lectura; la primera edición greenfield también exige aceptación
   explícita de la spec. Todo avance multihito queda acotado a la sesión actual.
+- `debug-z80` mantiene diagnóstico y fixes candidatos en un worktree desechable;
+  solo edita el árbol principal para una reparación solicitada y causalmente probada.
 - `audit-z80` y `shrink-z80` no editan el proyecto.
 - `organize-z80` solo edita código en modo `apply` tras una petición explícita,
   línea base congelada, frontera aprobada, un slice nombrado y rollback; una
@@ -522,6 +555,10 @@ skills/
     SKILL.md
     agents/openai.yaml
   develop-z80/
+    SKILL.md
+    agents/openai.yaml
+    references/
+  debug-z80/
     SKILL.md
     agents/openai.yaml
     references/

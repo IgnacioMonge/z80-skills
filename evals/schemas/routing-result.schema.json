@@ -10,6 +10,7 @@
         "route-z80",
         "workflow",
         "develop-z80",
+        "debug-z80",
         "audit-z80",
         "organize-z80",
         "shrink-z80",

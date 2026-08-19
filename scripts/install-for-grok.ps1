@@ -6,7 +6,7 @@
 .DESCRIPTION
   Canonical skill sources remain under ./skills (Codex/plugin layout).
   This script:
-    1. Copies the six skills into ~/.grok/skills (repo = canonical on name conflict)
+    1. Copies the seven Grok-compatible skills into ~/.grok/skills (repo = canonical on name conflict)
     2. Copies run_in_worktree.py into each skill that needs disposable worktrees
     3. Rewrites ../../scripts/run_in_worktree.py paths for the flat Grok layout
     4. Applies the Grok workflow overlay (spawn_subagent, lean-ctx, Windows python)
@@ -46,6 +46,7 @@ $SharedScript = Join-Path $RepoRoot "scripts\run_in_worktree.py"
 
 $SkillNames = @(
     "audit-z80",
+    "debug-z80",
     "develop-z80",
     "optimize-z80",
     "organize-z80",
@@ -87,7 +88,7 @@ function Copy-SkillTree([string]$Name, [string]$DestRoot) {
 
 function Copy-RunInWorktree([string]$DestRoot) {
     Assert-Path $SharedScript "run_in_worktree.py"
-    foreach ($name in @("audit-z80", "develop-z80", "optimize-z80", "shrink-z80")) {
+    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "shrink-z80")) {
         $scripts = Join-Path $DestRoot "$name\scripts"
         if (-not (Test-Path -LiteralPath $scripts)) {
             New-Item -ItemType Directory -Path $scripts -Force | Out-Null
@@ -107,7 +108,7 @@ function Patch-WorktreePaths([string]$DestRoot) {
             $_.FullName -notmatch '[\\/]_z80-shared'
         }
     foreach ($file in $mdFiles) {
-        # Only touch files under the six skill trees we just installed
+        # Only touch files under the seven skill trees we just installed
         $rel = $file.FullName.Substring($DestRoot.Length).TrimStart('\', '/')
         $top = ($rel -split '[\\/]')[0]
         if ($SkillNames -notcontains $top) { continue }
@@ -253,7 +254,7 @@ function Patch-SkillMarkdown([string]$SkillMd) {
 }
 
 function Patch-DomainPortability([string]$DestRoot) {
-    foreach ($name in @("audit-z80", "develop-z80", "optimize-z80", "organize-z80", "shrink-z80")) {
+    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "organize-z80", "shrink-z80")) {
         Patch-SkillMarkdown -SkillMd (Join-Path $DestRoot "$name\SKILL.md")
     }
 }
@@ -325,10 +326,12 @@ if (-not (Select-String -Path $wf -Pattern 'Host runtime \(Grok Build\)' -Quiet)
 }
 $wt = Join-Path $Dest "optimize-z80\scripts\run_in_worktree.py"
 Assert-Path $wt "optimize-z80/scripts/run_in_worktree.py"
+$debugWt = Join-Path $Dest "debug-z80\scripts\run_in_worktree.py"
+Assert-Path $debugWt "debug-z80/scripts/run_in_worktree.py"
 
 Write-Host ""
 Write-Host "Done. Open a new Grok task (or wait for skill auto-reload) and use:" -ForegroundColor Green
-Write-Host "  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
+Write-Host "  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
 Write-Host ""
 Write-Host "Update loop:"
 Write-Host "  cd $RepoRoot"

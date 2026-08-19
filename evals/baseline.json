@@ -1,5 +1,5 @@
 {
-  "current_manifest_version": "0.6.1+codex.20260813121500",
+  "current_manifest_version": "0.6.1+codex.20260819154645",
   "evaluated_at": "2026-08-13T10:23:51Z",
   "model": "runtime-default",
   "execution": "fresh ephemeral read-only Codex session per case",
@@ -19,7 +19,31 @@
       "passed": 1,
       "failed": 0
     },
-    "claim": "The observed regression passed after the router boundary fix; a complete 22-case replay on the repaired version was not run."
+    "targeted_debug_run": {
+      "plugin_version": "0.6.1+codex.20260819151353",
+      "evaluated_at": "2026-08-19T15:24:51Z",
+      "model": "gpt-5.6-sol",
+      "case_ids": [
+        "direct-debug",
+        "indirect-audit",
+        "indirect-debug",
+        "negative-known-bug",
+        "ambiguous-crash"
+      ],
+      "passed": 5,
+      "failed": 0
+    },
+    "current_suite": {
+      "cases": 24,
+      "status": "PASSED",
+      "plugin_version": "0.6.1+codex.20260819151353",
+      "evaluated_at": "2026-08-19T15:46:02Z",
+      "model": "gpt-5.6-sol",
+      "passed": 24,
+      "failed": 0,
+      "accuracy": 1.0
+    },
+    "claim": "The current 24-case routing suite passed on gpt-5.6-sol, including three debug-z80 positives and seven workflow boundaries."
   },
   "evidence": {
     "plugin_version": "0.6.1+codex.20260813121500",

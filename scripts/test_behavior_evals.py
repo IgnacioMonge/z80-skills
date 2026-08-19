@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import unittest
+from unittest import mock
 
 import run_behavior_evals as behavior
 
@@ -19,7 +20,7 @@ class BehaviorEvalTest(unittest.TestCase):
             {case["kind"] for case in routing},
             {"direct", "indirect", "negative", "ambiguous"},
         )
-        self.assertEqual(len(routing), 22)
+        self.assertEqual(len(routing), 24)
         self.assertEqual(len(evidence), 3)
         routes = {case["expected"]["route"] for case in routing}
         self.assertEqual(
@@ -28,6 +29,7 @@ class BehaviorEvalTest(unittest.TestCase):
                 "route-z80",
                 "workflow",
                 "develop-z80",
+                "debug-z80",
                 "audit-z80",
                 "organize-z80",
                 "shrink-z80",
@@ -39,6 +41,40 @@ class BehaviorEvalTest(unittest.TestCase):
         actual = {"route": "audit-z80", "rationale": "source evidence"}
         self.assertTrue(behavior.matches_expected(actual, {"route": "audit-z80"}))
         self.assertFalse(behavior.matches_expected(actual, {"route": "workflow"}))
+
+    def test_codex_command_resolves_to_platform_launcher(self) -> None:
+        launcher = r"C:\Users\example\AppData\Roaming\npm\codex.CMD"
+        with mock.patch.object(behavior.shutil, "which", return_value=launcher):
+            self.assertEqual(behavior.resolve_codex_bin("codex"), launcher)
+        with mock.patch.object(behavior.shutil, "which", return_value=None):
+            with self.assertRaises(FileNotFoundError):
+                behavior.resolve_codex_bin("codex")
+
+    def test_run_case_sends_multiline_prompt_via_stdin(self) -> None:
+        case = {
+            "id": "stdin-transport",
+            "kind": "direct",
+            "schema": "schemas/routing-result.schema.json",
+            "prompt": "Observed failure\nwith a second line",
+            "expected": {"route": "debug-z80"},
+            "_suite": str(ROOT / "evals" / "routing.jsonl"),
+            "_line": 1,
+        }
+
+        def fake_run(command, **kwargs):
+            self.assertEqual(command[-1], "-")
+            self.assertEqual(kwargs["input"], behavior.evaluation_prompt(case))
+            output = Path(command[command.index("-o") + 1])
+            output.write_text(
+                json.dumps({"route": "debug-z80", "rationale": "observed"}),
+                encoding="utf-8",
+            )
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with mock.patch.object(behavior.subprocess, "run", side_effect=fake_run):
+            record = behavior.run_case(case, "codex.CMD", None, 10)
+
+        self.assertTrue(record["passed"])
 
     def test_schema_validation_rejects_extra_and_invalid_values(self) -> None:
         schema = json.loads((
@@ -72,9 +108,21 @@ class BehaviorEvalTest(unittest.TestCase):
         )
         self.assertEqual(baseline["routing"]["full_run"]["passed"], 21)
         self.assertIn(
-            "complete 22-case replay",
+            "current 24-case routing suite passed",
             baseline["routing"]["claim"],
         )
+        current = baseline["routing"]["current_suite"]
+        self.assertEqual(current["cases"], 24)
+        self.assertEqual(current["status"], "PASSED")
+        self.assertEqual(current["model"], "gpt-5.6-sol")
+        self.assertEqual(current["passed"], 24)
+        self.assertEqual(current["failed"], 0)
+        self.assertEqual(current["accuracy"], 1.0)
+        targeted = baseline["routing"]["targeted_debug_run"]
+        self.assertEqual(targeted["model"], "gpt-5.6-sol")
+        self.assertEqual(targeted["passed"], 5)
+        self.assertEqual(targeted["failed"], 0)
+        self.assertEqual(len(targeted["case_ids"]), 5)
         self.assertEqual(
             baseline["evidence"]["passed_after_grader_correction"], 3
         )

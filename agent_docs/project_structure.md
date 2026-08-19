@@ -19,6 +19,7 @@ scripts/
 skills/
   route-z80/                     Thin Z80 domain selector
   develop-z80/                   Idea-to-implementation SDD workflow
+  debug-z80/                     Root-cause diagnosis and gated repair
   audit-z80/                     Read-only correctness audit
   organize-z80/                  Architecture and reorganization workflow
   shrink-z80/                    Size-only analysis and analyzers
@@ -34,9 +35,10 @@ validation commands. Runtime behavior results are generated under ignored
 `evals/results/`; they are not mixed with deterministic unit tests.
 
 Ownership boundaries are intentionally explicit: route selects a domain;
-develop handles explicit product initiatives and their dossiers; audit handles
-correctness, organize handles structure, shrink handles size, optimize handles
-competing metrics, and workflow handles generic execution control. Domain
+develop handles explicit product initiatives and their dossiers; debug handles
+observed failures with unresolved causality; audit handles preventive or broad
+read-only correctness review; organize handles structure, shrink handles size,
+optimize handles competing metrics, and workflow handles generic execution control. Domain
 evidence and safety gates remain in the specialized skills.
 
 Repository instructions live in `AGENTS.md`; durable project context is kept

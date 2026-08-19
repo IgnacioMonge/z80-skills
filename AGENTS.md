@@ -3,7 +3,7 @@
 ## Project Context
 
 Z80 Skills is a Codex plugin: portable workflow, Z80 router, and
-five specialists. `skills/workflow/` is canonical; do not duplicate its routes
+six specialists. `skills/workflow/` is canonical; do not duplicate its routes
 in repository-local documents.
 
 Read the smallest relevant context. When needed, use

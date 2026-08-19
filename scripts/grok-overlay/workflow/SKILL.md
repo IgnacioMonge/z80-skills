@@ -17,7 +17,8 @@ This install is adapted for **Grok Build**:
 - On Windows, invoke Python as `python` (or the interpreter the user names);
   never hardcode `python3` paths.
 - Domain Z80 skills live as siblings under `~/.grok/skills/` (`audit-z80`,
-  `develop-z80`, `organize-z80`, `optimize-z80`, `shrink-z80`, `workflow`).
+  `debug-z80`, `develop-z80`, `organize-z80`, `optimize-z80`, `shrink-z80`,
+  `workflow`).
 
 ## Select effort
 

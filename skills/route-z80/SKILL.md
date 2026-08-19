@@ -1,6 +1,6 @@
 ---
 name: route-z80
-description: Thin domain dispatcher for Z80, ZX Spectrum, and ZX Spectrum Next work. Use when the user asks which Z80 skill fits, or when a generic Z80 repository request is genuinely ambiguous among product development, correctness auditing, code organization, size reduction, and multi-objective optimization. Select one primary specialist or plain workflow without loading every candidate. Do not use when the user explicitly names a specialist or when an ordinary localized fix, review, refactor, build, test, or documentation task already has a clear workflow-only path.
+description: Thin domain dispatcher for Z80, ZX Spectrum, and ZX Spectrum Next work. Use when the user asks which Z80 skill fits, or when a generic Z80 repository request is genuinely ambiguous among product development, root-cause debugging, correctness auditing, code organization, size reduction, and multi-objective optimization. Select one primary specialist or plain workflow without loading every candidate. Do not use when the user explicitly names a specialist or when an ordinary localized fix, review, refactor, build, test, or documentation task already has a clear workflow-only path.
 ---
 
 # Route Z80
@@ -28,7 +28,8 @@ competing acceptance criteria.
 | Primary question | Route |
 | --- | --- |
 | Is this an explicit new product initiative—application, game, demo, tool, or port—that needs an SDD specification and milestones, or are we resuming its existing dossier? | [`develop-z80`](../develop-z80/SKILL.md) |
-| Are there defects or correctness risks involving ABI, ISR, memory, firmware, toolchain behavior, hardware timing, or regressions that require an evidence-first read-only audit? | [`audit-z80`](../audit-z80/SKILL.md) |
+| Is there a concrete observed failure whose causal owner remains unknown, evidence conflicts, or an evidence-supported repair failed? | [`debug-z80`](../debug-z80/SKILL.md) |
+| Does the user want a preventive or broad read-only audit for defects or correctness risks involving ABI, ISR, memory, firmware, toolchain behavior, hardware timing, or regressions? | [`audit-z80`](../audit-z80/SKILL.md) |
 | Should ownership, dependencies, source layout, module boundaries, banking, overlays, or runtime placement be mapped or reorganized? | [`organize-z80`](../organize-z80/SKILL.md) |
 | Is the exclusive objective to reduce linked/storage size or memory footprint and prove net byte savings? | [`shrink-z80`](../shrink-z80/SKILL.md) |
 | Must the real bottleneck and trade-offs among speed, size, RAM, rendering, latency, or other competing metrics be ranked? | [`optimize-z80`](../optimize-z80/SKILL.md) |
@@ -40,9 +41,15 @@ repository. Those are normal engineering activities. Select it only for an
 explicit product lifecycle or an already active develop dossier.
 
 When size is the sole acceptance metric, prefer `shrink-z80`; when size competes
-with speed, RAM, rendering, or latency, prefer `optimize-z80`. When the user asks
-to fix a known bug, use `workflow`; use `audit-z80` when the requested result is
-an audit or when correctness remains an unresolved evidence question.
+with speed, RAM, rendering, or latency, prefer `optimize-z80`. A performance
+regression is `debug-z80` only when current behavior violates a known baseline
+and the cause is unresolved; improving acceptable behavior is `optimize-z80`.
+
+Use `debug-z80` for one observed failure with unresolved causality, whether the
+user requests diagnosis alone or diagnosis plus repair. Use `audit-z80` for a
+preventive or broad read-only correctness review without one failure driving a
+causal investigation. When the cause is already established and the user asks
+for the fix, use `workflow`.
 
 ## Handoff
 

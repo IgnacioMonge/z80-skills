@@ -1,0 +1,6 @@
+interface:
+  display_name: "Debug Z80"
+  short_description: "Root-cause debugging for Z80 failures"
+  default_prompt: "Use $debug-z80 to isolate the causal owner of this observed Z80 failure and apply a verified repair only if requested."
+policy:
+  allow_implicit_invocation: false

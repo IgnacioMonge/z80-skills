@@ -1,6 +1,6 @@
 ---
 name: audit-z80
-description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or user-visible regressions. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
+description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
 ---
 
 # Audit Z80
@@ -91,6 +91,8 @@ is incomplete.
 ## Core Rules
 
 - Findings first; never edit project code during an audit.
+- Hand one observed failure with unresolved causality to `$debug-z80`; keep a
+  requested preventive or broad correctness review here.
 - Promote only current-code or fresh-artifact evidence.
 - Verify reachability, ABI, stack, flags, registers, interrupt state, memory
   layout, generated-code reality, and target constraints as applicable.

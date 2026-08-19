@@ -11,6 +11,7 @@ DEVELOP = ROOT / "skills" / "develop-z80"
 ROUTER = ROOT / "skills" / "route-z80"
 Z80_DOMAIN_SKILLS = (
     "develop-z80",
+    "debug-z80",
     "audit-z80",
     "organize-z80",
     "shrink-z80",
@@ -148,6 +149,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
             self.assertIn(boundary, develop_contract)
         self.assertIn("scripts/run_in_worktree.py", develop_contract)
 
+        debug_contract = (
+            ROOT / "skills" / "debug-z80" / "references" / "hard-contract.md"
+        ).read_text(encoding="utf-8")
+        for boundary in (
+            "primary-tree read-only",
+            "disposable-worktree-only",
+            "authorized primary-tree mutation",
+        ):
+            self.assertIn(boundary, debug_contract)
+        self.assertIn("scripts/run_in_worktree.py", debug_contract)
+
     def test_optimize_runtime_paths_are_structurally_resolvable(self) -> None:
         skill_file = ROOT / "skills" / "optimize-z80" / "SKILL.md"
         skill = skill_file.read_text(encoding="utf-8")
@@ -261,6 +273,22 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("not sufficient activation", develop)
         self.assertIn("Do not use for routine bug fixes", description)
         self.assertNotIn("game, demo, tool, feature, or port", description)
+
+    def test_debug_route_requires_observed_unresolved_failure(self) -> None:
+        router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
+        debug = (ROOT / "skills" / "debug-z80" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        audit = (ROOT / "skills" / "audit-z80" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("one observed failure with unresolved causality", router)
+        self.assertIn("cause is already established", router)
+        self.assertIn("There is an observed failure", debug)
+        self.assertIn("The causal owner is genuinely unknown", debug)
+        self.assertIn("hand the known-cause fix to `$workflow`", debug)
+        self.assertIn("Do not use for root-cause diagnosis", audit)
 
     def test_domain_lane_files_do_not_duplicate_the_router(self) -> None:
         for relative in LANE_FILES:
