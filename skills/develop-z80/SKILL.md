@@ -1,6 +1,6 @@
 ---
 name: develop-z80
-description: Specification-driven lifecycle for starting or resuming a complete Z80, ZX Spectrum, or ZX Spectrum Next product initiative—application, game, demo, tool, or port—from an explicit idea through accepted specification, milestones, implementation, and verification. Use when the user explicitly invokes develop-z80, asks to design or build a complete product or deliberate vertical slice, requests an SDD dossier or milestone plan, or resumes an existing develop-z80 dossier or task. Do not use for routine bug fixes, isolated repository features, refactors, reviews, maintenance, build/test/documentation fixes, or internal architecture proposals; use workflow or the relevant specialist unless the user explicitly places the work under an active product dossier.
+description: Specification-driven lifecycle for starting or resuming a complete Z80, ZX Spectrum, or ZX Spectrum Next product initiative—application, game, demo, tool, or generic port—from an explicit idea through accepted specification, milestones, implementation, and verification. Use when the user explicitly invokes develop-z80, asks to design or build a complete product or deliberate vertical slice, requests an SDD dossier or milestone plan, or resumes an existing develop-z80 dossier or task. Do not use for routine bug fixes, isolated repository features, refactors, reviews, maintenance, build/test/documentation fixes, internal architecture proposals, or a consumer port to the Spectranext cartridge; use port-spectranext, workflow, or the relevant specialist unless the user explicitly places the work under an active product dossier.
 ---
 
 # Develop Z80
@@ -22,6 +22,10 @@ Once explicitly activated for a product, keep this skill as the product
 contract across its dossier and milestones. Execute its individual engineering
 steps through `$workflow` without treating each fix or proposal as a fresh
 develop-z80 activation.
+
+An existing ZX program's consumer port to the Spectranext cartridge has its own
+external fail-closed lifecycle. Route it to `port-spectranext`; do not run two
+product state machines over the same port.
 
 ## Workflow Core
 

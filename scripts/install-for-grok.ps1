@@ -6,7 +6,7 @@
 .DESCRIPTION
   Canonical skill sources remain under ./skills (Codex/plugin layout).
   This script:
-    1. Copies all eight skills into ~/.grok/skills (repo = canonical on name conflict)
+    1. Copies all nine skills into ~/.grok/skills (repo = canonical on name conflict)
     2. Copies run_in_worktree.py into each skill that needs disposable worktrees
     3. Rewrites ../../scripts/run_in_worktree.py paths for the flat Grok layout
     4. Derives Grok workflow adaptations from the canonical workflow sources
@@ -49,6 +49,7 @@ $SkillNames = @(
     "develop-z80",
     "optimize-z80",
     "organize-z80",
+    "port-spectranext",
     "route-z80",
     "shrink-z80",
     "workflow"
@@ -108,7 +109,7 @@ function Patch-WorktreePaths([string]$DestRoot) {
             $_.FullName -notmatch '[\\/]_z80-shared'
         }
     foreach ($file in $mdFiles) {
-        # Only touch files under the seven skill trees we just installed
+        # Only touch files under the nine skill trees we just installed
         $rel = $file.FullName.Substring($DestRoot.Length).TrimStart('\', '/')
         $top = ($rel -split '[\\/]')[0]
         if ($SkillNames -notcontains $top) { continue }
@@ -346,7 +347,7 @@ function Patch-SkillMarkdown([string]$SkillMd) {
 }
 
 function Patch-DomainPortability([string]$DestRoot) {
-    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "organize-z80", "shrink-z80")) {
+    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "organize-z80", "port-spectranext", "shrink-z80")) {
         Patch-SkillMarkdown -SkillMd (Join-Path $DestRoot "$name\SKILL.md")
     }
 }
@@ -431,7 +432,7 @@ Assert-Path $debugWt "debug-z80/scripts/run_in_worktree.py"
 
 Write-Host ""
 Write-Host "Done. Open a new Grok task (or wait for skill auto-reload) and use:" -ForegroundColor Green
-Write-Host "  /route-z80  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
+Write-Host "  /route-z80  /port-spectranext  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
 Write-Host ""
 Write-Host "Update loop:"
 Write-Host "  cd $RepoRoot"

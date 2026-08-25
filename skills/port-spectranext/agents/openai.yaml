@@ -1,0 +1,6 @@
+interface:
+  display_name: "Port Spectranext"
+  short_description: "Run cartridge consumer port pipeline"
+  default_prompt: "Use $port-spectranext to start or resume this existing ZX program's port to the Spectranext cartridge."
+policy:
+  allow_implicit_invocation: false

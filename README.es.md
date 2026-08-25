@@ -3,9 +3,9 @@
 **Idiomas:** [English](README.md) · Español
 
 Plugin para Codex con un workflow adaptativo independiente, un selector de
-dominio ligero y seis skills complementarios para desarrollar, depurar, analizar y
-organizar proyectos Z80, especialmente software de ZX Spectrum escrito en
-ensamblador, C o una mezcla de ambos con z88dk o SDCC.
+dominio ligero y siete skills complementarios para desarrollar, portar,
+depurar, analizar y organizar proyectos Z80, especialmente software de ZX
+Spectrum escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
 
 El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
 el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
@@ -38,6 +38,7 @@ hipótesis.
 | `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa light, un flujo medium controlado por Sol o coordinación heavy plana con workers Luna acotados. |
 | `route-z80` | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
 | `develop-z80` | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
+| `port-spectranext` | ¿Cómo atraviesa un programa ZX existente el pipeline consumidor del cartucho Spectranext? | Intake canónico, implementación acotada, gates ligados a artefactos, evidencia física y handoff final. |
 | `debug-z80` | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
 | `audit-z80` | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
 | `organize-z80` | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
@@ -46,12 +47,14 @@ hipótesis.
 
 `workflow` es independiente de Z80 y selecciona el esfuerzo de ejecución.
 `route-z80` selecciona dominio únicamente cuando el objetivo es realmente
-ambiguo. Los seis skills especialistas se solapan solo donde es útil:
+ambiguo. Los siete skills especialistas se solapan solo donde es útil:
 
 - Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
 - Usa `route-z80` para elegir un especialista sin cargar todos los candidatos.
 - Usa `develop-z80` solo para una iniciativa explícita de producto o un dossier
   SDD existente, no para fixes ordinarios ni features aisladas del repositorio.
+- Usa `port-spectranext` para portar un programa ZX existente al cartucho
+  Spectranext, no para targets ZX Spectrum Next ni trabajo sobre el backend.
 - Usa `debug-z80` para un fallo observado cuyo owner causal sigue sin conocerse.
 - Usa `audit-z80` para revisión preventiva o amplia de corrección en solo lectura.
 - Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
@@ -178,6 +181,19 @@ dispersar idea, requisitos, plan, tareas y estado entre varios archivos.
 `plan`, `tasks`, `implement` y `verify` permiten trabajo dirigido. Evidencia,
 decisiones de plataforma, formato del dossier y verificación por hitos se cargan
 progresivamente desde referencias separadas.
+
+### `port-spectranext`
+
+Orquestación fina para portar un programa ZX existente al cartucho Spectranext.
+Descubre y relee el checkout externo actual de Spectranext, ejecuta su entrada
+absoluta `tools/dev port request` desde la raíz del consumidor y sigue el estado
+y el siguiente comando emitidos por esa puerta fail-closed.
+
+El consumidor posee manifiesto, seam, artefactos, reportes, worktree e historial
+Git. El checkout Spectranext conserva la autoridad sobre código del cartucho,
+documentación y mecánica del pipeline. El skill añade selección de esfuerzo,
+límites de autorización, carga progresiva, checkpoints físicos y reporte de
+evidencia sin copiar el schema ni el pipeline.
 
 ### `debug-z80`
 
@@ -351,7 +367,7 @@ sí solos.
 ### Primera instalación
 
 Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
-checkout es la fuente canónica de los ocho skills.
+checkout es la fuente canónica de los nueve skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -368,16 +384,16 @@ ningún skill incluido bajo `~/.agents/skills/<skill-name>` ni en la ruta
 heredada `~/.codex/skills/<skill-name>`. Esas copias pueden ocultar el plugin
 con namespace y omitir archivos del paquete como `scripts/run_in_worktree.py`;
 copiar directorios individuales desde `skills/` no constituye una instalación
-completa. El plugin ya incluye los ocho skills, incluidos `route-z80` y
+completa. El plugin ya incluye los nueve skills, incluidos `route-z80` y
 `workflow`. El instalador avisa si encuentra una de estas
 ubicaciones duplicadas; muévela o desactívala antes de abrir una tarea nueva de
 Codex.
 
-Solo `route-z80` participa en la selección implícita de dominio Z80. Los seis
+Solo `route-z80` participa en la selección implícita de dominio Z80. Los siete
 especialistas siguen disponibles mediante invocación explícita de
-`$develop-z80`, `$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
+`$develop-z80`, `$port-spectranext`, `$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
 después de decidir, `route-z80` carga únicamente el hermano seleccionado. Así el
-trabajo ordinario permanece en `workflow` y no se inyectan las seis
+trabajo ordinario permanece en `workflow` y no se inyectan las siete
 descripciones especialistas.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
@@ -399,7 +415,7 @@ para que Codex cree una copia instalada nueva. No edites directamente
 
 ### Grok Build y sincronización con Claude
 
-En Windows, instala los ocho skills en Grok Build con las adaptaciones del host
+En Windows, instala los nueve skills en Grok Build con las adaptaciones del host
 derivadas de las fuentes canónicas de `workflow`:
 
 ```powershell
@@ -409,7 +425,7 @@ pwsh -File .\scripts\install-for-grok.ps1
 El instalador incluye `route-z80`, guarda por defecto una copia con timestamp de
 los skills existentes en el destino, incluye el runner de worktrees desechables
 y parchea únicamente las copias instaladas. Añade `-SyncClaude` para copiar
-también los mismos ocho árboles canónicos, sin adaptaciones Grok, a
+también los mismos nueve árboles canónicos, sin adaptaciones Grok, a
 `~/.claude/skills`:
 
 ```powershell
@@ -445,6 +461,14 @@ del repositorio Z80, o workflow si no hace falta un contrato especialista.
 Usa develop-z80 para dirigir esta idea de juego para ZX Spectrum Next desde el
 concepto hasta una implementación verificada. Elige y ejecuta por mí las fases
 SDD; pregunta solo cuando falte una decisión de producto material.
+```
+
+### Port al cartucho Spectranext
+
+```text
+Usa port-spectranext para reanudar el port de este programa ZX existente al
+cartucho Spectranext. Empieza por el port request canónico, conserva el seam del
+consumidor y detente para obtener evidencia del hardware real cuando proceda.
 ```
 
 ### Depuración de causa raíz
@@ -527,6 +551,9 @@ configuración y receta deben pertenecer a la misma línea base.
 - `develop-z80` mantiene idea, especificación, planificación y desglose de tareas
   en solo lectura; la primera edición greenfield también exige aceptación
   explícita de la spec. Todo avance multihito queda acotado a la sesión actual.
+- `port-spectranext` mantiene autoritativo el checkout externo de Spectranext y
+  aislado el estado del consumidor; las ediciones quedan dentro del seam
+  autorizado y los resultados físicos exigen observación explícita del usuario.
 - `debug-z80` mantiene diagnóstico y fixes candidatos en un worktree desechable;
   solo edita el árbol principal para una reparación solicitada y causalmente probada.
 - `audit-z80` y `shrink-z80` no editan el proyecto.
@@ -578,6 +605,10 @@ skills/
     SKILL.md
     agents/openai.yaml
   develop-z80/
+    SKILL.md
+    agents/openai.yaml
+    references/
+  port-spectranext/
     SKILL.md
     agents/openai.yaml
     references/

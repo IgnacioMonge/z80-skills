@@ -20,7 +20,7 @@ class BehaviorEvalTest(unittest.TestCase):
             {case["kind"] for case in routing},
             {"direct", "indirect", "negative", "ambiguous"},
         )
-        self.assertEqual(len(routing), 24)
+        self.assertEqual(len(routing), 28)
         self.assertEqual(len(evidence), 4)
         routes = {case["expected"]["route"] for case in routing}
         self.assertEqual(
@@ -28,6 +28,7 @@ class BehaviorEvalTest(unittest.TestCase):
             {
                 "route-z80",
                 "workflow",
+                "port-spectranext",
                 "develop-z80",
                 "debug-z80",
                 "audit-z80",
@@ -107,13 +108,10 @@ class BehaviorEvalTest(unittest.TestCase):
             baseline["current_manifest_version"], manifest["version"]
         )
         self.assertEqual(baseline["routing"]["full_run"]["passed"], 21)
-        self.assertIn(
-            "current 24-case routing suite passed",
-            baseline["routing"]["claim"],
-        )
+        self.assertIn("previous 24-case routing suite passed", baseline["routing"]["claim"])
         current = baseline["routing"]["current_suite"]
         self.assertEqual(current["cases"], 24)
-        self.assertEqual(current["status"], "PASSED")
+        self.assertEqual(current["status"], "SUPERSEDED")
         self.assertEqual(current["model"], "gpt-5.6-sol")
         self.assertEqual(current["passed"], 24)
         self.assertEqual(current["failed"], 0)
@@ -123,6 +121,12 @@ class BehaviorEvalTest(unittest.TestCase):
         self.assertEqual(targeted["passed"], 5)
         self.assertEqual(targeted["failed"], 0)
         self.assertEqual(len(targeted["case_ids"]), 5)
+        targeted_port = baseline["routing"]["targeted_port_run"]
+        self.assertEqual(targeted_port["model"], "gpt-5.6-sol")
+        self.assertEqual(targeted_port["passed"], 4)
+        self.assertEqual(targeted_port["failed"], 0)
+        self.assertEqual(targeted_port["accuracy"], 1.0)
+        self.assertEqual(len(targeted_port["case_ids"]), 4)
         self.assertEqual(
             baseline["evidence"]["passed_after_grader_correction"], 4
         )

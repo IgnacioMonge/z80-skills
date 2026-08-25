@@ -1,6 +1,6 @@
 ---
 name: route-z80
-description: Thin domain dispatcher for Z80, ZX Spectrum, and ZX Spectrum Next work. Use when the user asks which Z80 skill fits, or when a generic Z80 repository request is genuinely ambiguous among product development, root-cause debugging, correctness auditing, code organization, size reduction, and multi-objective optimization. Select one primary specialist or plain workflow without loading every candidate. Do not use when the user explicitly names a specialist or when an ordinary localized fix, review, refactor, build, test, or documentation task already has a clear workflow-only path.
+description: Thin domain dispatcher for Z80, ZX Spectrum, ZX Spectrum Next, and Spectranext cartridge work. Use when the user asks which Z80 skill fits, or when a generic Z80 repository request is genuinely ambiguous among product development, Spectranext consumer porting, root-cause debugging, correctness auditing, code organization, size reduction, and multi-objective optimization. Select one primary specialist or plain workflow without loading every candidate. Do not use when the user explicitly names a specialist or when an ordinary localized fix, review, refactor, build, test, or documentation task already has a clear workflow-only path.
 ---
 
 # Route Z80
@@ -27,6 +27,7 @@ competing acceptance criteria.
 
 | Primary question | Route |
 | --- | --- |
+| Is this a request to start, resume, implement, diagnose, validate, or hand off an existing ZX program's consumer port to the **Spectranext cartridge** through its canonical external pipeline? | [`port-spectranext`](../port-spectranext/SKILL.md) |
 | Is this an explicit new product initiative—application, game, demo, tool, or port—that needs an SDD specification and milestones, or are we resuming its existing dossier? | [`develop-z80`](../develop-z80/SKILL.md) |
 | Is there a concrete observed failure whose causal owner remains unknown, evidence conflicts, or an evidence-supported repair failed? | [`debug-z80`](../debug-z80/SKILL.md) |
 | Does the user want a preventive or broad read-only audit for defects or correctness risks involving ABI, ISR, memory, firmware, toolchain behavior, hardware timing, or regressions? | [`audit-z80`](../audit-z80/SKILL.md) |
@@ -39,6 +40,11 @@ Do not select `develop-z80` merely because the request mentions a feature,
 architecture, planning, implementation, or verification inside an established
 repository. Those are normal engineering activities. Select it only for an
 explicit product lifecycle or an already active develop dossier.
+
+`Spectranext` names the cartridge and its consumer pipeline; it is not shorthand
+for the ZX Spectrum Next platform. Route an existing consumer port to that
+cartridge through `port-spectranext`. Route a generic Spectrum Next product or
+port according to its requested lifecycle or ordinary engineering outcome.
 
 When size is the sole acceptance metric, prefer `shrink-z80`; when size competes
 with speed, RAM, rendering, or latency, prefer `optimize-z80`. A performance

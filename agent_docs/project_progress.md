@@ -2,13 +2,13 @@
 
 ## Current State
 
-- The plugin contains `workflow`, `route-z80`, and six explicit domain skills.
+- The plugin contains `workflow`, `route-z80`, and seven explicit domain skills.
 - `debug-z80` owns unresolved-cause diagnosis and permits a minimal primary-tree
   repair only after its causal gate is satisfied.
 - Runtime routing and evidence evals cover all routes, including the debug
   mutation boundary and stale-evidence rejection.
 - The Grok installer derives its workflow overlay from the canonical
-  `skills/workflow/` files and installs all eight skills. Optional Claude sync
+  `skills/workflow/` files and installs all nine skills. Optional Claude sync
   copies the canonical skill set.
 - Audit and shrink scanners share traversal, text matching, hit reporting, and
   map/symbol parsing through `skills/shrink-z80/scripts/scan_common.py`; their

@@ -1,5 +1,5 @@
 {
-  "current_manifest_version": "0.6.1+codex.20260819164121",
+  "current_manifest_version": "0.6.1+codex.20260825083916",
   "evaluated_at": "2026-08-19T16:42:34Z",
   "model": "mixed; see suite records",
   "execution": "fresh ephemeral read-only Codex session per case",
@@ -33,18 +33,32 @@
       "passed": 5,
       "failed": 0
     },
+    "targeted_port_run": {
+      "plugin_version": "0.6.1+codex.20260825083916",
+      "evaluated_at": "2026-08-25T08:43:32Z",
+      "model": "gpt-5.6-sol",
+      "case_ids": [
+        "direct-port-spectranext",
+        "indirect-port-spectranext",
+        "negative-spectrum-next-not-spectranext",
+        "ambiguous-spectranext-backend"
+      ],
+      "passed": 4,
+      "failed": 0,
+      "accuracy": 1.0
+    },
     "current_suite": {
       "cases": 24,
-      "status": "PASSED",
+      "status": "SUPERSEDED",
       "plugin_version": "0.6.1+codex.20260819151353",
       "evaluated_at": "2026-08-19T15:46:02Z",
       "model": "gpt-5.6-sol",
       "passed": 24,
       "failed": 0,
       "accuracy": 1.0,
-      "post_run_delta": "After this suite, debug causal detail moved behind a progressive reference without changing its frontmatter or router gate; workflow metadata, analyzer internals, installers, tests, docs, eval metadata, and cachebusters also changed. Route-selection descriptions and router decision rules are unchanged."
+      "post_run_delta": "This verified 24-case run predates the port-spectranext route. The current 28-case routing dataset requires a fresh runtime evaluation before any new pass claim."
     },
-    "claim": "The current 24-case routing suite passed on gpt-5.6-sol, including three debug-z80 positives and seven workflow boundaries."
+    "claim": "The previous 24-case routing suite passed on gpt-5.6-sol. All four added port-spectranext boundary cases passed a targeted gpt-5.6-sol run; the expanded 28-case suite has not yet been run in full."
   },
   "evidence": {
     "plugin_version": "0.6.1+codex.20260819154645",

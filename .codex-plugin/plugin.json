@@ -1,7 +1,7 @@
 {
   "name": "z80-skills",
-  "version": "0.6.1+codex.20260819164121",
-  "description": "Standalone adaptive workflow, thin Z80 routing, and specialist development, debugging, audit, organization, size, and optimization skills.",
+  "version": "0.6.1+codex.20260825083916",
+  "description": "Standalone adaptive workflow, thin Z80 routing, and specialist development, Spectranext porting, debugging, audit, organization, size, and optimization skills.",
   "author": {
     "name": "M. Ignacio Monge Garc\u00eda"
   },
@@ -25,13 +25,15 @@
     "performance",
     "architecture",
     "code-organization",
-    "migration"
+    "migration",
+    "spectranext",
+    "application-porting"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Z80 Skills + Workflow",
     "shortDescription": "Adaptive workflow for Z80",
-    "longDescription": "Bundles an independent workflow, a thin Z80 domain selector, and six specialists. Routing separates unresolved observed failures, broad audits, known-cause fixes, and other domain work; workflow chooses execution effort.",
+    "longDescription": "Bundles an independent workflow, a thin Z80 domain selector, and seven specialists. Routing separates Spectranext consumer ports, unresolved observed failures, broad audits, known-cause fixes, and other domain work; workflow chooses execution effort.",
     "developerName": "M. Ignacio Monge Garc\u00eda",
     "websiteURL": "https://github.com/IgnacioMonge/z80-skills",
     "category": "Productivity",

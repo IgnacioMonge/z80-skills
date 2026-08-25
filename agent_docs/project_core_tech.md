@@ -6,7 +6,8 @@
   the general helpers, while complete TOML policy handling requires Python 3.11+
   unless an explicit safe fallback is used.
 - Target domain: Z80/ZX Spectrum software, including pure assembly and mixed
-  C/ASM projects using z88dk or SDCC.
+  C/ASM projects using z88dk or SDCC, plus external-pipeline consumer ports to
+  the Spectranext cartridge.
 - Safety boundary: analysis is read-only in the primary tree; builds,
   measurements, diagnostic probes, and candidate repairs run in detached
   disposable Git worktrees via `scripts/run_in_worktree.py`. A requested

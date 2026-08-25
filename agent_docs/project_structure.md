@@ -19,6 +19,7 @@ scripts/
 skills/
   route-z80/                     Thin Z80 domain selector
   develop-z80/                   Idea-to-implementation SDD workflow
+  port-spectranext/              External Spectranext consumer-port workflow
   debug-z80/                     Root-cause diagnosis and gated repair
   audit-z80/                     Read-only correctness audit
   organize-z80/                  Architecture and reorganization workflow
@@ -28,18 +29,22 @@ skills/
 ```
 
 Each skill owns its `SKILL.md` and `agents/openai.yaml`; domain detail lives in
-`references/` only where progressive loading helps. Analyzer-bearing skills
-also own `scripts/`; `shrink-z80` additionally owns its smoke tests. The root
-README documents installation, usage, safety rules, repository structure, and
-validation commands. Runtime behavior results are generated under ignored
-`evals/results/`; they are not mixed with deterministic unit tests.
+`references/` only where progressive loading helps. `port-spectranext` keeps
+the external cartridge checkout authoritative and adds no duplicate pipeline
+script. Analyzer-bearing skills own `scripts/`; `shrink-z80` additionally owns
+its smoke tests. The root README documents installation, usage, safety rules,
+repository structure, and validation commands. Runtime behavior results are
+generated under ignored `evals/results/`; they are not mixed with deterministic
+unit tests.
 
 Ownership boundaries are intentionally explicit: route selects a domain;
-develop handles explicit product initiatives and their dossiers; debug handles
-observed failures with unresolved causality; audit handles preventive or broad
-read-only correctness review; organize handles structure, shrink handles size,
-optimize handles competing metrics, and workflow handles generic execution control. Domain
-evidence and safety gates remain in the specialized skills.
+develop handles explicit product initiatives and their dossiers;
+port-spectranext handles the external cartridge consumer lifecycle; debug
+handles observed failures with unresolved causality; audit handles preventive
+or broad read-only correctness review; organize handles structure, shrink
+handles size, optimize handles competing metrics, and workflow handles generic
+execution control. Domain evidence and safety gates remain in the specialized
+skills.
 
 Repository instructions live in `AGENTS.md`; durable project context is kept
 under `agent_docs/`. The canonical adaptive workflow lives under

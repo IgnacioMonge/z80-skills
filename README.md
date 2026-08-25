@@ -3,9 +3,9 @@
 **Languages:** English · [Español](README.es.md)
 
 Codex plugin with one standalone adaptive workflow, one thin domain selector,
-and six complementary skills for developing, debugging, analyzing, and organizing Z80
-projects, especially ZX Spectrum software written in assembly, C, or a mixture
-of both using z88dk or SDCC.
+and seven complementary skills for developing, porting, debugging, analyzing,
+and organizing Z80 projects, especially ZX Spectrum software written in
+assembly, C, or a mixture of both using z88dk or SDCC.
 
 The goal is not to produce generic lists of tricks. The skills inspect the
 current code and artifacts, adapt depth and parallelism to the actual risk, and
@@ -37,6 +37,7 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 | `workflow` | What is the smallest sufficient execution level for this engineering task? | Light direct execution, a Sol-controlled medium stream, or flat heavy coordination with bounded Luna workers. |
 | `route-z80` | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
 | `develop-z80` | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
+| `port-spectranext` | How does an existing ZX program move through the Spectranext cartridge's consumer pipeline? | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and final handoff. |
 | `debug-z80` | What causes this observed failure, and which component owns the repair? | One falsifiable causal explanation and, when requested, one verified root-cause fix. |
 | `audit-z80` | Are there latent defects or broad correctness risks? | Read-only findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
 | `organize-z80` | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
@@ -44,13 +45,15 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 | `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
 `workflow` is independent of Z80 and routes execution effort. `route-z80`
-selects a domain only when the goal is genuinely ambiguous. The six specialist
+selects a domain only when the goal is genuinely ambiguous. The seven specialist
 skills overlap only where useful:
 
 - Use `workflow` directly for adaptive planning, implementation, and verification.
 - Use `route-z80` to choose one specialist, without loading all candidates.
 - Use `develop-z80` only for an explicit product initiative or an existing SDD
   dossier, not for routine fixes or isolated repository features.
+- Use `port-spectranext` for an existing ZX program's consumer port to the
+  Spectranext cartridge, not for ZX Spectrum Next targets or backend work.
 - Use `debug-z80` for an observed failure whose causal owner remains unknown.
 - Use `audit-z80` for preventive or broad read-only correctness review.
 - Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
@@ -173,6 +176,19 @@ idea, requirements, plan, tasks, and status across several files.
 `implement`, and `verify` ceilings support targeted work. Evidence, platform
 decisions, dossier format, and milestone verification load progressively from
 separate references.
+
+### `port-spectranext`
+
+Thin orchestration for an existing ZX program's port to the Spectranext
+cartridge. It discovers and re-reads the current external Spectranext checkout,
+runs its absolute `tools/dev port request` entry point from the consumer root,
+and follows the state and next command emitted by that fail-closed gate.
+
+The consumer owns its manifest, seam, artifacts, reports, worktree, and Git
+history. The Spectranext checkout remains the authority for cartridge code,
+documentation, and pipeline mechanics. The skill adds workflow effort routing,
+authorization boundaries, progressive context loading, hardware checkpoints,
+and evidence reporting without copying the manifest schema or pipeline.
 
 ### `debug-z80`
 
@@ -344,7 +360,7 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Initial installation
 
 Clone the repository anywhere under your home directory. The checkout is the
-canonical source for all eight skills.
+canonical source for all nine skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -361,14 +377,14 @@ under `~/.agents/skills/<skill-name>` or the legacy
 `~/.codex/skills/<skill-name>`.
 Those copies can shadow the namespaced plugin and omit package-level files such
 as `scripts/run_in_worktree.py`; copying individual directories from `skills/`
-is not a complete installation. The plugin already bundles all eight skills,
+is not a complete installation. The plugin already bundles all nine skills,
 including `route-z80` and `workflow`. The installer warns when
 it finds one of these duplicate locations; move or disable it before opening a
 new Codex task.
 
-Only `route-z80` participates in implicit Z80-domain selection. The six
-specialists remain available through explicit `$develop-z80`, `$debug-z80`,
-`$audit-z80`, `$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
+Only `route-z80` participates in implicit Z80-domain selection. The seven
+specialists remain available through explicit `$develop-z80`, `$port-spectranext`,
+`$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
 `route-z80` loads only the selected sibling. This keeps routine repository work
 on plain `workflow` and avoids injecting every specialist description.
 
@@ -390,7 +406,7 @@ open a new task again.
 
 ### Grok Build and Claude sync
 
-On Windows, install all eight skills into Grok Build with the host adaptations
+On Windows, install all nine skills into Grok Build with the host adaptations
 derived from the canonical `workflow` sources:
 
 ```powershell
@@ -399,7 +415,7 @@ pwsh -File .\scripts\install-for-grok.ps1
 
 The installer includes `route-z80`, preserves existing destination skills in a
 timestamped backup by default, bundles the disposable-worktree runner, and
-patches only the installed copies. Add `-SyncClaude` to also copy the same eight
+patches only the installed copies. Add `-SyncClaude` to also copy the same nine
 canonical skill trees, without Grok adaptations, into `~/.claude/skills`:
 
 ```powershell
@@ -435,6 +451,14 @@ request, or use plain workflow if no specialist evidence contract is needed.
 Use develop-z80 to lead this ZX Spectrum Next game idea from concept to verified
 implementation. Choose and run the SDD stages for me; ask only when a material
 product decision is missing.
+```
+
+### Spectranext cartridge porting
+
+```text
+Use port-spectranext to resume this existing ZX program's port to the
+Spectranext cartridge. Begin with the canonical port request gate, preserve the
+consumer seam, and stop for real hardware evidence when required.
 ```
 
 ### Root-cause debugging
@@ -517,6 +541,9 @@ configuration, and recipe must belong to the same baseline.
 - `develop-z80` keeps idea, specification, planning, and task breakdown
   read-only; its first greenfield product-code edit also requires explicit spec
   acceptance. Any multi-milestone auto-advance is bounded to the current session.
+- `port-spectranext` keeps the external Spectranext checkout authoritative and
+  consumer state isolated; source edits stay inside the authorized consumer
+  seam and physical results require explicit user observation.
 - `debug-z80` keeps diagnosis and candidate repairs in a disposable worktree;
   it edits the primary tree only for a requested, causally supported repair.
 - `audit-z80` and `shrink-z80` do not edit the project.
@@ -568,6 +595,10 @@ skills/
     SKILL.md
     agents/openai.yaml
   develop-z80/
+    SKILL.md
+    agents/openai.yaml
+    references/
+  port-spectranext/
     SKILL.md
     agents/openai.yaml
     references/

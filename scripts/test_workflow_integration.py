@@ -9,8 +9,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / "skills" / "workflow"
 DEVELOP = ROOT / "skills" / "develop-z80"
+PORT = ROOT / "skills" / "port-spectranext"
 ROUTER = ROOT / "skills" / "route-z80"
 Z80_DOMAIN_SKILLS = (
+    "port-spectranext",
     "develop-z80",
     "debug-z80",
     "audit-z80",
@@ -161,6 +163,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
             self.assertIn(boundary, debug_contract)
         self.assertIn("scripts/run_in_worktree.py", debug_contract)
 
+        port_contract = (
+            PORT / "references" / "hard-contract.md"
+        ).read_text(encoding="utf-8")
+        for boundary in (
+            "primary-tree read-only",
+            "disposable-worktree-only",
+            "authorized primary-tree mutation",
+        ):
+            self.assertIn(boundary, port_contract)
+        self.assertIn("Protected paths win over allowed paths", port_contract)
+
     def test_optimize_runtime_paths_are_structurally_resolvable(self) -> None:
         skill_file = ROOT / "skills" / "optimize-z80" / "SKILL.md"
         skill = skill_file.read_text(encoding="utf-8")
@@ -290,6 +303,26 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("The causal owner is genuinely unknown", debug)
         self.assertIn("hand the known-cause fix to `$workflow`", debug)
         self.assertIn("Do not use for root-cause diagnosis", audit)
+
+    def test_spectranext_port_route_uses_the_external_consumer_pipeline(self) -> None:
+        router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
+        port = (PORT / "SKILL.md").read_text(encoding="utf-8")
+        contract = (PORT / "references" / "hard-contract.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("../port-spectranext/SKILL.md", router)
+        self.assertIn(
+            "not shorthand for the ZX Spectrum Next platform",
+            " ".join(router.split()),
+        )
+        self.assertIn("port request", port)
+        self.assertIn("docs/porting.md", port)
+        self.assertIn("consumer repository root", port)
+        self.assertIn("Do not maintain a second state file", port)
+        self.assertIn("Spectranext checkout owns only generic", contract)
+        self.assertNotIn(r"C:\dev\Spectranext", port)
+        self.assertNotIn("port_pipeline.py", port)
 
     def test_debug_uses_progressive_causal_reference(self) -> None:
         debug_path = ROOT / "skills" / "debug-z80" / "SKILL.md"

@@ -9,6 +9,7 @@
       "enum": [
         "route-z80",
         "workflow",
+        "port-spectranext",
         "develop-z80",
         "debug-z80",
         "audit-z80",
