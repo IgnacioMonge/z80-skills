@@ -353,10 +353,10 @@ sí solos.
 ### Requisitos
 
 - Codex con soporte para plugins y skills.
-- Los niveles Medium y Heavy de `workflow` requieren subagentes de Codex y usan
-  únicamente los tipos integrados `default`, `worker` y `explorer`. Sol y Luna
-  son modelos preferidos, no dependencias de perfiles personalizados; cualquier
-  pérdida del modelo fijado se gestiona y declara según el contrato del workflow.
+- Los niveles Light y Medium de `workflow` trabajan directamente; Heavy usa
+  subagentes cuando están disponibles. Los roles y la selección de modelos
+  siguen la [política canónica](skills/workflow/references/roles.md), que comprueba
+  las capacidades del runtime y declara las sustituciones de modelo o esfuerzo.
 - Git para clonar y actualizar el repositorio.
 - Python 3.9 o posterior para los helpers generales; Python 3.11 o posterior
   es obligatorio cuando `optimize-z80` deba interpretar o aplicar una política

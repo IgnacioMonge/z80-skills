@@ -84,6 +84,9 @@ For Heavy, use the portable roles in
 
 Use only documented built-in `worker`, `explorer`, or `default` types.
 Task names identify workflow roles; they are not external custom-agent profiles.
+Pass a type only when the runtime exposes `agent_type`; otherwise put the role
+in the capsule. Choose model and reasoning effort per assignment using
+`references/roles.md`, not from the workflow level or task name.
 
 ## Run the route
 
@@ -95,8 +98,7 @@ Task names identify workflow roles; they are not external custom-agent profiles.
   gate holds.
 
 If subagents are unavailable, continue directly unless the user explicitly
-required multi-agent execution; then report the exact limitation. If a preferred
-model is unavailable, use the runtime-selected subagent model only when the user
-did not explicitly request a model, and disclose that model pinning was lost.
-Never substitute an explicitly requested model or claim a model ran without
-child-thread or runtime evidence.
+required multi-agent execution; then report the exact limitation. For model or
+effort availability, use the selection and fallback rules in
+[references/roles.md](references/roles.md). Never substitute an explicit user
+choice or claim a model ran without child-thread or runtime evidence.

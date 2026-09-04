@@ -348,10 +348,10 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Requirements
 
 - Codex with plugin and skill support.
-- `workflow` Medium and Heavy require Codex subagents and use only the built-in
-  `default`, `worker`, and `explorer` agent types. Sol and Luna are preferred
-  models, not custom-profile dependencies; unavailable model pinning is handled
-  and disclosed according to the workflow contract.
+- `workflow` Light and Medium run directly; Heavy uses subagents when available.
+  Roles and model selection follow the canonical
+  [workflow policy](skills/workflow/references/roles.md), which checks runtime
+  capabilities and discloses model or effort fallbacks.
 - Git to clone and update the repository.
 - Python 3.9 or later for general helpers; Python 3.11 or later is required
   whenever `optimize-z80` must parse or enforce a TOML policy.

@@ -7,7 +7,7 @@ Before dispatch, classify each ownership surface using the intersection of user
 authorization, project instructions, and the domain contract:
 
 - **primary-tree read-only:** use only `explorer` or read-only `default` roles;
-  do not spawn `executor` or `sol_executor` for that surface.
+  do not spawn `executor` for that surface.
 - **disposable-worktree-only:** an `executor` may edit or build only inside a
   verified, domain-gated disposable worktree; never the primary tree.
 - **authorized primary-tree mutation:** an implementer may edit and run checks
@@ -18,8 +18,10 @@ authorization, project instructions, and the domain contract:
 - `explorer`: built-in `explorer`, read-only investigation.
 - `executor`: built-in `worker`, default implementation.
 - `verifier`: built-in `default`, independent verification and failure analysis.
-- `sol_executor`: built-in `worker`, exceptional implementation only when the
-  normal implementer cannot reasonably own the package; at most one.
+
+Select model and reasoning effort per assignment through `roles.md`; a model
+change does not create a new role or widen ownership. Use built-in types only
+when the runtime accepts `agent_type`.
 
 ## Dispatch gate
 
@@ -83,4 +85,5 @@ Do not trust natural-language claims about model identity.
 ## Completion
 
 Integrate only verified work and inspect critical hunks and boundaries. Finish
-with call counts for `explorer`, `executor`, `sol_executor`, and `verifier`.
+with call counts by role and runtime-confirmed model/effort when available;
+otherwise label settings as requested, not confirmed.

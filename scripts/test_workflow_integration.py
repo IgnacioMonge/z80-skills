@@ -57,8 +57,8 @@ class WorkflowIntegrationTest(unittest.TestCase):
         roles = " ".join(roles_text.split())
         agent_types = set(
             re.findall(
-                r"^\| [^|]+ \| `[^`]+` \| `([^`]+)` \| `[^`]+` \|$",
-                roles_text,
+                r"^\| [^|]+ \| `[^`]+` \| `([^`]+)` \|$",
+                roles_text.split("\nSpawn every role", 1)[0],
                 re.MULTILINE,
             )
         )
@@ -87,7 +87,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             combined,
         )
         self.assertIn('reasoning_effort="medium"', roles)
-        self.assertIn("Raise effort to `high` or `max`", roles)
+        self.assertNotIn("sol_executor", combined)
 
     def test_z80_skills_delegate_without_widening_permissions(self) -> None:
         for name in Z80_DOMAIN_SKILLS:

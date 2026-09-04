@@ -93,6 +93,11 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
                 self.assertIn("Do not duplicate delegated discovery", text)
             self.assertIn("## Direct repair loop", heavy)
             self.assertIn("within 250 words", roles)
+            for text in (skill, heavy, roles):
+                self.assertNotIn("sol_executor", text)
+                self.assertNotIn("gpt-", text)
+            self.assertIn("Workers must not spawn children", roles)
+            self.assertIn("supported models and reasoning controls", roles)
             self.assertEqual(
                 medium,
                 (WORKFLOW / "references" / "medium.md").read_text(

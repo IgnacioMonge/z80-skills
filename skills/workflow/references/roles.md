@@ -4,22 +4,57 @@ Use only Codex's documented built-in agent types. Role behavior comes from the
 self-contained task capsule, not from custom profiles installed outside this
 plugin.
 
-| Workflow role | Task name | Built-in agent type | Preferred model |
-| --- | --- | --- | --- |
-| Investigator | `explorer` | `explorer` | `gpt-5.6-luna` |
-| Implementer | `executor` | `worker` | `gpt-5.6-luna` |
-| Verifier | `verifier` | `default` | `gpt-5.6-luna` |
-| Exceptional implementer | `sol_executor` | `worker` | `gpt-5.6-sol` |
+| Workflow role | Task name | Built-in agent type |
+| --- | --- | --- |
+| Investigator | `explorer` | `explorer` |
+| Implementer | `executor` | `worker` |
+| Verifier | `verifier` | `default` |
 
 Spawn every role with `fork_turns="none"` and a self-contained capsule. Set
-the preferred model explicitly when supported. For `gpt-5.6-luna`, use
-`reasoning_effort="medium"` by default. Raise effort to `high` or `max`
-only when the capsule identifies difficult, ambiguous, or high-risk reasoning
-whose expected benefit justifies the added latency and token cost. A task name
-is only a stable label for messaging and call counts; never pass it as a custom
-`agent_type`.
+the selected model and effort explicitly when supported. Pass `agent_type`
+only if the runtime exposes that parameter; otherwise express the role in the
+capsule. Task names are stable labels, never custom agent profiles.
+
+## Model and reasoning selection
+
+Choose for the assignment, independently of role and workflow level. Keep the
+main thread on its current model. These are starting preferences based on
+runtime model descriptions, not measured price, speed, or quality rankings.
+Check the live tool schema or runtime catalog before dispatch; it determines
+available model IDs, supported efforts, and spawn parameters. Do not infer
+availability from this table or transfer Codex model IDs to another host.
+
+| Assignment | Preferred model | Initial reasoning effort |
+| --- | --- | --- |
+| Narrow lookup, mechanical edit, or verification with explicit criteria | `gpt-5.6-luna` | `medium` |
+| Cohesive coding, debugging, or code review needing implementation judgment | `gpt-5.6-terra` | `medium` |
+| General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-5.6-sol` | `medium` |
+| Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-6-astra` | `high` |
+
+Use `reasoning_effort="medium"` for ordinary bounded work. Raise effort to
+`high` for a specific reasoning difficulty. Use `max` only when a named hard
+criterion warrants it; never set Luna or Sol to `max` merely because they are
+delegates or the workflow is Heavy. Other effort levels require explicit user
+choice or task-specific evidence, and must be supported by the selected model.
+
+Select a suitable model upfront; do not require a failed Luna attempt before
+using Terra, Sol, or Astra. Missing inputs, tools, permissions, or reproduction
+evidence require fixing the capsule or reporting a blocker, not more reasoning.
+If a worker's reasoning falls short, retain its evidence, identify the gap, and
+choose either more effort or a better-suited model. Stop the prior worker before
+transferring mutable ownership; do not replay completed checks without cause.
+
+An explicit user model or effort wins; never silently substitute it. For an
+unavailable preference, select another advertised model suited to the same
+assignment; if none can be selected, use the runtime default. Disclose the
+fallback and any lost effort pinning. If an explicit choice cannot be honored,
+report the limitation before dependent work. Record requested settings and
+runtime-confirmed settings separately; do not infer actual identity from a
+worker's prose.
 
 ## Capsule contracts
+
+Workers must not spawn children; the main thread owns dispatch and model changes.
 
 - **Investigator:** remain read-only; trace the assigned surface and return
   evidence with paths, symbols, commands, and unresolved uncertainty.
@@ -27,8 +62,6 @@ is only a stable label for messaging and call counts; never pass it as a custom
   work; make the smallest coherent change and run the requested check.
 - **Verifier:** independently test the supplied acceptance criteria; do not fix
   defects; return exact commands, outcomes, and residual risk.
-- **Exceptional implementer:** use only when the main thread explains why the
-  bounded package cannot reasonably be handled by the default implementer.
 
 ## Upward report contract
 
@@ -49,5 +82,4 @@ read-only; implementers may write only in the classified surface. Assign one
 owner to each mutable file set; parallel implementers must use disjoint
 surfaces. A role never widens a network, approval, or mutation boundary.
 
-If a preferred model is rejected, follow `SKILL.md` model fallback rules. The
-role contract remains identical regardless of model.
+The role contract remains identical regardless of model.

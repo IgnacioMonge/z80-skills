@@ -181,7 +181,6 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
         '| Investigator | `explorer` | `explore` | `read-only` | `none` |',
         '| Implementer | `executor` | `general-purpose` | `read-write` or `all` | boundary-dependent |',
         '| Verifier | `verifier` | `general-purpose` | `read-only` or `execute` | `none` |',
-        '| Exceptional implementer | `sol_executor` | `general-purpose` | `all` | boundary-dependent |',
         '',
         '## Spawn rules (Grok)',
         '',
@@ -189,6 +188,10 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
         '- Put the workflow role in `description`; prefer `background: true` and collect',
         '  results with `get_command_or_subagent_output`.',
         '- Do not pass `model` unless the user explicitly requested one.',
+        '- Check the live host schema for supported models and reasoning controls.',
+        '  Honor explicit user settings; if unsupported, report the limitation before',
+        '  dependent work. Do not import Codex model IDs or effort defaults.',
+        '- Report requested settings separately from runtime-confirmed settings.',
         '- Map Codex `explorer` to `explore`, and `worker` or `default` to',
         '  `general-purpose`. A fresh spawn replaces `fork_turns="none"`.',
         '- For disposable-worktree-only mutation, require `isolation="worktree"` or',
@@ -206,26 +209,22 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
     $nl = if ($heavy.Contains("`r`n")) { "`r`n" } else { "`n" }
     $oldReadOnly = @(
         '- **primary-tree read-only:** use only `explorer` or read-only `default` roles;',
-        '  do not spawn `executor` or `sol_executor` for that surface.'
+        '  do not spawn `executor` for that surface.'
     ) -join $nl
     $newReadOnly = @(
         '- **primary-tree read-only:** use only `explore` or read-only `general-purpose` roles;',
-        '  do not spawn `executor` or `sol_executor` for that surface.'
+        '  do not spawn `executor` for that surface.'
     ) -join $nl
     $heavy = $heavy.Replace($oldReadOnly, $newReadOnly)
     $oldRoles = @(
         '- `explorer`: built-in `explorer`, read-only investigation.',
         '- `executor`: built-in `worker`, default implementation.',
-        '- `verifier`: built-in `default`, independent verification and failure analysis.',
-        '- `sol_executor`: built-in `worker`, exceptional implementation only when the',
-        '  normal implementer cannot reasonably own the package; at most one.'
+        '- `verifier`: built-in `default`, independent verification and failure analysis.'
     ) -join $nl
     $newRoles = @(
         '- `explorer`: `explore`, read-only investigation.',
         '- `executor`: write-capable `general-purpose`, default implementation.',
-        '- `verifier`: read-only or execute-only `general-purpose`, independent verification.',
-        '- `sol_executor`: full-capability `general-purpose`, exceptional implementation only',
-        '  when the normal implementer cannot reasonably own the package; at most one.'
+        '- `verifier`: read-only or execute-only `general-purpose`, independent verification.'
     ) -join $nl
     $heavy = $heavy.Replace($oldRoles, $newRoles)
     $oldSpawn = @(
