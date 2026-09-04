@@ -1,0 +1,6 @@
+interface:
+  display_name: "Send BridgeZX"
+  short_description: "Send files to ZX or Next via BridgeZX"
+  default_prompt: "Use $send-bridgezx to send this build artifact to my ZX Spectrum using the last known BridgeZX IP."
+policy:
+  allow_implicit_invocation: false

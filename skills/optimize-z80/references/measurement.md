@@ -34,6 +34,23 @@ Static estimates identify candidates; fresh artifacts may prove size; emulator
 or `ticks` can prove the exercised kernel; hardware evidence applies only to
 the tested model and conditions.
 
+### Compression tradeoff evidence card
+
+Keep one compact card per retained compression candidate, using measured values
+when available and labeling estimates explicitly:
+
+```text
+asset | original_bytes | packed_bytes | decompressor_plus_glue_bytes |
+peak_workspace_bytes | residency/bank_pressure | decompression_cycles |
+transition/stall_frames | result | evidence_ref | current
+```
+
+`result` must make the tradeoff visible (including net storage and peak-RAM
+delta); do not report packed bytes alone. Retain machine-readable results when
+the existing tooling supports them, alongside the human summary. Keep
+decompression cycles and transition/stall frames separate from static byte
+claims.
+
 ## One-Candidate Experiment
 
 Requires explicit user approval.

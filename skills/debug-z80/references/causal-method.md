@@ -10,6 +10,11 @@ Use this reference only after the `debug-z80` entry gate passes.
 2. Reuse fresh evidence when it identifies the source state and configuration.
    Otherwise reproduce once with the narrowest command or input that preserves
    the symptom. Do not repeat an unchanged deterministic command.
+   For visible symptoms, stop at a named event/state boundary rather than an
+   arbitrary sleep or fixed delay; use scripted input where possible and retain
+   only changed regions or deliberate keyframes when useful. Freeze model, ROM,
+   binary, and configuration for replay. Image/state diffs are corroborating
+   product evidence, never a substitute for the violated technical invariant.
 3. Compare one known-good case when available. Change one axis at a time:
    source revision, target, 48K/128K/Next model, emulator/hardware, ROM,
    toolchain, optimization flags, memory map, bank state, interrupt state,

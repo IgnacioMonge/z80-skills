@@ -31,8 +31,12 @@ Declare one effective class before workflow dispatch:
 
 The most restrictive user, consumer, Spectranext, and workflow rule wins.
 Protected paths win over allowed paths. Never widen an allowlist to make a
-failing diff pass. Never edit the Spectranext checkout during a consumer port
-unless the user separately authorizes one generic reusable change there.
+failing diff pass. A generic platform repair is never a consumer-seam edit: it
+must use the Spectranext checkout, focused platform gates and its own commit.
+When the live Spectranext `AGENTS.md` or `docs/porting.md` grants standing
+authorization for a bounded, compatible, consumer-agnostic repair, that is the
+required authority; do not stop merely to ask the user to repeat it. Stop only
+when the live canon classifies the change as requiring an explicit decision.
 
 Branch or worktree creation must match the authorized topology recorded by the
 consumer manifest. Do not rewrite history. Commit or push only when required by

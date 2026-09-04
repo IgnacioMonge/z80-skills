@@ -100,6 +100,9 @@ Bundled helpers are evidence-selective: start with
 `contention_audit.py`, `tstate_estimate.py`, `bincompare.py`, and
 `score_candidates.py` only for the matching signal. Scanner and static
 timing/map estimates are candidate evidence, never `PROVEN` by themselves.
+When ASM comments claim exact cycle costs, run `tstate_estimate.py
+--audit-annotations`; a mismatch or unknown blocks promotion, while a match
+still remains static candidate evidence until the relevant runtime gate passes.
 Python 3.11+ is required whenever a TOML policy must be parsed or enforced;
 `score_candidates.py --policy` rejects older runtimes. On Python 3.9–3.10,
 run only policy-free paths or pass explicitly verified `--target` and

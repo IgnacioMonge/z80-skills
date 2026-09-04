@@ -76,6 +76,11 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
 
             installed = destination / "workflow"
             self.assertTrue((destination / "route-z80" / "SKILL.md").is_file())
+            installed_document = (
+                destination / "document-z80" / "SKILL.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("~/.grok/skills/workflow/SKILL.md", installed_document)
+            self.assertIn("## Runtime Portability", installed_document)
             skill = (installed / "SKILL.md").read_text(encoding="utf-8")
             medium = (installed / "references" / "medium.md").read_text(
                 encoding="utf-8"

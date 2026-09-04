@@ -40,6 +40,21 @@ R16 = {"bc", "de", "hl", "sp"}
 IDX = {"ix", "iy"}
 CONDITIONS = {"nz", "z", "nc", "c", "po", "pe", "p", "m"}
 LABEL_RE = re.compile(r"^\s*[A-Za-z_.$@?][\w.$@?]*:\s*")
+ANNOTATION_PAIR_RE = re.compile(r"(?<!\d)(\d+)\s*/\s*(\d+)\s*T(?:states?)?\b", re.I)
+ANNOTATION_SINGLE_RE = re.compile(r"(?<!\d)(\d+)\s*T(?:states?)?\b", re.I)
+ANNOTATION_NAMED_RE = re.compile(
+    r"(?:(?:not[- ]?taken\s*[:=]?\s*(\d+)\s*T[^,;]*(?:\s*[,;]\s*|\s+).*?taken\s*[:=]?\s*(\d+)\s*T)|"
+    r"(?:taken\s*[:=]?\s*(\d+)\s*T[^,;]*(?:\s*[,;]\s*|\s+).*?not[- ]?taken\s*[:=]?\s*(\d+)\s*T))",
+    re.I,
+)
+
+# For conditional instructions, annotations use the conventional
+# taken/not-taken order.  The static estimator deliberately keeps its
+# historical single-pass value; this table is only for opt-in auditing.
+CONDITIONAL_TIMINGS = {
+    "jr": (12, 7), "djnz": (13, 8), "jp": (10, 10),
+    "call": (17, 10), "ret": (11, 5),
+}
 
 
 def clean(line):
@@ -189,21 +204,74 @@ def estimate(op, args):
         return 12 if "(c)" in args.lower() else 11
     return None
 
+
+def annotation_status(op, args, comment):
+    """Return (status, detail) for an inline T-state annotation."""
+    named = ANNOTATION_NAMED_RE.search(comment)
+    pair = ANNOTATION_PAIR_RE.search(comment) if not named else None
+    single = ANNOTATION_SINGLE_RE.search(comment) if not pair else None
+    named_branches = (
+        re.search(r"\btaken\b", comment, re.I)
+        and re.search(r"\bnot[- ]?taken\b", comment, re.I)
+    )
+    if named_branches and not named and not pair:
+        return "unknown", "named annotation is not computable"
+    if named:
+        # Named forms are accepted in either order but normalized to the
+        # canonical taken/not-taken tuple.
+        if named.group(1):
+            actual = (int(named.group(2)), int(named.group(1)))
+        else:
+            actual = (int(named.group(3)), int(named.group(4)))
+        pair = actual
+    if not pair and not single:
+        if re.search(r"\b(?:t[- ]?states?|cycles?|taken|not[- ]?taken)\b", comment, re.I):
+            return "unknown", "annotation is not computable"
+        return None, "no recognizable T-state annotation"
+    is_conditional = op == "djnz" or (
+        op in CONDITIONAL_TIMINGS and split_args(args)[0] in CONDITIONS
+    )
+    expected = CONDITIONAL_TIMINGS.get(op) if is_conditional else None
+    if expected is None:
+        actual = ((int(pair.group(1)), int(pair.group(2))) if hasattr(pair, "group") else pair) if pair else int(single.group(1))
+        estimate_value = estimate(op, args)
+        if estimate_value is None:
+            return "unknown", "opcode has no timing model"
+        if isinstance(actual, tuple):
+            status = "match" if actual == (estimate_value, estimate_value) else "mismatch"
+            return status, "expected fixed %dT" % estimate_value
+        return ("match" if actual == estimate_value else "mismatch"), "expected %dT" % estimate_value
+    if pair:
+        actual = ((int(pair.group(1)), int(pair.group(2))) if hasattr(pair, "group") else pair)
+        return ("match" if actual == expected else "mismatch"), "expected %d/%dT (taken/not-taken)" % expected
+    actual = int(single.group(1))
+    if expected[0] == expected[1] and actual == expected[0]:
+        return "match", "expected %dT on either branch" % actual
+    return ("partial" if actual in expected else "mismatch"), "expected %d/%dT (taken/not-taken)" % expected
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("file")
     ap.add_argument("--top-window", type=int, default=12)
+    ap.add_argument("--audit-annotations", action="store_true",
+                    help="validate inline ; N T or ; N/M T annotations")
     args = ap.parse_args()
     path = Path(args.file)
     rows = []
     manual_markers = []
     total = 0
     unknown = 0
+    audit = []
     for n, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
         parsed = clean(line)
         if not parsed:
             continue
         op, rest = parsed
+        if args.audit_annotations and ";" in line:
+            comment = line.split(";", 1)[1]
+            status, detail = annotation_status(op, rest, comment)
+            if status:
+                audit.append((n, status, line.strip(), detail))
         branch_head, _ = split_args(rest)
         t = estimate(op, rest)
         if op in REPEAT:
@@ -226,6 +294,15 @@ def main():
         print("manual_timing_markers:")
         for n, src in manual_markers[:20]:
             print(f"  line {n}: {src}")
+    audit_failures = 0
+    if args.audit_annotations:
+        print("annotation_audit:")
+        for n, status, src, detail in audit:
+            print(f"  line {n}: {status}: {src} ({detail})")
+            if status in {"mismatch", "unknown"}:
+                audit_failures += 1
+        if not audit:
+            print("  none")
     if rows:
         w = max(1, args.top_window)
         windows = []
@@ -235,6 +312,8 @@ def main():
         for s, a, b in sorted(windows, reverse=True)[:10]:
             print(f"hot_window {s:5d}T lines {a}-{b}")
     print("note: single-pass estimate only; multiply marked loops manually and account for contention, branch direction, and windows crossing labels")
+    if audit_failures:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 {
-  "current_manifest_version": "0.6.1+codex.20260825083916",
-  "evaluated_at": "2026-08-19T16:42:34Z",
+  "current_manifest_version": "0.8.0",
+  "evaluated_at": "2026-09-04T19:31:56.307330+00:00",
   "model": "mixed; see suite records",
   "execution": "fresh ephemeral read-only Codex session per case",
   "routing": {
@@ -33,6 +33,16 @@
       "passed": 5,
       "failed": 0
     },
+    "targeted_implicit_debug_run": {
+      "plugin_version": "0.6.1+codex.20260827072508",
+      "evaluated_at": "2026-08-27T07:26:54Z",
+      "model": "runtime-default",
+      "case_ids": ["implicit-z80-debug-precedence"],
+      "passed": 1,
+      "failed": 0,
+      "accuracy": 1.0,
+      "debug_z80_contract_observed": true
+    },
     "targeted_port_run": {
       "plugin_version": "0.6.1+codex.20260825083916",
       "evaluated_at": "2026-08-25T08:43:32Z",
@@ -47,7 +57,7 @@
       "failed": 0,
       "accuracy": 1.0
     },
-    "current_suite": {
+    "previous_suite": {
       "cases": 24,
       "status": "SUPERSEDED",
       "plugin_version": "0.6.1+codex.20260819151353",
@@ -56,11 +66,34 @@
       "passed": 24,
       "failed": 0,
       "accuracy": 1.0,
-      "post_run_delta": "This verified 24-case run predates the port-spectranext route. The current 28-case routing dataset requires a fresh runtime evaluation before any new pass claim."
+      "post_run_delta": "This verified 24-case run predates the port-spectranext, send-bridgezx, and document-z80 routes plus the implicit Z80-debug precedence case. See current_suite for the complete 0.8.0 evaluation."
     },
-    "claim": "The previous 24-case routing suite passed on gpt-5.6-sol. All four added port-spectranext boundary cases passed a targeted gpt-5.6-sol run; the expanded 28-case suite has not yet been run in full."
+    "current_suite": {
+      "cases": 34,
+      "status": "PASS",
+      "plugin_version": "0.8.0",
+      "installed_version": "0.8.0",
+      "evaluated_at": "2026-09-04T19:31:56.307330+00:00",
+      "model": "runtime-default",
+      "passed": 34,
+      "failed": 0,
+      "accuracy": 1.0,
+      "all_routes_precision": 1.0,
+      "all_routes_recall": 1.0
+    },
+    "claim": "The previous 24-case routing suite passed on gpt-5.6-sol. The complete 34-case suite passed on installed 0.8.0 using the runtime-default model, including BridgeZX, documentation, and implicit Z80-debug precedence; every route had precision and recall of 1.0."
   },
   "evidence": {
+    "current_suite": {
+      "cases": 4,
+      "status": "PASS",
+      "plugin_version": "0.8.0",
+      "installed_version": "0.8.0",
+      "evaluated_at": "2026-09-04T19:17:30.008817+00:00",
+      "model": "runtime-default",
+      "passed": 4,
+      "failed": 0
+    },
     "plugin_version": "0.6.1+codex.20260819154645",
     "evaluated_at": "2026-08-19T16:16:33Z",
     "model": "runtime-default",

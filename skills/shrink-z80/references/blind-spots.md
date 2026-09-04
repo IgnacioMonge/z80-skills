@@ -33,6 +33,23 @@ Use this file as a pre-submit guard against shallow shrink passes.
 - display next-line / attribute strategy considered when screen code dominates
 - Z80N wins gated by multi-target matrix
 - compression reported as Net_storage (packed+decoder+call glue) plus separate RAM_peak_delta
+- compression claims have a compact evidence card: real-asset packed bytes,
+  decompressor+glue bytes, peak workspace/residency/bank pressure,
+  decompression cycles, and transition/stall frames are measured or clearly
+  marked estimated; retain machine-readable results when existing tooling
+  supports them
+
+Use this minimum card for each retained compression candidate:
+
+```text
+asset | original_bytes | packed_bytes | decompressor_plus_glue_bytes |
+peak_workspace_bytes | residency/bank_pressure | decompression_cycles |
+transition/stall_frames | Net_storage | RAM_peak_delta | evidence_ref | current
+```
+
+Keep packed bytes, runtime cost, and residency pressure distinct; missing
+evidence is `NOT MEASURED`, not silently zero. Use `ESTIMATED` only for a
+defensible calculation with its assumptions recorded.
 - buffer lifetime overlays considered before growing BSS
 - hard-contract: current-code evidence; no leftover experiment worktrees
 

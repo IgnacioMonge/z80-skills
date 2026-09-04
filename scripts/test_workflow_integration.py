@@ -14,13 +14,16 @@ ROUTER = ROOT / "skills" / "route-z80"
 Z80_DOMAIN_SKILLS = (
     "port-spectranext",
     "develop-z80",
+    "document-z80",
     "debug-z80",
     "audit-z80",
     "organize-z80",
     "shrink-z80",
     "optimize-z80",
 )
-Z80_SKILLS = ("route-z80", *Z80_DOMAIN_SKILLS)
+Z80_OPERATION_SKILLS = ("send-bridgezx",)
+Z80_ROUTED_SKILLS = (*Z80_OPERATION_SKILLS, *Z80_DOMAIN_SKILLS)
+Z80_SKILLS = ("route-z80", *Z80_ROUTED_SKILLS)
 ALL_SKILLS = (*Z80_SKILLS, "workflow")
 ANALYSIS_SKILLS = ("audit-z80", "shrink-z80", "optimize-z80")
 LANE_FILES = (
@@ -49,6 +52,9 @@ class WorkflowIntegrationTest(unittest.TestCase):
             self.assertNotIn("Z80", path.read_text(encoding="utf-8"), path)
 
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text())
+        self.assertEqual(manifest, json.loads((ROOT / "plugin.json").read_text()))
+        gemini = json.loads((ROOT / "gemini-extension.json").read_text())
+        self.assertEqual(gemini["version"], manifest["version"])
         self.assertEqual((ROOT / manifest["skills"]).resolve(), ROOT / "skills")
         self.assertTrue(WORKFLOW.is_dir())
 
@@ -242,12 +248,12 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "$route-z80" in prompt for prompt in interface["defaultPrompt"]
         ))
         self.assertFalse(any(
-            sum(f"${name}" in prompt for name in Z80_DOMAIN_SKILLS) > 1
+            sum(f"${name}" in prompt for name in Z80_ROUTED_SKILLS) > 1
             for prompt in interface["defaultPrompt"]
         ))
 
     def test_only_router_is_implicitly_invoked_for_z80_domains(self) -> None:
-        for name in Z80_DOMAIN_SKILLS:
+        for name in Z80_ROUTED_SKILLS:
             metadata = (
                 ROOT / "skills" / name / "agents" / "openai.yaml"
             ).read_text(encoding="utf-8")
@@ -273,15 +279,20 @@ class WorkflowIntegrationTest(unittest.TestCase):
     def test_z80_domain_router_is_thin_and_develop_is_opt_in(self) -> None:
         router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
         develop = (DEVELOP / "SKILL.md").read_text(encoding="utf-8")
+        router_frontmatter = re.match(r"\A---\n(.*?)\n---\n", router, re.DOTALL)
         frontmatter = re.match(r"\A---\n(.*?)\n---\n", develop, re.DOTALL)
+        self.assertIsNotNone(router_frontmatter)
         self.assertIsNotNone(frontmatter)
+        router_description = router_frontmatter.group(1)
         description = frontmatter.group(1)
 
-        for name in (*Z80_DOMAIN_SKILLS, "workflow"):
+        for name in (*Z80_ROUTED_SKILLS, "workflow"):
             self.assertIn(f"../{name}/SKILL.md", router)
         self.assertIn("Select one primary route", router)
         self.assertIn("load every sibling `SKILL.md`", router)
         self.assertIn("ordinary bounded fix", router)
+        self.assertIn("even when the match is unambiguous", router_description)
+        self.assertIn("observed unresolved failures", router_description)
         self.assertIn("remain in `route-z80`", router)
         self.assertIn("appear together as alternatives", router)
         self.assertIn("not sufficient activation", develop)
@@ -298,6 +309,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         )
 
         self.assertIn("one observed failure with unresolved causality", router)
+        self.assertIn("rather than in a generic debugging workflow", router)
         self.assertIn("cause is already established", router)
         self.assertIn("There is an observed failure", debug)
         self.assertIn("The causal owner is genuinely unknown", debug)
@@ -323,6 +335,44 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("Spectranext checkout owns only generic", contract)
         self.assertNotIn(r"C:\dev\Spectranext", port)
         self.assertNotIn("port_pipeline.py", port)
+
+    def test_bridgezx_route_uses_official_client_and_last_ip(self) -> None:
+        router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
+        send = (ROOT / "skills" / "send-bridgezx" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        executor = (
+            ROOT / "skills" / "send-bridgezx" / "scripts" / "bridgezx_transfer.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("../send-bridgezx/SKILL.md", router)
+        self.assertIn("BridgeZX", send)
+        self.assertIn("last_ip", send)
+        self.assertIn("expected_target=detected_target", executor)
+        self.assertIn("api.build_remote_path_map(sources)", executor)
+        self.assertNotIn("socket", executor)
+
+    def test_documentation_route_is_grounded_and_bilingual(self) -> None:
+        router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
+        document = (
+            ROOT / "skills" / "document-z80" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("../document-z80/SKILL.md", router)
+        self.assertIn("README as the landing page", document)
+        self.assertIn("Verify commands, options, paths, filenames", document)
+        self.assertIn("language variants aligned", document)
+        self.assertIn("A workflow route never widens", document)
+        self.assertIn("## Workflow Core", document)
+        for demand in ("Focused", "Standard", "Deep"):
+            self.assertIn(f"**{demand}:**", document)
+        self.assertIn("An explicit workflow level wins", document)
+        self.assertIn("If the sibling skill is unavailable", document)
+        self.assertIn("one coupled mutable", document)
+        self.assertIn("A review request is read-only", document)
+        self.assertIn("`AGENTS.md`", document)
+        self.assertIn("`agent_docs/`", document)
+        self.assertNotIn("- **Light:**", document)
 
     def test_debug_uses_progressive_causal_reference(self) -> None:
         debug_path = ROOT / "skills" / "debug-z80" / "SKILL.md"

@@ -172,8 +172,12 @@ def main() -> int:
 
         out = run(str(SKILL / "scripts" / "preflight_scan.py"), str(root))
         assert "[binary_artifacts]" in out and "blob.tap" in out
+        # Scanner subprocess latency must not make this fresh fixture stale.
+        for path in root.rglob("*"):
+            if path.is_file():
+                os.utime(path, (1_700_000_000, 1_700_000_000))
         out = run(str(SKILL / "scripts" / "artifact_freshness.py"), str(root))
-        assert "verdict:" in out
+        assert "verdict: FRESH" in out
         out = run(str(SKILL / "scripts" / "generated_helper_scan.py"), str(root / "build" / "foo.lst"), str(root / "build" / "a.map"))
         assert "[listing]" in out
 

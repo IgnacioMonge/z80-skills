@@ -1,0 +1,6 @@
+interface:
+  display_name: "Document Z80"
+  short_description: "Create consistent, evidence-based Z80 docs"
+  default_prompt: "Use $document-z80 to restructure this repository's README and keep its English and Spanish documentation aligned."
+policy:
+  allow_implicit_invocation: false

@@ -3,9 +3,9 @@
 **Idiomas:** [English](README.md) · Español
 
 Plugin para Codex con un workflow adaptativo independiente, un selector de
-dominio ligero y siete skills complementarios para desarrollar, portar,
-depurar, analizar y organizar proyectos Z80, especialmente software de ZX
-Spectrum escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
+dominio ligero, ocho skills complementarios de ingeniería y envío protegido
+mediante BridgeZX para proyectos Z80, especialmente software de ZX Spectrum
+escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
 
 El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
 el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
@@ -13,7 +13,8 @@ riesgo real y distinguen claramente entre evidencia probada, estimaciones e
 hipótesis.
 
 > Ejecución adaptativa, desarrollo dirigido por especificaciones, depuración
-> causal, análisis, organización, reducción de tamaño y optimización multiobjetivo basados en
+> causal, análisis, documentación de repositorios, organización, reducción de
+> tamaño y optimización multiobjetivo basados en
 > evidencia para Z80 y ZX Spectrum.
 
 ## Contenido
@@ -35,9 +36,11 @@ hipótesis.
 
 | Skill | Pregunta principal | Resultado |
 |---|---|---|
-| `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa light, un flujo medium controlado por Sol o coordinación heavy plana con workers Luna acotados. |
+| `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa Light o Medium en el hilo principal, o coordinación Heavy plana con workers integrados y acotados. |
 | `route-z80` | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
+| `send-bridgezx` | ¿Qué ficheros o directorios concretos deben llegar al ZX o Next? | Envío BridgeZX protegido con IP explícita o última conocida, destino opcional y secuencia solicitada. |
 | `develop-z80` | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
+| `document-z80` | ¿Cómo estructurar la documentación pública del repositorio y mantenerla correcta entre idiomas? | README y jerarquía documental basados en evidencia, con comandos, requisitos de hardware y paridad EN/ES verificados. |
 | `port-spectranext` | ¿Cómo atraviesa un programa ZX existente el pipeline consumidor del cartucho Spectranext? | Intake canónico, implementación acotada, gates ligados a artefactos, evidencia física y handoff final. |
 | `debug-z80` | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
 | `audit-z80` | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
@@ -46,13 +49,18 @@ hipótesis.
 | `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
 
 `workflow` es independiente de Z80 y selecciona el esfuerzo de ejecución.
-`route-z80` selecciona dominio únicamente cuando el objetivo es realmente
-ambiguo. Los siete skills especialistas se solapan solo donde es útil:
+`route-z80` es el único punto de entrada implícito para seleccionar dominio Z80
+desde lenguaje natural, incluidas coincidencias inequívocas con un especialista.
+Los skills enrutados se solapan solo donde es útil:
 
 - Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
 - Usa `route-z80` para elegir un especialista sin cargar todos los candidatos.
+- Usa `send-bridgezx` para entregar ficheros o directorios mediante el cliente
+  oficial BridgeZX sin mantener otra IP ni otra implementación del protocolo.
 - Usa `develop-z80` solo para una iniciativa explícita de producto o un dossier
   SDD existente, no para fixes ordinarios ni features aisladas del repositorio.
+- Usa `document-z80` para crear, reestructurar, revisar o sincronizar la
+  documentación pública sin borrar la identidad del proyecto.
 - Usa `port-spectranext` para portar un programa ZX existente al cartucho
   Spectranext, no para targets ZX Spectrum Next ni trabajo sobre el backend.
 - Usa `debug-z80` para un fallo observado cuyo owner causal sigue sin conocerse.
@@ -100,8 +108,8 @@ El skill independiente `workflow` es el núcleo común de ejecución:
 | Nivel | Estrategia |
 |---|---|
 | **Light** | El hilo principal resuelve directamente una tarea acotada. |
-| **Medium** | Un controlador Sol persistente planifica y revisa un flujo de ejecución Luna. |
-| **Heavy** | Un controlador Sol persistente coordina workers Luna independientes y acotados en topología plana. |
+| **Medium** | El hilo principal resuelve directamente un flujo ordenado de varios pasos. |
+| **Heavy** | El hilo principal coordina workers integrados independientes y acotados en topología plana. |
 
 En `auto`, cada skill Z80 aporta señales de dominio `Focused`, `Standard` o
 `Deep` después del preflight. Workflow controla ruta, despacho, reparación,
@@ -156,10 +164,35 @@ normalizadas; nunca deben subir código privado ni identificadores del proyecto.
 
 ### `route-z80`
 
-Dispatcher de dominio ligero para peticiones Z80 ambiguas. Selecciona un único
-especialista según el resultado solicitado, o `workflow` para un fix de causa conocida, revisión,
-refactor, test, build o cambio documental ordinario. No decide entre Light,
-Medium y Heavy ni carga todos los skills candidatos.
+Dispatcher implícito de dominio ligero para peticiones Z80 en lenguaje natural.
+Enruta inmediatamente una coincidencia inequívoca con un especialista y sólo
+pregunta cuando quedan varios resultados primarios. Los fixes de causa conocida,
+comentarios de código, instrucciones de agentes, refactors, tests y builds van a
+`workflow`. No decide entre Light, Medium y Heavy ni carga todos los skills
+candidatos.
+
+### `send-bridgezx`
+
+Entrega protegida de ficheros o directorios locales mediante el cliente Python
+oficial de BridgeZX. Usa una IP explícita o el último host conocido por
+BridgeZX, sondea y bloquea Classic/Next antes del envío, transmite un destino
+remoto relativo opcional y convierte un orden explícito en operaciones
+secuenciales que se detienen al primer fallo. Nunca reintenta automáticamente
+un resultado incierto.
+
+### `document-z80`
+
+Creación, reestructuración, sincronización y revisión de documentación pública
+de GitHub para proyectos Z80 y ZX, siempre basada en evidencia. Trata el README
+raíz como landing page; deja tutoriales, guías orientadas a objetivos,
+referencia exacta, explicaciones de arquitectura e historial de versiones en
+sus hogares mínimos útiles; evita duplicar hechos.
+
+Verifica comandos, rutas, artefactos, máquinas objetivo, periféricos y requisitos
+del toolchain contra el repositorio. Las variantes de idioma conservan la misma
+topología y los mismos hechos sin forzar traducción literal ni una nueva
+convención de nombres. La marca, las capturas y la voz retro siguen siendo
+propias de cada proyecto.
 
 ### `develop-z80`
 
@@ -367,7 +400,7 @@ sí solos.
 ### Primera instalación
 
 Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
-checkout es la fuente canónica de los nueve skills.
+checkout es la fuente canónica de los once skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -384,17 +417,19 @@ ningún skill incluido bajo `~/.agents/skills/<skill-name>` ni en la ruta
 heredada `~/.codex/skills/<skill-name>`. Esas copias pueden ocultar el plugin
 con namespace y omitir archivos del paquete como `scripts/run_in_worktree.py`;
 copiar directorios individuales desde `skills/` no constituye una instalación
-completa. El plugin ya incluye los nueve skills, incluidos `route-z80` y
+completa. El plugin ya incluye los once skills, incluidos `route-z80` y
 `workflow`. El instalador avisa si encuentra una de estas
 ubicaciones duplicadas; muévela o desactívala antes de abrir una tarea nueva de
 Codex.
 
-Solo `route-z80` participa en la selección implícita de dominio Z80. Los siete
-especialistas siguen disponibles mediante invocación explícita de
-`$develop-z80`, `$port-spectranext`, `$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
+Solo `route-z80` participa en la selección implícita de dominio Z80. Los nueve
+skills enrutados siguen disponibles mediante invocación explícita de
+`$send-bridgezx`, `$develop-z80`, `$document-z80`, `$port-spectranext`,
+`$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
 después de decidir, `route-z80` carga únicamente el hermano seleccionado. Así el
-trabajo ordinario permanece en `workflow` y no se inyectan las siete
-descripciones especialistas.
+router también cubre peticiones inequívocas en lenguaje natural, mientras el
+trabajo ordinario permanece en `workflow` y no se inyectan las nueve descripciones
+especialistas.
 
 Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
 carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea
@@ -415,7 +450,7 @@ para que Codex cree una copia instalada nueva. No edites directamente
 
 ### Grok Build y sincronización con Claude
 
-En Windows, instala los nueve skills en Grok Build con las adaptaciones del host
+En Windows, instala los once skills en Grok Build con las adaptaciones del host
 derivadas de las fuentes canónicas de `workflow`:
 
 ```powershell
@@ -425,7 +460,7 @@ pwsh -File .\scripts\install-for-grok.ps1
 El instalador incluye `route-z80`, guarda por defecto una copia con timestamp de
 los skills existentes en el destino, incluye el runner de worktrees desechables
 y parchea únicamente las copias instaladas. Añade `-SyncClaude` para copiar
-también los mismos nueve árboles canónicos, sin adaptaciones Grok, a
+también los mismos once árboles canónicos, sin adaptaciones Grok, a
 `~/.claude/skills`:
 
 ```powershell
@@ -453,6 +488,21 @@ ejecución suficiente y conservar los contratos existentes del repositorio.
 ```text
 Usa route-z80 para elegir el único especialista relevante para esta petición
 del repositorio Z80, o workflow si no hace falta un contrato especialista.
+```
+
+### Envío mediante BridgeZX
+
+```text
+Usa send-bridgezx para enviar build/juego.nex a mi Spectrum Next con la última
+IP conocida por BridgeZX, dentro de JUEGOS/DEMO.
+```
+
+### Documentación del repositorio
+
+```text
+Usa document-z80 para reestructurar el README como landing page, verificar cada
+afirmación sobre build y hardware y mantener alineados los documentos en inglés
+y español sin perder la voz del proyecto.
 ```
 
 ### Desarrollo dirigido por especificaciones
@@ -556,6 +606,9 @@ configuración y receta deben pertenecer a la misma línea base.
   autorizado y los resultados físicos exigen observación explícita del usuario.
 - `debug-z80` mantiene diagnóstico y fixes candidatos en un worktree desechable;
   solo edita el árbol principal para una reparación solicitada y causalmente probada.
+- `document-z80` edita solo la documentación pública para personas incluida en
+  el alcance; no cambia código, configuración de build, releases ni instrucciones
+  de agentes.
 - `audit-z80` y `shrink-z80` no editan el proyecto.
 - `organize-z80` solo edita código en modo `apply` tras una petición explícita,
   línea base congelada, frontera aprobada, un slice nombrado y rollback; una
@@ -602,6 +655,13 @@ skills/
     agents/openai.yaml
     references/
   route-z80/
+    SKILL.md
+    agents/openai.yaml
+  send-bridgezx/
+    SKILL.md
+    agents/openai.yaml
+    scripts/
+  document-z80/
     SKILL.md
     agents/openai.yaml
   develop-z80/
@@ -655,6 +715,7 @@ python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
 python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
 python3 scripts/test_behavior_evals.py
+python3 skills/send-bridgezx/scripts/test_bridgezx_transfer.py
 ```
 
 También debe validarse el manifiesto del plugin y el frontmatter de cada skill

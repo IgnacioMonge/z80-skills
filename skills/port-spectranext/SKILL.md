@@ -18,8 +18,10 @@ Next platform. Route a generic Spectrum Next product or port to `develop-z80`
 when it needs a product lifecycle, or to `$workflow` for bounded engineering.
 
 Work on the Spectranext driver, tools, firmware contract, or generic pipeline
-is ordinary work in that repository, not a consumer port. Keep it separate from
-the consumer task and require its own authorization.
+is platform work, not part of the consumer seam. Keep it in the Spectranext
+repository and in its own commit. When the live external canon grants standing
+escalation for a bounded generic repair, use that authorization and continue
+without asking the user to repeat it.
 
 ## Workflow Core
 
@@ -87,8 +89,10 @@ capacity reduces parallelism, not gates or required evidence.
   investigation is a material blocker; return its verified result to the same
   port state.
 - If the declared seam cannot preserve protected product behavior, stop the
-  port. Split a product change or generic Spectranext change into a separately
-  authorized task instead of widening the manifest.
+  port. Keep a product change separate from the port seam. Route a required
+  generic Spectranext repair through the live authority policy instead of
+  widening the manifest; perform it immediately when that policy grants
+  standing authorization.
 - After a passing gate report, read
   `references/evidence-and-handoffs.md` before hardware or final handoff work.
 

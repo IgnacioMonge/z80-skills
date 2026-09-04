@@ -20,14 +20,29 @@ class BehaviorEvalTest(unittest.TestCase):
             {case["kind"] for case in routing},
             {"direct", "indirect", "negative", "ambiguous"},
         )
-        self.assertEqual(len(routing), 28)
+        self.assertEqual(len(routing), 34)
         self.assertEqual(len(evidence), 4)
+        implicit_debug = next(
+            case for case in routing
+            if case["id"] == "implicit-z80-debug-precedence"
+        )
+        self.assertEqual(implicit_debug["kind"], "indirect")
+        self.assertEqual(implicit_debug["expected"], {"route": "debug-z80"})
+        self.assertNotIn("$", implicit_debug["prompt"])
+        self.assertNotIn("skill", implicit_debug["prompt"].lower())
+        agent_docs = next(
+            case for case in routing if case["id"] == "negative-agent-docs"
+        )
+        self.assertEqual(agent_docs["kind"], "negative")
+        self.assertEqual(agent_docs["expected"], {"route": "workflow"})
         routes = {case["expected"]["route"] for case in routing}
         self.assertEqual(
             routes,
             {
                 "route-z80",
                 "workflow",
+                "document-z80",
+                "send-bridgezx",
                 "port-spectranext",
                 "develop-z80",
                 "debug-z80",
@@ -109,7 +124,16 @@ class BehaviorEvalTest(unittest.TestCase):
         )
         self.assertEqual(baseline["routing"]["full_run"]["passed"], 21)
         self.assertIn("previous 24-case routing suite passed", baseline["routing"]["claim"])
-        current = baseline["routing"]["current_suite"]
+        for suite_name in ("routing", "evidence"):
+            release = baseline[suite_name]["current_suite"]
+            cases = behavior.load_cases(ROOT / "evals" / f"{suite_name}.jsonl")
+            self.assertEqual(release["plugin_version"], manifest["version"])
+            self.assertEqual(release["installed_version"], manifest["version"])
+            self.assertEqual(release["cases"], len(cases))
+            self.assertEqual(release["passed"], len(cases))
+            self.assertEqual(release["failed"], 0)
+            self.assertEqual(release["status"], "PASS")
+        current = baseline["routing"]["previous_suite"]
         self.assertEqual(current["cases"], 24)
         self.assertEqual(current["status"], "SUPERSEDED")
         self.assertEqual(current["model"], "gpt-5.6-sol")
@@ -121,6 +145,16 @@ class BehaviorEvalTest(unittest.TestCase):
         self.assertEqual(targeted["passed"], 5)
         self.assertEqual(targeted["failed"], 0)
         self.assertEqual(len(targeted["case_ids"]), 5)
+        implicit_debug = baseline["routing"]["targeted_implicit_debug_run"]
+        self.assertEqual(implicit_debug["model"], "runtime-default")
+        self.assertEqual(
+            implicit_debug["case_ids"],
+            ["implicit-z80-debug-precedence"],
+        )
+        self.assertEqual(implicit_debug["passed"], 1)
+        self.assertEqual(implicit_debug["failed"], 0)
+        self.assertEqual(implicit_debug["accuracy"], 1.0)
+        self.assertTrue(implicit_debug["debug_z80_contract_observed"])
         targeted_port = baseline["routing"]["targeted_port_run"]
         self.assertEqual(targeted_port["model"], "gpt-5.6-sol")
         self.assertEqual(targeted_port["passed"], 4)

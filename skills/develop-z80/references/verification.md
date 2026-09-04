@@ -32,6 +32,17 @@ Use the project's existing emulator, harness, profiler, or hardware path. When
 none exists, describe the smallest reproducible manual procedure and mark it
 `NOT RUN` until observed. Do not name an arbitrary emulator as proof.
 
+### Deterministic visual-state evidence
+
+For visible behavior, prefer a named event/state boundary (for example, the
+menu-ready flag, frame counter, or input-acknowledgement) over an arbitrary
+fixed delay. Use scripted input whenever the harness permits it. Capture only
+changed regions or explicit keyframes when that is sufficient, and retain the
+input script plus the boundary/state predicate with the capture. Freeze the
+model, ROM, binary, and configuration for replay. Compare images or serialized
+state only as product evidence; they never replace technical invariants such
+as ABI, memory, timing, interrupt, paging, or I/O checks.
+
 ## Acceptance Matrix
 
 Report every criterion in this shape:

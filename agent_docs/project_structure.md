@@ -18,6 +18,8 @@ scripts/
   test_workflow_integration.py   Workflow composition and portability tests
 skills/
   route-z80/                     Thin Z80 domain selector
+  send-bridgezx/                 Guarded BridgeZX file delivery
+  document-z80/                  Evidence-grounded repository documentation
   develop-z80/                   Idea-to-implementation SDD workflow
   port-spectranext/              External Spectranext consumer-port workflow
   debug-z80/                     Root-cause diagnosis and gated repair
@@ -38,6 +40,8 @@ generated under ignored `evals/results/`; they are not mixed with deterministic
 unit tests.
 
 Ownership boundaries are intentionally explicit: route selects a domain;
+send performs only the requested remote BridgeZX transfer;
+document owns public repository documentation and language parity;
 develop handles explicit product initiatives and their dossiers;
 port-spectranext handles the external cartridge consumer lifecycle; debug
 handles observed failures with unresolved causality; audit handles preventive

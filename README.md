@@ -3,16 +3,17 @@
 **Languages:** English · [Español](README.es.md)
 
 Codex plugin with one standalone adaptive workflow, one thin domain selector,
-and seven complementary skills for developing, porting, debugging, analyzing,
-and organizing Z80 projects, especially ZX Spectrum software written in
-assembly, C, or a mixture of both using z88dk or SDCC.
+eight complementary engineering skills, and guarded BridgeZX file delivery for
+Z80 projects, especially ZX Spectrum software written in assembly, C, or a
+mixture of both using z88dk or SDCC.
 
 The goal is not to produce generic lists of tricks. The skills inspect the
 current code and artifacts, adapt depth and parallelism to the actual risk, and
 clearly distinguish proven evidence, estimates, and hypotheses.
 
 > Adaptive execution plus specification-driven development, root-cause
-> debugging, evidence-first auditing, organization, size reduction, and multi-objective optimization for
+> debugging, evidence-first auditing, repository documentation, organization,
+> size reduction, and multi-objective optimization for
 > Z80 and ZX Spectrum projects.
 
 ## Contents
@@ -34,9 +35,11 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 
 | Skill | Primary question | Result |
 |---|---|---|
-| `workflow` | What is the smallest sufficient execution level for this engineering task? | Light direct execution, a Sol-controlled medium stream, or flat heavy coordination with bounded Luna workers. |
+| `workflow` | What is the smallest sufficient execution level for this engineering task? | Direct Light or Medium execution in the main thread, or flat Heavy coordination with bounded built-in workers. |
 | `route-z80` | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
+| `send-bridgezx` | Which named files or directories should be delivered to a ZX or Next? | A guarded BridgeZX transfer using the explicit or last-known IP, optional destination, and requested sequence. |
 | `develop-z80` | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
+| `document-z80` | How should this repository's public documentation be structured and kept accurate across languages? | An evidence-grounded README and documentation hierarchy with verified commands, hardware requirements, and EN/ES parity. |
 | `port-spectranext` | How does an existing ZX program move through the Spectranext cartridge's consumer pipeline? | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and final handoff. |
 | `debug-z80` | What causes this observed failure, and which component owns the repair? | One falsifiable causal explanation and, when requested, one verified root-cause fix. |
 | `audit-z80` | Are there latent defects or broad correctness risks? | Read-only findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
@@ -44,14 +47,19 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 | `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
 | `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
-`workflow` is independent of Z80 and routes execution effort. `route-z80`
-selects a domain only when the goal is genuinely ambiguous. The seven specialist
-skills overlap only where useful:
+`workflow` is independent of Z80 and routes execution effort. `route-z80` is
+the sole implicit entry point for natural-language Z80 domain selection,
+including unambiguous specialist matches. The routed skills overlap only where
+useful:
 
 - Use `workflow` directly for adaptive planning, implementation, and verification.
 - Use `route-z80` to choose one specialist, without loading all candidates.
+- Use `send-bridgezx` to deliver named files or directories through the official
+  BridgeZX client without maintaining another IP or protocol implementation.
 - Use `develop-z80` only for an explicit product initiative or an existing SDD
   dossier, not for routine fixes or isolated repository features.
+- Use `document-z80` to create, restructure, review, or synchronize public
+  repository documentation without flattening the project's identity.
 - Use `port-spectranext` for an existing ZX program's consumer port to the
   Spectranext cartridge, not for ZX Spectrum Next targets or backend work.
 - Use `debug-z80` for an observed failure whose causal owner remains unknown.
@@ -152,10 +160,34 @@ they must never upload private code or project identifiers.
 
 ### `route-z80`
 
-Thin domain dispatch for ambiguous Z80 requests. It selects one primary
-specialist from the requested result, or plain `workflow` for an ordinary known-cause fix,
-review, refactor, test, build, or documentation change. It does not choose
-Light, Medium, or Heavy and does not load every candidate skill.
+Thin implicit domain dispatch for natural-language Z80 requests. It routes an
+unambiguous specialist match immediately and asks a focused question only when
+multiple primary outcomes remain. Ordinary known-cause fixes, source-code
+comments, agent instructions, refactors, tests, and builds go to plain
+`workflow`. It does not choose Light, Medium, or Heavy or load every candidate
+skill.
+
+### `send-bridgezx`
+
+Guarded delivery of named local files or directories through the official
+BridgeZX Python client. It uses an explicit IP or BridgeZX's last-known host,
+probes and locks Classic/Next before sending, passes an optional relative remote
+destination, and turns an explicit order into sequential operations that stop
+at the first failure. It never retries an uncertain transfer automatically.
+
+### `document-z80`
+
+Evidence-grounded creation, restructuring, synchronization, and review of
+public GitHub documentation for Z80 and ZX projects. It treats the root README
+as the landing page, keeps tutorials, goal-oriented guides, exact reference,
+architecture explanations, and release history in their smallest useful homes,
+and avoids duplicating facts.
+
+It verifies commands, paths, artifact names, target machines, peripherals, and
+toolchain requirements against the repository. Maintained language variants
+keep the same topology and facts without forcing literal translation or a new
+filename convention. Existing branding, screenshots, and retro voice remain
+project-specific.
 
 ### `develop-z80`
 
@@ -360,7 +392,7 @@ Static cycle, map, or pattern estimators do not constitute proof by themselves.
 ### Initial installation
 
 Clone the repository anywhere under your home directory. The checkout is the
-canonical source for all nine skills.
+canonical source for all eleven skills.
 
 ```sh
 git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
@@ -377,16 +409,18 @@ under `~/.agents/skills/<skill-name>` or the legacy
 `~/.codex/skills/<skill-name>`.
 Those copies can shadow the namespaced plugin and omit package-level files such
 as `scripts/run_in_worktree.py`; copying individual directories from `skills/`
-is not a complete installation. The plugin already bundles all nine skills,
+is not a complete installation. The plugin already bundles all eleven skills,
 including `route-z80` and `workflow`. The installer warns when
 it finds one of these duplicate locations; move or disable it before opening a
 new Codex task.
 
-Only `route-z80` participates in implicit Z80-domain selection. The seven
-specialists remain available through explicit `$develop-z80`, `$port-spectranext`,
-`$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
-`route-z80` loads only the selected sibling. This keeps routine repository work
-on plain `workflow` and avoids injecting every specialist description.
+Only `route-z80` participates in implicit Z80-domain selection. The nine
+routed skills remain available through explicit `$send-bridgezx`, `$develop-z80`,
+`$document-z80`, `$port-spectranext`, `$debug-z80`, `$audit-z80`,
+`$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
+`route-z80` loads only the selected sibling. Natural-language requests do not
+need to be ambiguous to enter the router. This keeps routine repository work on
+plain `workflow` and avoids injecting every specialist description.
 
 Open a new Codex task after installing: the skill catalog is loaded when the
 task starts and does not update dynamically within an already open task.
@@ -406,7 +440,7 @@ open a new task again.
 
 ### Grok Build and Claude sync
 
-On Windows, install all nine skills into Grok Build with the host adaptations
+On Windows, install all eleven skills into Grok Build with the host adaptations
 derived from the canonical `workflow` sources:
 
 ```powershell
@@ -415,7 +449,7 @@ pwsh -File .\scripts\install-for-grok.ps1
 
 The installer includes `route-z80`, preserves existing destination skills in a
 timestamped backup by default, bundles the disposable-worktree runner, and
-patches only the installed copies. Add `-SyncClaude` to also copy the same nine
+patches only the installed copies. Add `-SyncClaude` to also copy the same eleven
 canonical skill trees, without Grok adaptations, into `~/.claude/skills`:
 
 ```powershell
@@ -443,6 +477,21 @@ execution level and preserve the repository's existing contracts.
 ```text
 Use route-z80 to choose the single relevant specialist for this Z80 repository
 request, or use plain workflow if no specialist evidence contract is needed.
+```
+
+### BridgeZX delivery
+
+```text
+Use send-bridgezx to send build/game.nex to my Spectrum Next with the last
+known BridgeZX IP, under GAMES/DEMO.
+```
+
+### Repository documentation
+
+```text
+Use document-z80 to restructure this project's README as the landing page,
+verify every build and hardware claim, and keep the English and Spanish files
+structurally aligned without losing the project's voice.
 ```
 
 ### Specification-driven development
@@ -546,6 +595,8 @@ configuration, and recipe must belong to the same baseline.
   seam and physical results require explicit user observation.
 - `debug-z80` keeps diagnosis and candidate repairs in a disposable worktree;
   it edits the primary tree only for a requested, causally supported repair.
+- `document-z80` edits only the public human-facing documentation in scope; it
+  does not change code, build configuration, releases, or agent instructions.
 - `audit-z80` and `shrink-z80` do not edit the project.
 - `organize-z80` edits source only in `apply` mode after an explicit request,
   frozen baseline, approved boundary, one named slice, and rollback point; an
@@ -592,6 +643,13 @@ skills/
     agents/openai.yaml
     references/
   route-z80/
+    SKILL.md
+    agents/openai.yaml
+  send-bridgezx/
+    SKILL.md
+    agents/openai.yaml
+    scripts/
+  document-z80/
     SKILL.md
     agents/openai.yaml
   develop-z80/
@@ -645,6 +703,7 @@ python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
 python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
 python3 scripts/test_behavior_evals.py
+python3 skills/send-bridgezx/scripts/test_bridgezx_transfer.py
 ```
 
 The plugin manifest and the front matter of each skill should also be validated

@@ -6,7 +6,7 @@
 .DESCRIPTION
   Canonical skill sources remain under ./skills (Codex/plugin layout).
   This script:
-    1. Copies all nine skills into ~/.grok/skills (repo = canonical on name conflict)
+    1. Copies all eleven skills into ~/.grok/skills (repo = canonical on name conflict)
     2. Copies run_in_worktree.py into each skill that needs disposable worktrees
     3. Rewrites ../../scripts/run_in_worktree.py paths for the flat Grok layout
     4. Derives Grok workflow adaptations from the canonical workflow sources
@@ -47,10 +47,12 @@ $SkillNames = @(
     "audit-z80",
     "debug-z80",
     "develop-z80",
+    "document-z80",
     "optimize-z80",
     "organize-z80",
     "port-spectranext",
     "route-z80",
+    "send-bridgezx",
     "shrink-z80",
     "workflow"
 )
@@ -109,7 +111,7 @@ function Patch-WorktreePaths([string]$DestRoot) {
             $_.FullName -notmatch '[\\/]_z80-shared'
         }
     foreach ($file in $mdFiles) {
-        # Only touch files under the nine skill trees we just installed
+        # Only touch files under the skill trees we just installed
         $rel = $file.FullName.Substring($DestRoot.Length).TrimStart('\', '/')
         $top = ($rel -split '[\\/]')[0]
         if ($SkillNames -notcontains $top) { continue }
@@ -150,7 +152,7 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
             '## Host runtime (Grok Build)',
             '',
             '- Spawn workers with `spawn_subagent`; use the mappings in `references/roles.md`.',
-            '- Prefer lean-ctx tools for read, search, and shell work when available.',
+            '- Prefer native tools for read, search, and shell work.',
             '- On Windows, invoke `python` or the interpreter named by the user; do not',
             '  hardcode `python3` paths.',
             '- Domain Z80 skills and `workflow` live as siblings under `~/.grok/skills/`.'
@@ -277,12 +279,12 @@ function Patch-SkillMarkdown([string]$SkillMd) {
                     '- On Grok Build, `spawn_subagent` with `isolation="worktree"` is an equivalent'
                     '  disposable sandbox when preferred.'
                     '- On Grok Build: load sibling `$workflow` from `~/.grok/skills/workflow/SKILL.md`'
-                    '  when needed; prefer lean-ctx tools for read/search/shell.'
+                    '  when needed; prefer native tools for read/search/shell.'
                 ) -join "`r`n"
             }
             'develop-z80' {
                 @(
-                    '- On Grok Build: prefer lean-ctx for read/search/shell; Medium/Heavy agents use'
+                    '- On Grok Build: prefer native tools for read/search/shell; Heavy agents use'
                     '  `spawn_subagent` per `$workflow`. On Windows, prefer `python` when `python3`'
                     '  is missing. Disposable spikes may use `isolation="worktree"` or'
                     '  `"$SKILL_DIR/scripts/run_in_worktree.py"`.'
@@ -290,7 +292,7 @@ function Patch-SkillMarkdown([string]$SkillMd) {
             }
             'organize-z80' {
                 @(
-                    '- On Grok Build: prefer lean-ctx for read/search/shell; Medium/Heavy agents use'
+                    '- On Grok Build: prefer native tools for read/search/shell; Heavy agents use'
                     '  `spawn_subagent` per `$workflow`. On Windows, prefer `python` when `python3`'
                     '  is missing.'
                 ) -join "`r`n"
@@ -298,7 +300,7 @@ function Patch-SkillMarkdown([string]$SkillMd) {
             default {
                 @(
                     '- On Grok Build: load sibling `$workflow` from `~/.grok/skills/workflow/SKILL.md`'
-                    '  when needed; prefer lean-ctx tools for read/search/shell; Medium/Heavy agents use'
+                    '  when needed; prefer native tools for read/search/shell; Heavy agents use'
                     '  `spawn_subagent` per the workflow skill.'
                 ) -join "`r`n"
             }
@@ -346,7 +348,7 @@ function Patch-SkillMarkdown([string]$SkillMd) {
 }
 
 function Patch-DomainPortability([string]$DestRoot) {
-    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "organize-z80", "port-spectranext", "shrink-z80")) {
+    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "document-z80", "optimize-z80", "organize-z80", "port-spectranext", "shrink-z80")) {
         Patch-SkillMarkdown -SkillMd (Join-Path $DestRoot "$name\SKILL.md")
     }
 }
@@ -431,7 +433,7 @@ Assert-Path $debugWt "debug-z80/scripts/run_in_worktree.py"
 
 Write-Host ""
 Write-Host "Done. Open a new Grok task (or wait for skill auto-reload) and use:" -ForegroundColor Green
-Write-Host "  /route-z80  /port-spectranext  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
+Write-Host "  /route-z80  /document-z80  /send-bridgezx  /port-spectranext  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
 Write-Host ""
 Write-Host "Update loop:"
 Write-Host "  cd $RepoRoot"
