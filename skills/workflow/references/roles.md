@@ -26,19 +26,18 @@ availability from this table or transfer Codex model IDs to another host.
 
 | Assignment | Preferred model | Initial reasoning effort |
 | --- | --- | --- |
-| Narrow lookup, mechanical edit, or verification with explicit criteria | `gpt-5.6-luna` | `medium` |
-| Cohesive coding, debugging, or code review needing implementation judgment | `gpt-5.6-terra` | `medium` |
-| General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-5.6-sol` | `medium` |
-| Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-6-astra` | `high` |
+| Narrow lookup, mechanical edit, or verification with explicit criteria | `gpt-5.6-luna` | `max` |
+| Cohesive coding, debugging, or code review needing implementation judgment | `gpt-5.6-sol` | `high` |
+| General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-5.6-sol` | `high` |
+| Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-5.6-sol` | `xhigh` |
 
-Use `reasoning_effort="medium"` for ordinary bounded work. Raise effort to
-`high` for a specific reasoning difficulty. Use `max` only when a named hard
-criterion warrants it; never set Luna or Sol to `max` merely because they are
-delegates or the workflow is Heavy. Other effort levels require explicit user
-choice or task-specific evidence, and must be supported by the selected model.
+Use the table's initial effort for each assignment. Reserve `max` for the
+narrow Luna assignments listed above; do not set Sol to `max` merely because a
+delegate or workflow is Heavy. Other effort levels require explicit user choice
+or task-specific evidence, and must be supported by the selected model.
 
 Select a suitable model upfront; do not require a failed Luna attempt before
-using Terra, Sol, or Astra. Missing inputs, tools, permissions, or reproduction
+using Sol. Missing inputs, tools, permissions, or reproduction
 evidence require fixing the capsule or reporting a blocker, not more reasoning.
 If a worker's reasoning falls short, retain its evidence, identify the gap, and
 choose either more effort or a better-suited model. Stop the prior worker before
