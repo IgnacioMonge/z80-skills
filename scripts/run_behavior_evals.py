@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -19,6 +20,20 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SUITES = (ROOT / "evals" / "routing.jsonl", ROOT / "evals" / "evidence.jsonl")
 PLUGIN_NAME = "z80-skills@personal"
+USAGE_FIELDS = (
+    "input_tokens",
+    "cached_input_tokens",
+    "cache_write_input_tokens",
+    "output_tokens",
+    "reasoning_output_tokens",
+)
+ACTION_TYPES = {
+    "command_execution",
+    "file_change",
+    "mcp_tool_call",
+    "collab_tool_call",
+    "web_search",
+}
 
 
 def load_cases(suite: Path) -> list[dict[str, Any]]:
@@ -158,6 +173,166 @@ def manifest_version() -> str:
     return manifest["version"]
 
 
+def fingerprint_files(paths: list[Path]) -> dict[str, Any]:
+    digest = hashlib.sha256()
+    files = sorted({
+        path.resolve() for path in paths
+        if path.is_file()
+        and "__pycache__" not in path.parts
+        and path.suffix != ".pyc"
+    })
+    for path in files:
+        try:
+            relative = path.relative_to(ROOT).as_posix()
+        except ValueError:
+            relative = f"external/{path.name}"
+        content = path.read_bytes()
+        digest.update(f"{relative}\0{len(content)}\0".encode())
+        digest.update(content)
+    return {
+        "algorithm": "sha256",
+        "digest": digest.hexdigest(),
+        "file_count": len(files),
+        "installed_content_verified": False,
+    }
+
+
+def evaluated_source_fingerprint(
+    cases: list[dict[str, Any]], suites: tuple[Path, ...]
+) -> dict[str, Any]:
+    paths = [
+        ROOT / ".codex-plugin" / "plugin.json",
+        Path(__file__),
+        ROOT / "scripts" / "run_in_worktree.py",
+        *suites,
+    ]
+    paths.extend(path for path in (ROOT / "skills").rglob("*") if path.is_file())
+    for case in cases:
+        paths.append(resolve_case_path(case, "schema"))
+        if "fixture" in case:
+            paths.extend(
+                path for path in resolve_case_path(case, "fixture").rglob("*")
+                if path.is_file()
+            )
+    return fingerprint_files(paths)
+
+
+def workspace_fingerprint(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        if path.is_dir():
+            digest.update(f"d\0{relative}\0".encode())
+        elif path.is_file():
+            content = path.read_bytes()
+            digest.update(f"f\0{relative}\0{len(content)}\0".encode())
+            digest.update(content)
+    return digest.hexdigest()
+
+
+def parse_event_trace(raw: str) -> dict[str, Any]:
+    events: list[tuple[int, dict[str, Any]]] = []
+    malformed = 0
+    for line_number, line in enumerate(raw.splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if not isinstance(event, dict):
+            malformed += 1
+            continue
+        events.append((line_number, event))
+
+    usage_totals = {field: 0 for field in USAGE_FIELDS}
+    usage_known = {field: True for field in USAGE_FIELDS}
+    turn_completed = 0
+    runtime_effort: str | None = None
+    runtime_model: str | None = None
+    actions: dict[str, dict[str, Any]] = {}
+    for line_number, event in events:
+        if isinstance(event.get("reasoning_effort"), str):
+            runtime_effort = event["reasoning_effort"]
+        if isinstance(event.get("model"), str):
+            runtime_model = event["model"]
+        if event.get("type") == "turn.completed":
+            turn_completed += 1
+            observed = event.get("usage")
+            for field in USAGE_FIELDS:
+                value = observed.get(field) if isinstance(observed, dict) else None
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                    usage_totals[field] += value
+                else:
+                    usage_known[field] = False
+        if event.get("type") not in {"item.started", "item.updated", "item.completed"}:
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict) or item.get("type") not in ACTION_TYPES:
+            continue
+        action_id = item.get("id")
+        key = str(action_id) if action_id is not None else f"line-{line_number}"
+        actions[key] = item
+
+    action_items = list(actions.values())
+    command_count = sum(item.get("type") == "command_execution" for item in action_items)
+    file_changes = [item for item in action_items if item.get("type") == "file_change"]
+    web_searches = sum(item.get("type") == "web_search" for item in action_items)
+    unknown_effects = sum(
+        item.get("type") in {"command_execution", "mcp_tool_call", "collab_tool_call"}
+        for item in action_items
+    )
+    failed_actions = sum(
+        item.get("status") in {"failed", "declined"}
+        or (
+            item.get("type") == "command_execution"
+            and isinstance(item.get("exit_code"), int)
+            and item["exit_code"] != 0
+        )
+        for item in action_items
+    )
+    usage = {
+        field: usage_totals[field]
+        if turn_completed and usage_known[field]
+        else None
+        for field in USAGE_FIELDS
+    }
+    return {
+        "event_count": len(events),
+        "malformed_event_count": malformed,
+        "turn_completed_count": turn_completed,
+        "usage": usage,
+        "runtime_confirmed_reasoning_effort": runtime_effort,
+        "runtime_confirmed_model": runtime_model,
+        "actions": {
+            "tool_calls_total": len(action_items),
+            "command_count": command_count,
+            "non_command_tool_count": len(action_items) - command_count,
+            "observed_read_attempt_count": web_searches,
+            "observed_write_attempt_count": len(file_changes),
+            "unknown_effect_attempt_count": unknown_effects,
+            "failed_action_count": failed_actions,
+            "successful_file_change_count": sum(
+                item.get("status") == "completed" for item in file_changes
+            ),
+        },
+    }
+
+
+def read_only_observed(telemetry: dict[str, Any], workspace_changed: bool) -> bool:
+    return (
+        telemetry["malformed_event_count"] == 0
+        and telemetry["turn_completed_count"] > 0
+        and telemetry["actions"]["observed_write_attempt_count"] == 0
+        and not workspace_changed
+    )
+
+
+def _subprocess_text(value: str | bytes | None) -> str:
+    return value.decode(errors="replace") if isinstance(value, bytes) else value or ""
+
+
 def resolve_codex_bin(command: str) -> str:
     resolved = shutil.which(command)
     if resolved is None:
@@ -185,7 +360,8 @@ def evaluation_prompt(case: dict[str, Any]) -> str:
         "This is a read-only behavior evaluation of the installed z80-skills "
         "plugin. Treat the text under USER REQUEST as a fresh real request. "
         "Select and follow the appropriate installed skill exactly as normal, "
-        "but do not modify files. Inspect only the current working directory. "
+        "but do not modify files. Load installed skill instructions and bundled "
+        "resources as needed; inspect project inputs only in the current working directory. "
         "Return only JSON matching the supplied output schema.\n\n"
         f"USER REQUEST:\n{case['prompt']}"
     )
@@ -195,7 +371,9 @@ def run_case(
     case: dict[str, Any],
     codex_bin: str,
     model: str | None,
+    reasoning_effort: str | None,
     timeout: int,
+    trace_path: Path | None = None,
 ) -> dict[str, Any]:
     schema_path = resolve_case_path(case, "schema")
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -207,6 +385,7 @@ def run_case(
             shutil.copytree(resolve_case_path(case, "fixture"), workdir)
         else:
             workdir.mkdir()
+        workspace_before = workspace_fingerprint(workdir)
         output = temp_root / "last-message.json"
         command = [
             codex_bin,
@@ -215,6 +394,7 @@ def run_case(
             "--sandbox",
             "read-only",
             "--skip-git-repo-check",
+            "--json",
             "--output-schema",
             str(schema_path),
             "--color",
@@ -226,16 +406,36 @@ def run_case(
         ]
         if model:
             command.extend(("--model", model))
+        if reasoning_effort:
+            command.extend((
+                "-c",
+                f"model_reasoning_effort={json.dumps(reasoning_effort)}",
+            ))
         prompt = evaluation_prompt(case)
         command.append("-")
-        result = subprocess.run(
-            command,
-            input=prompt,
-            text=True,
-            capture_output=True,
-            timeout=timeout,
-            check=False,
-        )
+        timed_out = False
+        try:
+            result = subprocess.run(
+                command,
+                input=prompt,
+                text=True,
+                capture_output=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            result = subprocess.CompletedProcess(
+                command,
+                124,
+                _subprocess_text(exc.stdout),
+                _subprocess_text(exc.stderr),
+            )
+        if trace_path is not None:
+            trace_path.parent.mkdir(parents=True, exist_ok=True)
+            trace_path.write_bytes(result.stdout.encode())
+        telemetry = parse_event_trace(result.stdout)
+        workspace_after = workspace_fingerprint(workdir)
         actual: Any = None
         parse_error: str | None = None
         if output.is_file():
@@ -246,11 +446,13 @@ def run_case(
         else:
             parse_error = "Codex did not write the final response file"
         schema_errors = validate_json(actual, schema) if parse_error is None else []
+        changed = workspace_before != workspace_after
         passed = (
             result.returncode == 0
             and parse_error is None
             and not schema_errors
             and matches_expected(actual, case["expected"])
+            and read_only_observed(telemetry, changed)
         )
         return {
             "id": case["id"],
@@ -260,8 +462,19 @@ def run_case(
             "passed": passed,
             "duration_seconds": round(time.monotonic() - started, 3),
             "returncode": result.returncode,
+            "timed_out": timed_out,
             "parse_error": parse_error,
             "schema_errors": schema_errors,
+            "telemetry": telemetry,
+            "requested_reasoning_effort": reasoning_effort,
+            "observed": {
+                "write_attempt": telemetry["actions"]["observed_write_attempt_count"] > 0,
+                "successful_file_change": (
+                    telemetry["actions"]["successful_file_change_count"] > 0
+                ),
+                "workspace_changed": changed,
+            },
+            "trace_file": str(trace_path) if trace_path is not None else None,
             "stderr_tail": result.stderr[-2000:],
         }
 
@@ -276,6 +489,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--model")
+    parser.add_argument(
+        "--reasoning-effort",
+        help="native Codex model_reasoning_effort config value",
+    )
     parser.add_argument("--codex-bin", default="codex")
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--results-dir", type=Path, default=ROOT / "evals" / "results")
@@ -314,16 +531,47 @@ def main() -> int:
             f"manifest version {authored_version!r}; reinstall before evaluating"
         )
 
+    source_before = evaluated_source_fingerprint(cases, suites)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    output = args.results_dir / f"behavior-{stamp}.json"
+    trace_dir = args.results_dir / f"behavior-{stamp}.traces"
     records: list[dict[str, Any]] = []
     for index, case in enumerate(cases, 1):
         print(f"[{index}/{len(cases)}] {case['id']}", flush=True)
-        records.append(run_case(case, codex_bin, args.model, args.timeout))
+        trace_name = re.sub(r"[^A-Za-z0-9_.-]+", "-", case["id"])
+        record = run_case(
+            case,
+            codex_bin,
+            args.model,
+            args.reasoning_effort,
+            args.timeout,
+            trace_dir / f"{index:03d}-{trace_name}.jsonl",
+        )
+        record["trace_file"] = str(Path(record["trace_file"]).relative_to(args.results_dir))
+        records.append(record)
 
+    source_changed = (
+        evaluated_source_fingerprint(cases, suites)["digest"]
+        != source_before["digest"]
+    )
     report = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "manifest_version": authored_version,
         "installed_version": active_version,
-        "model": args.model or "runtime-default",
+        "requested_model": args.model,
+        "runtime_confirmed_model": sorted({
+            record["telemetry"]["runtime_confirmed_model"]
+            for record in records
+            if record["telemetry"]["runtime_confirmed_model"] is not None
+        }) or None,
+        "requested_reasoning_effort": args.reasoning_effort,
+        "runtime_confirmed_reasoning_effort": sorted({
+            record["telemetry"]["runtime_confirmed_reasoning_effort"]
+            for record in records
+            if record["telemetry"]["runtime_confirmed_reasoning_effort"] is not None
+        }) or None,
+        "authored_source_fingerprint": source_before,
+        "authored_source_changed_during_run": source_changed,
         "suites": [str(path) for path in suites],
         "passed": sum(record["passed"] for record in records),
         "failed": sum(not record["passed"] for record in records),
@@ -331,8 +579,6 @@ def main() -> int:
         "records": records,
     }
     args.results_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output = args.results_dir / f"behavior-{stamp}.json"
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({key: report[key] for key in ("passed", "failed", "routing")}, indent=2))
     print(f"results: {output}")

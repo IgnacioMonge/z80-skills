@@ -6,7 +6,10 @@ Apply this contract to every real `port-spectranext` task.
 
 - The current Spectranext checkout's `AGENTS.md`, `docs/porting.md`, development
   entry point, pipeline code, and manifest validator are authoritative in that
-  order of scope. Re-read relevant files; do not rely on bundled recollection.
+  order of scope. Read `AGENTS.md` and `docs/porting.md` at the start of every
+  real task. Within that task, reuse them only after verifying they are
+  unchanged; re-read affected authority when canonical state or the blocker
+  changes. Never carry cached authority across tasks or into this plugin.
 - The consumer checkout owns its manifest, source, build outputs, reports,
   artifacts, branch, worktree, and Git history.
 - The Spectranext checkout owns only generic cartridge code and documentation.

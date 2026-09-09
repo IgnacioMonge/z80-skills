@@ -1,27 +1,9 @@
 # Heavy effort
 
 Keep the main thread as controller and use bounded workers in a flat topology.
-Read `roles.md` first.
 
-Before dispatch, classify each ownership surface using the intersection of user
-authorization, project instructions, and the domain contract:
-
-- **primary-tree read-only:** use only `explorer` or read-only `default` roles;
-  do not spawn `executor` for that surface.
-- **disposable-worktree-only:** an `executor` may edit or build only inside a
-  verified, domain-gated disposable worktree; never the primary tree.
-- **authorized primary-tree mutation:** an implementer may edit and run checks
-  only within its assigned ownership surface and effective authorization.
-
-## Roles
-
-- `explorer`: built-in `explorer`, read-only investigation.
-- `executor`: built-in `worker`, default implementation.
-- `verifier`: built-in `default`, independent verification and failure analysis.
-
-Select model and reasoning effort per assignment through `roles.md`; a model
-change does not create a new role or widen ownership. Use built-in types only
-when the runtime accepts `agent_type`.
+Apply the [common rules and mutation boundary](../SKILL.md) before dispatch.
+Role types and model/effort selection live in [roles.md](roles.md).
 
 ## Dispatch gate
 
@@ -34,6 +16,8 @@ when the runtime accepts `agent_type`.
    at most 400 words.
 4. Give each worker a task ID, outcome, ownership, acceptance criteria, source
    paths, validation, protected areas, return format, and stop condition.
+   Include relevant verified evidence with revision/configuration and remaining
+   questions so fresh-context workers do not repeat completed discovery.
 5. Assign one owner to each mutable file set. Parallel implementers may write
    only to disjoint surfaces.
 6. Keep workers away from Git state and main-owned status or handoff files.
@@ -45,22 +29,17 @@ when the runtime accepts `agent_type`.
 
 ## Direct repair loop
 
-Give the verifier and responsible implementer each other's canonical task
-names. For a routine production defect, the verifier sends a compact defect
-packet directly to that implementer; the implementer repairs within the
-original capsule and returns the result directly; the verifier reruns the
-failed criterion and affected regression checks. The main thread must not relay
-or rediagnose that loop.
-
-Escalate to the main thread only when a repair conflicts with the capsule,
-changes a cross-package contract, invalidates a material decision, expands
-ownership, introduces security or migration risk, or the same criterion still
-fails after two focused repair attempts. Test, fixture, mock, or test-data
-defects remain with the verifier.
-
-A defect packet contains the failed criterion, minimal reproduction, observed
-and expected behavior, affected contract or files, exact evidence reference,
-and whether scope or architecture appears implicated.
+Give verifier and implementer each other's canonical task names. The verifier
+sends the failed criterion, reproduction, expected/actual behavior, affected
+files/contracts, evidence reference, and scope/architecture concerns directly.
+The implementer repairs within its capsule and returns results; the verifier
+reruns failed and affected checks without editing files or weakening assertions.
+The main thread must not relay or rediagnose routine repairs.
+Test, fixture, mock, and test-data repairs also belong to the implementer within
+its scope; otherwise the main thread assigns an authorized owner.
+Escalate capsule conflicts, cross-package contract changes, invalidated decisions,
+ownership expansion, security/migration risks, or the same failing criterion
+after two focused repair attempts.
 
 ## Layered evidence
 
@@ -68,7 +47,9 @@ Follow the upward report contract in `roles.md`. Workers retain raw operational
 context and return only the bounded knowledge delta. The main thread normally
 accepts a coherent report with `Decision required: none` without reopening its
 logs or artifacts; inspect them only when evidence conflicts, uncertainty is
-material, or an integration boundary is high risk.
+material, or an integration boundary is high risk. Domain promotion gates still
+require their specified source/artifact checks; a worker summary cannot replace
+that proof.
 
 Update durable documentation in the main thread after verification and only for
 architecture, public behavior, structure, decisions, or usage changes.
@@ -80,7 +61,6 @@ evidence-free response requires replacement. If replacement fails, disclose the
 loss of independent execution before taking over delegated work.
 
 Trust child-thread events, runtime metadata, diffs, logs, and command results.
-Do not trust natural-language claims about model identity.
 
 ## Completion
 

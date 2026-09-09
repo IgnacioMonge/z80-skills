@@ -5,6 +5,12 @@ import re
 import sys
 from pathlib import Path
 
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import directive_symbols  # noqa: E402
+
 TEXT_EXTS = {".asm", ".c", ".h", ".i", ".inc", ".lst", ".s"}
 TOP_LEVEL_FILES = {"Makefile", "makefile"}
 SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
@@ -14,7 +20,6 @@ DEFINE_CONV_RE = re.compile(r"^\s*#\s*define\s+(\w+)\b.*(__z88dk_callee|__z88dk_
 FUNC_HEAD_RE = re.compile(r"\b(?P<name>[A-Za-z_]\w+)\s*\((?P<args>[^()]*)\)\s*(?P<tail>[^;{}]*)\s*(?P<kind>[;{])")
 PUBLIC_RE = re.compile(r"^\s*(?:PUBLIC|GLOBAL|XDEF|EXPORT|\.globl)\s+(.+)", re.IGNORECASE)
 EXTERN_RE = re.compile(r"^\s*(?:EXTERN|XREF|\.extern)\s+(.+)", re.IGNORECASE)
-SYMBOL_RE = re.compile(r"[A-Za-z_.$][\w.$?@]*")
 LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):(?:\s|$)")
 RET_N_RE = re.compile(r"\bret\s+(\d+)\b", re.IGNORECASE)
 STACK_CLEAN_RE = re.compile(r"\b(pop\s+af|inc\s+sp|dec\s+sp|add\s+sp)\b", re.IGNORECASE)
@@ -48,14 +53,6 @@ def files(root: Path) -> tuple[list[Path], list[Path]]:
         found.append(path)
     found.sort(key=lambda item: (item.suffix.lower() not in {".h", ".i"}, str(item).lower()))
     return found, too_large
-
-
-def directive_symbols(line: str, regex: re.Pattern[str]) -> list[str]:
-    match = regex.search(line)
-    if not match:
-        return []
-    body = re.split(r";|//", match.group(1), 1)[0]
-    return [token for token in re.split(r"[\s,]+", body.strip()) if SYMBOL_RE.fullmatch(token)]
 
 
 def logical_c_records(lines: list[str]):

@@ -159,15 +159,6 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
         ) -join $nl
         $skill = $skill.Replace('## Select effort', "$hostSection$nl$nl## Select effort")
     }
-    $portableTypes = @(
-        'Use only documented built-in `worker`, `explorer`, or `default` types.',
-        'Task names identify workflow roles; they are not external custom-agent profiles.'
-    ) -join $nl
-    $grokTypes = @(
-        'Use only the Grok host mappings documented in `references/roles.md`.',
-        'Task labels identify workflow roles; they are not external custom-agent profiles.'
-    ) -join $nl
-    $skill = $skill.Replace($portableTypes, $grokTypes)
     Set-TextFile -Path $skillPath -Text $skill
 
     $roles = [System.IO.File]::ReadAllText($rolesPath)
@@ -209,26 +200,6 @@ function Patch-WorkflowForGrok([string]$DestRoot) {
 
     $heavy = [System.IO.File]::ReadAllText($heavyPath)
     $nl = if ($heavy.Contains("`r`n")) { "`r`n" } else { "`n" }
-    $oldReadOnly = @(
-        '- **primary-tree read-only:** use only `explorer` or read-only `default` roles;',
-        '  do not spawn `executor` for that surface.'
-    ) -join $nl
-    $newReadOnly = @(
-        '- **primary-tree read-only:** use only `explore` or read-only `general-purpose` roles;',
-        '  do not spawn `executor` for that surface.'
-    ) -join $nl
-    $heavy = $heavy.Replace($oldReadOnly, $newReadOnly)
-    $oldRoles = @(
-        '- `explorer`: built-in `explorer`, read-only investigation.',
-        '- `executor`: built-in `worker`, default implementation.',
-        '- `verifier`: built-in `default`, independent verification and failure analysis.'
-    ) -join $nl
-    $newRoles = @(
-        '- `explorer`: `explore`, read-only investigation.',
-        '- `executor`: write-capable `general-purpose`, default implementation.',
-        '- `verifier`: read-only or execute-only `general-purpose`, independent verification.'
-    ) -join $nl
-    $heavy = $heavy.Replace($oldRoles, $newRoles)
     $oldSpawn = @(
         '3. Spawn each worker with `fork_turns="none"` and a self-contained capsule of',
         '   at most 400 words.'
@@ -417,7 +388,8 @@ if (-not (Select-String -Path $wf -Pattern 'Host runtime \(Grok Build\)' -Quiet)
     throw "Workflow adaptation missing Grok host section — install incomplete"
 }
 $workflowChecks = @(
-    @{ Path = $wf; Pattern = 'Do not duplicate delegated discovery' },
+    @{ Path = $wf; Pattern = '## Mutation boundary' },
+    @{ Path = (Join-Path $Dest "workflow\references\heavy.md"); Pattern = 'Do not duplicate delegated discovery' },
     @{ Path = (Join-Path $Dest "workflow\references\heavy.md"); Pattern = '## Direct repair loop' },
     @{ Path = (Join-Path $Dest "workflow\references\roles.md"); Pattern = 'within 250 words' }
 )

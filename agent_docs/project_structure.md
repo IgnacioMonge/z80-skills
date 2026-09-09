@@ -39,16 +39,8 @@ repository structure, and validation commands. Runtime behavior results are
 generated under ignored `evals/results/`; they are not mixed with deterministic
 unit tests.
 
-Ownership boundaries are intentionally explicit: route selects a domain;
-send performs only the requested remote BridgeZX transfer;
-document owns public repository documentation and language parity;
-develop handles explicit product initiatives and their dossiers;
-port-spectranext handles the external cartridge consumer lifecycle; debug
-handles observed failures with unresolved causality; audit handles preventive
-or broad read-only correctness review; organize handles structure, shrink
-handles size, optimize handles competing metrics, and workflow handles generic
-execution control. Domain evidence and safety gates remain in the specialized
-skills.
+See the [README catalog](../README.md#what-is-included) for skill responsibilities;
+domain evidence and safety gates remain in the specialized skills.
 
 Repository instructions live in `AGENTS.md`; durable project context is kept
 under `agent_docs/`. The canonical adaptive workflow lives under

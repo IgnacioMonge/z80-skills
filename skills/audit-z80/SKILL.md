@@ -90,7 +90,8 @@ is incomplete.
 
 ## Core Rules
 
-- Findings first; never edit project code during an audit.
+- Findings first; except for `preflight` mode, place profile and coverage context
+  after findings. Never edit project code during an audit.
 - Hand one observed failure with unresolved causality to `$debug-z80`; keep a
   requested preventive or broad correctness review here.
 - Promote only current-code or fresh-artifact evidence.

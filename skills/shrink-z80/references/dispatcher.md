@@ -25,8 +25,12 @@ queue, not confirmed savings.
 ## Mode Routing
 
 - `preflight`: baseline only, then stop.
-- `scan` / `diverge`: `high-impact.md`, evidence-selected lanes from
-  `agent-orchestration.md`, `blind-spots.md`, then `reporting.md`.
+- `scan`: start with `high-impact.md` and the single highest-payload lane
+  supported by fresh evidence; add another lane only when it can materially
+  change the ranking. Then use `blind-spots.md` and `reporting.md`.
+- `diverge`: cover every applicable high-yield lane, using
+  `agent-orchestration.md` only where independent lanes add value, then
+  `blind-spots.md` and `reporting.md`.
 - `deadcode`: deadcode scanner + `high-impact.md`; verify indirect calls,
   exports, map presence, and shared tails.
 - `dedup`: literal/repeated-sequence scanners; separate source duplicates from
@@ -53,8 +57,9 @@ queue, not confirmed savings.
 5. Enter black-belt or external research only after higher-yield SAFE lanes, or
    earlier when a concrete uncertainty blocks them.
 
-For broad work, cover every applicable high-yield lane; collapse irrelevant
-lanes into one concise `n/a` note rather than emitting fixed checklists.
+For explicitly broad or exhaustive work, cover every applicable high-yield
+lane; collapse irrelevant lanes into one concise `n/a` note rather than
+emitting fixed checklists.
 
 ## Evidence
 

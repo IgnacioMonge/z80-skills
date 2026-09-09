@@ -36,7 +36,9 @@ Capture these items before a `full` audit:
 
 ## Preflight output
 
-Summarize the profile before findings. A short block is enough:
+In `preflight` mode, return the profile and escalation signals, then stop. In a
+real audit, use the profile to qualify findings and place one short profile or
+coverage block after the findings; never put it ahead of promoted findings.
 
 ```text
 Toolchain: zcc + sdcc + z80asm

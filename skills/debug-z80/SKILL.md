@@ -8,30 +8,11 @@ description: Evidence-bounded root-cause debugging for observed Z80, ZX Spectrum
 Find one causal owner and, only when requested, apply one verified root-cause
 repair. Do not turn a local failure into a repository audit.
 
-## Workflow Core
-
-Apply the sibling `$workflow` skill at `../workflow/SKILL.md` as the execution
-control plane. Workflow owns effort, agent topology, dispatch, repair
-coordination, verification, and integration; this skill owns the debugging
-entry gate, Z80 evidence, causal loop, repair gate, and output contract. A
-workflow route never widens the mutation boundary. If the sibling is
-unavailable, report the limitation and continue directly without claiming
-workflow execution.
-
-Read [references/hard-contract.md](references/hard-contract.md) for every real
-debugging task before reproducing, building, instrumenting, or editing.
-
-## Runtime Portability
-
-- Canonicalize the catalog path to this `SKILL.md` while following symlinks and
-  Windows junctions, then set `SKILL_DIR` to its parent.
-- Use the Python 3 interpreter exposed by the host or explicitly provided by
-  the user; never assume a platform-specific executable or path.
-- Resolve `RUNNER` from canonical `SKILL_DIR` as
-  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` and verify that it is a file
-  before any disposable command. Invoke it by absolute path.
-
 ## Entry Gate
+
+For `help`, explain this gate and stop without loading references or workflow.
+Otherwise evaluate the request first. If it fails, state `NOT_DEBUGGING` and
+continue through the receiving route, loading its instructions only.
 
 Enter only when all conditions hold:
 
@@ -53,6 +34,29 @@ check, hand the known-cause fix to `$workflow`. Route preventive or broad
 read-only correctness review to `$audit-z80`; route acceptable behavior that
 only needs better size, speed, RAM, rendering, or latency to the matching
 optimization specialist.
+
+## Workflow Core
+
+After the entry gate passes, apply the sibling `$workflow` skill at
+`../workflow/SKILL.md` as the execution control plane. Workflow owns effort,
+agent topology, dispatch, repair coordination, verification, and integration;
+this skill owns Z80 evidence, the causal loop, repair gate, and output contract.
+A workflow route never widens the mutation boundary. If the sibling is
+unavailable, report the limitation and continue directly without claiming
+workflow execution.
+
+Read [references/hard-contract.md](references/hard-contract.md) before
+reproducing, building, instrumenting, or editing.
+
+## Runtime Portability
+
+- Canonicalize the catalog path to this `SKILL.md` while following symlinks and
+  Windows junctions, then set `SKILL_DIR` to its parent.
+- Use the Python 3 interpreter exposed by the host or explicitly provided by
+  the user; never assume a platform-specific executable or path.
+- Resolve `RUNNER` from canonical `SKILL_DIR` as
+  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` and verify that it is a file
+  before any disposable command. Invoke it by absolute path.
 
 ## Demand Signal
 

@@ -69,9 +69,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             )
         )
         self.assertEqual(agent_types, {"default", "worker", "explorer"})
-        self.assertIn("not external custom-agent profiles", " ".join(
-            (WORKFLOW / "SKILL.md").read_text(encoding="utf-8").split()
-        ))
+        self.assertIn("not from custom profiles", roles)
         self.assertNotIn("runtime-provided", roles)
 
     def test_workflow_avoids_serial_controller_overhead(self) -> None:
@@ -106,25 +104,18 @@ class WorkflowIntegrationTest(unittest.TestCase):
             self.assertTrue(sibling.is_file(), sibling)
 
         for path in ROUTE_FILES:
-            text = " ".join(path.read_text(encoding="utf-8").split())
-            for boundary in (
-                "primary-tree read-only",
-                "disposable-worktree-only",
-                "authorized primary-tree mutation",
-            ):
-                self.assertIn(boundary, text)
-            self.assertIn("verified, domain-gated disposable worktree", text)
+            self.assertIn("../SKILL.md", path.read_text(encoding="utf-8"))
 
     def test_mutation_dispatch_matches_domain_contracts(self) -> None:
-        workflow_files = (WORKFLOW / "SKILL.md", ROLES, *ROUTE_FILES)
-        for path in workflow_files:
-            text = " ".join(path.read_text(encoding="utf-8").split())
-            for boundary in (
-                "primary-tree read-only",
-                "disposable-worktree-only",
-                "authorized primary-tree mutation",
-            ):
-                self.assertIn(boundary, text, path)
+        text = " ".join((WORKFLOW / "SKILL.md").read_text(encoding="utf-8").split())
+        for boundary in (
+            "primary-tree read-only",
+            "disposable-worktree-only",
+            "authorized primary-tree mutation",
+        ):
+            self.assertIn(boundary, text)
+        self.assertIn("verified, domain-gated disposable worktree", text)
+        self.assertIn("never edit production files", text)
 
         for name in ANALYSIS_SKILLS:
             contract = (
@@ -185,7 +176,9 @@ class WorkflowIntegrationTest(unittest.TestCase):
         skill_file = ROOT / "skills" / "optimize-z80" / "SKILL.md"
         skill = skill_file.read_text(encoding="utf-8")
 
-        self.assertIn("following symlinks and Windows junctions", skill)
+        contract = (skill_file.parent / "references" / "hard-contract.md").read_text(encoding="utf-8")
+        self.assertIn("references/hard-contract.md", skill)
+        self.assertIn("following symlinks and Windows junctions", contract)
         self.assertIn("sole preflight entry point", skill)
         self.assertNotIn("references/preflight.md", skill)
         self.assertTrue(
@@ -290,7 +283,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         for name in (*Z80_ROUTED_SKILLS, "workflow"):
             self.assertIn(f"../{name}/SKILL.md", router)
         self.assertIn("Select one primary route", router)
-        self.assertIn("load every sibling `SKILL.md`", router)
+        self.assertIn("load every sibling `SKILL.md`", " ".join(router.split()))
         self.assertIn("ordinary bounded fix", router)
         self.assertIn("even when the match is unambiguous", router_description)
         self.assertIn("observed unresolved failures", router_description)
@@ -310,7 +303,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         )
 
         self.assertIn("one observed failure with unresolved causality", router)
-        self.assertIn("rather than in a generic debugging workflow", router)
+        self.assertIn("rather than a generic debugging workflow", router)
         self.assertIn("cause is already established", router)
         self.assertIn("There is an observed failure", debug)
         self.assertIn("The causal owner is genuinely unknown", debug)
@@ -420,6 +413,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertTrue({
             "Hit",
             "collect_pattern_hits",
+            "directive_symbols",
             "fmt_hex",
             "load_symbol_table",
             "print_pattern_hits",
@@ -427,6 +421,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
 
         forbidden = {
             "collect_hits",
+            "directive_symbols",
             "fmt_hex",
             "Hit",
             "load_symbols",
@@ -437,7 +432,10 @@ class WorkflowIntegrationTest(unittest.TestCase):
         }
         for skill in ("audit-z80", "shrink-z80"):
             scripts = ROOT / "skills" / skill / "scripts"
-            for name in ("map_summary.py", "preflight_scan.py", "z80_pattern_scan.py"):
+            names = ("map_summary.py", "preflight_scan.py", "z80_pattern_scan.py")
+            if skill == "audit-z80":
+                names += ("abi_inventory.py",)
+            for name in names:
                 path = scripts / name
                 text = path.read_text(encoding="utf-8")
                 tree = ast.parse(text)

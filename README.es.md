@@ -23,7 +23,6 @@ hipótesis.
 - [Qué aporta frente a un análisis genérico](#qué-aporta-frente-a-un-análisis-genérico)
 - [Ejecución adaptativa y multiagente](#ejecución-adaptativa-y-multiagente)
 - [Investigación externa dirigida](#investigación-externa-dirigida)
-- [Detalle de cada skill](#detalle-de-cada-skill)
 - [Instalación](#instalación)
 - [Uso](#uso)
 - [Artefactos recomendados](#artefactos-recomendados)
@@ -36,17 +35,17 @@ hipótesis.
 
 | Skill | Pregunta principal | Resultado |
 |---|---|---|
-| `workflow` | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa Light o Medium en el hilo principal, o coordinación Heavy plana con workers integrados y acotados. |
-| `route-z80` | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
-| `send-bridgezx` | ¿Qué ficheros o directorios concretos deben llegar al ZX o Next? | Envío BridgeZX protegido con IP explícita o última conocida, destino opcional y secuencia solicitada. |
-| `develop-z80` | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
-| `document-z80` | ¿Cómo estructurar la documentación pública del repositorio y mantenerla correcta entre idiomas? | README y jerarquía documental basados en evidencia, con comandos, requisitos de hardware y paridad EN/ES verificados. |
-| `port-spectranext` | ¿Cómo atraviesa un programa ZX existente el pipeline consumidor del cartucho Spectranext? | Intake canónico, implementación acotada, gates ligados a artefactos, evidencia física y handoff final. |
-| `debug-z80` | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
-| `audit-z80` | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
-| `organize-z80` | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
-| `shrink-z80` | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
-| `optimize-z80` | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
+| [workflow](skills/workflow/SKILL.md) | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa Light o Medium en el hilo principal, o coordinación Heavy plana con workers integrados y acotados. |
+| [route-z80](skills/route-z80/SKILL.md) | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
+| [send-bridgezx](skills/send-bridgezx/SKILL.md) | ¿Qué ficheros o directorios concretos deben llegar al ZX o Next? | Envío BridgeZX protegido con IP explícita o última conocida, destino opcional y secuencia solicitada. |
+| [develop-z80](skills/develop-z80/SKILL.md) | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
+| [document-z80](skills/document-z80/SKILL.md) | ¿Cómo estructurar la documentación pública del repositorio y mantenerla correcta entre idiomas? | README y jerarquía documental basados en evidencia, con comandos, requisitos de hardware y paridad EN/ES verificados. |
+| [port-spectranext](skills/port-spectranext/SKILL.md) | ¿Cómo atraviesa un programa ZX existente el pipeline consumidor del cartucho Spectranext? | Intake canónico, implementación acotada, gates ligados a artefactos, evidencia física y handoff final. |
+| [debug-z80](skills/debug-z80/SKILL.md) | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
+| [audit-z80](skills/audit-z80/SKILL.md) | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
+| [organize-z80](skills/organize-z80/SKILL.md) | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
+| [shrink-z80](skills/shrink-z80/SKILL.md) | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
+| [optimize-z80](skills/optimize-z80/SKILL.md) | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
 
 `workflow` es independiente de Z80 y selecciona el esfuerzo de ejecución.
 `route-z80` es el único punto de entrada implícito para seleccionar dominio Z80
@@ -159,227 +158,6 @@ proyecto permanece como hipótesis.
 
 Para proteger proyectos privados, las búsquedas usan únicamente firmas mínimas
 normalizadas; nunca deben subir código privado ni identificadores del proyecto.
-
-## Detalle de cada skill
-
-### `route-z80`
-
-Dispatcher implícito de dominio ligero para peticiones Z80 en lenguaje natural.
-Enruta inmediatamente una coincidencia inequívoca con un especialista y sólo
-pregunta cuando quedan varios resultados primarios. Los fixes de causa conocida,
-comentarios de código, instrucciones de agentes, refactors, tests y builds van a
-`workflow`. No decide entre Light, Medium y Heavy ni carga todos los skills
-candidatos.
-
-### `send-bridgezx`
-
-Entrega protegida de ficheros o directorios locales mediante el cliente Python
-oficial de BridgeZX. Usa una IP explícita o el último host conocido por
-BridgeZX, sondea y bloquea Classic/Next antes del envío, transmite un destino
-remoto relativo opcional y convierte un orden explícito en operaciones
-secuenciales que se detienen al primer fallo. Nunca reintenta automáticamente
-un resultado incierto.
-
-### `document-z80`
-
-Creación, reestructuración, sincronización y revisión de documentación pública
-de GitHub para proyectos Z80 y ZX, siempre basada en evidencia. Trata el README
-raíz como landing page; deja tutoriales, guías orientadas a objetivos,
-referencia exacta, explicaciones de arquitectura e historial de versiones en
-sus hogares mínimos útiles; evita duplicar hechos.
-
-Verifica comandos, rutas, artefactos, máquinas objetivo, periféricos y requisitos
-del toolchain contra el repositorio. Las variantes de idioma conservan la misma
-topología y los mismos hechos sin forzar traducción literal ni una nueva
-convención de nombres. La marca, las capturas y la voz retro siguen siendo
-propias de cada proyecto.
-
-### `develop-z80`
-
-Desarrollo dirigido por especificaciones desde una idea inicial hasta código
-verificado. Da forma al concepto, define comportamiento observable, elige el
-perfil ZX/Next, planifica hitos ejecutables, crea tareas con dependencias,
-implementa las tareas listas y reconcilia cada criterio de aceptación con
-evidencia.
-
-El usuario no dirige esas fases. El skill deduce dónde empezar, avanza
-automáticamente y solo pregunta por decisiones de producto materiales o por la
-autorización que falte antes de modificar código de producto.
-
-El trabajo pequeño conserva un único dossier SDD en la conversación. Un proyecto
-de varias sesiones puede persistir ese mismo dossier en el repositorio en vez de
-dispersar idea, requisitos, plan, tareas y estado entre varios archivos.
-
-`auto` sigue siendo la experiencia normal; los techos opcionales `idea`, `spec`,
-`plan`, `tasks`, `implement` y `verify` permiten trabajo dirigido. Evidencia,
-decisiones de plataforma, formato del dossier y verificación por hitos se cargan
-progresivamente desde referencias separadas.
-
-### `port-spectranext`
-
-Orquestación fina para portar un programa ZX existente al cartucho Spectranext.
-Descubre y relee el checkout externo actual de Spectranext, ejecuta su entrada
-absoluta `tools/dev port request` desde la raíz del consumidor y sigue el estado
-y el siguiente comando emitidos por esa puerta fail-closed.
-
-El consumidor posee manifiesto, seam, artefactos, reportes, worktree e historial
-Git. El checkout Spectranext conserva la autoridad sobre código del cartucho,
-documentación y mecánica del pipeline. El skill añade selección de esfuerzo,
-límites de autorización, carga progresiva, checkpoints físicos y reporte de
-evidencia sin copiar el schema ni el pipeline.
-
-### `debug-z80`
-
-Depuración causal acotada por evidencia para un fallo observado cuya causa aún
-no está establecida. Acepta crashes, salida incorrecta, fallos de build/link,
-no determinismo, regresiones, divergencia hardware/emulador y reparaciones
-fallidas; rechaza fixes de causa conocida, auditorías especulativas y mejoras
-sin comportamiento fallido.
-
-El skill conserva la modalidad: un diagnóstico permanece en solo lectura; una
-petición de diagnosticar y corregir solo cruza la puerta de reparación cuando
-una hipótesis falsable identifica owner y check de aceptación. Builds, sondas,
-mediciones y fixes candidatos se ejecutan en un worktree desechable verificado.
-La edición del árbol principal queda limitada a la reparación probada y exige
-autorización previa del usuario.
-
-Su router de síntomas Z80 parte de la frontera mínima pertinente: primer
-diagnóstico de build, ABI C/ASM y stack, orden de ISR, restauración de banco o
-página, código generado, delta entre targets o supuesto de hardware/emulador.
-Devuelve `NOT_DEBUGGING`, `READY_TO_FIX`, `NEEDS_EVIDENCE`, `EXTERNAL` o `FIXED`
-en vez de un catálogo de causas plausibles.
-
-### `audit-z80`
-
-Auditoría preventiva o amplia de solo lectura para encontrar defectos reales y
-riesgos reproducibles sin convertir un fallo observado en un escaneo general.
-
-**Cobertura**
-
-- fronteras C/ASM, calling conventions, registros, flags y stack;
-- ISR, `DI`/`EI`, reentrada y estado compartido;
-- mapas de memoria, BSS, stack gap, bancos y overlays;
-- firmware, ROM, RST 8, esxDOS, divMMC y diferencias entre modelos;
-- semántica C, buffers, promoción, signedness y lifetime;
-- ASM/listings generados, reglas copt y comportamiento z88dk/SDCC;
-- ULA, contention, puertos, timing y regresiones visibles para el usuario.
-
-**Modos**
-
-- `auto`: preflight y profundidad adaptativa.
-- `preflight`: perfil y señales de escalado sin auditoría completa.
-- `full` / `diverge`: cobertura amplia con las mismas puertas de evidencia.
-- Focos: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
-  `toolchain`, `copt` y `map`.
-
-**Helpers principales**
-
-- `preflight_scan.py`: inventario de fuentes, artefactos y señales de riesgo.
-- `z80_pattern_scan.py`: patrones estructurales ASM/C.
-- `abi_inventory.py`: declaraciones, convenciones y fronteras C/ASM.
-- `map_summary.py`: símbolos, direcciones y aproximación del stack gap.
-- `smoke_test.py`: comprobación reproducible de los analizadores.
-
-La salida pone primero los hallazgos que superan la puerta de promoción. Si
-ninguno sobrevive, lo indica y señala el riesgo residual más importante en vez
-de rellenar el informe con observaciones débiles.
-
-### `organize-z80`
-
-Workflow de arquitectura y reorganización Z80 basado en evidencia.
-
-**Cobertura**
-
-- propiedad, dependencias, estado mutable, layout de fuentes y placement en runtime;
-- un mapa persistente opcional del estado actual, recomendado y final verificado;
-- seams ASM puro y C/ASM, mapas, símbolos, entradas generadas y targets;
-- migraciones incrementales que preservan ABI, timing, banking, formatos y contratos de build.
-
-**Modos**
-
-- `map`, `design`, `plan`, `apply` y `review`, además de `help`.
-- La demanda escala como `Focused`, `Standard` o `Deep`; `apply` ejecuta únicamente un slice aprobado y reversible.
-
-Informa severidad, confianza, coste organizativo, evidencia de validación y
-`NO REORGANIZATION NEEDED` cuando la estructura actual ya es proporcionada.
-
-### `shrink-z80`
-
-Optimizador de tamaño basado en mediciones y contabilidad neta.
-
-**Objetivos separados**
-
-- tamaño de almacenamiento;
-- CODE/DATA enlazado;
-- memoria residente;
-- BSS y margen de stack;
-- techo de banco u overlay;
-- reserva mínima por target.
-
-**Modos**
-
-- `scan`: análisis adaptativo completo.
-- `preflight`: perfil de artefactos y presión.
-- Focos: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
-  `arch`, `libpull`, `blackbelt` y `reserve`.
-- `diverge`: exploración amplia sin relajar la prueba.
-
-**Orden de ataque**
-
-1. Arquitectura, residencia, datos y librerías enlazadas.
-2. Código generado, helpers y representaciones repetidas.
-3. Compresión con coste neto y RAM pico separados.
-4. Microoptimizaciones y técnicas de mayor riesgo solo cuando pueden importar.
-
-No suma propuestas dependientes, subsumidas, incompatibles o todavía no
-construidas. Distingue seguridad (`SAFE`, `AGGRESSIVE`, `EXPERIMENTAL`) y
-calidad de medida (`EXACTO`, `ESTIMADO`, `REQUIERE BUILD`).
-
-**Helpers principales**
-
-- `preflight_scan.py` y `artifact_freshness.py`;
-- `map_summary.py`, `deadcode_scan.py` y `libpull_scan.py`;
-- `generated_helper_scan.py` y `literal_dup_scan.py`;
-- `z80_pattern_scan.py`;
-- `net_compression_check.py`, que separa ahorro de almacenamiento y RAM pico.
-
-### `optimize-z80`
-
-Motor de estrategia multiobjetivo para decidir qué optimizar primero y cómo
-validarlo.
-
-**Ámbitos**
-
-- tamaño, ciclos y latencia;
-- RAM, stack y layout de datos;
-- renderizado, contention e I/O;
-- bancos, overlays y transiciones;
-- C a ASM, ABI, librerías, codegen y toolchain;
-- restricciones por modelo y hardware.
-
-**Modos**
-
-- `Triage`: inspección de solo lectura sin build. Los artefactos obsoletos
-  limitan la confianza.
-- `Measurement`: baseline reproducible en un worktree desechable.
-- `Experiment`: requiere aprobación explícita, cambia una sola variable y se
-  elimina salvo que el usuario pida conservarla.
-
-Primero identifica el cuello de botella dominante. Después aplica vetos de
-política y target, fusiona duplicados, audita los finalistas y recomienda como
-máximo tres experimentos siguientes.
-
-Cada candidato incluye:
-
-- ancla y frescura de la evidencia;
-- zona, mecanismo e impacto esperado;
-- efecto sobre tamaño, ciclos/latencia, RAM/stack y UX cuando corresponda;
-- riesgo, targets, restricciones, rollback y validación;
-- confianza (`PROVEN`, `LIKELY` o `SPECULATIVE`);
-- motivo por el que supera ahora a las alternativas.
-
-Los estimadores estáticos de ciclos, mapas o patrones no constituyen prueba por
-sí solos.
 
 ## Instalación
 
@@ -631,76 +409,12 @@ configuración y receta deben pertenecer a la misma línea base.
 
 ## Estructura del repositorio
 
-```text
-LICENSE
-README.md
-README.es.md
-.codex-plugin/
-  plugin.json
-evals/
-  baseline.json
-  routing.jsonl
-  evidence.jsonl
-  fixtures/
-  schemas/
-scripts/
-  install-for-grok.ps1
-  install_personal_marketplace.py
-  run_behavior_evals.py
-  run_in_worktree.py
-  test_behavior_evals.py
-skills/
-  workflow/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  route-z80/
-    SKILL.md
-    agents/openai.yaml
-  send-bridgezx/
-    SKILL.md
-    agents/openai.yaml
-    scripts/
-  document-z80/
-    SKILL.md
-    agents/openai.yaml
-  develop-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  port-spectranext/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  debug-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  audit-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-  organize-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  shrink-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-    tests/
-  optimize-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-```
+- `skills/<nombre>/`: `SKILL.md`, metadatos de agente, referencias y analizadores.
+- `scripts/`: instalación, runner de worktrees y pruebas.
+- `evals/`: casos y fixtures de routing/evidencia; los resultados generados se ignoran.
+- `agent_docs/`: contexto mantenido del proyecto.
 
-Cada skill mantiene las instrucciones centrales en `SKILL.md` y los detalles
-de carga selectiva en `references/`; los skills con analizadores reproducibles
-los mantienen en `scripts/`.
+Consulta el [mapa del repositorio](agent_docs/project_structure.md) para la propiedad de archivos.
 
 ## Validación
 
@@ -739,9 +453,21 @@ python3 scripts/run_behavior_evals.py --suite evals/evidence.jsonl
 
 El runner rechaza una versión instalada obsoleta salvo override explícito,
 registra precisión y recall por ruta y escribe resultados JSON ignorados bajo
-`evals/results/`. `evals/baseline.json` conserva el resumen verificado pequeño y
-no sensible, distinguiendo ejecuciones completas de replays dirigidos de una
-corrección.
+`evals/results/`, junto con trazas del runtime por caso. Usa `--model` y
+`--reasoning-effort` para hacer explícita la comparación. Los resultados separan
+los ajustes solicitados de los confirmados por el runtime, registran el consumo
+de tokens informado y las acciones observadas, y comparan los archivos de cada
+fixture antes y después. Los efectos no observables de comandos o herramientas
+quedan como desconocidos; el JSON final del modelo no demuestra que no intentó
+escribir. Las trazas pueden contener datos del fixture y rutas locales;
+revísalas antes de compartirlas.
+
+Los informes incluyen una huella del plugin fuente y de las entradas de
+evaluación; esa huella no demuestra por sí sola que la copia instalada coincida.
+Mantén iguales los casos, fixtures, modelo y esfuerzo al comparar revisiones
+de skills por calidad o coste. `evals/baseline.json` conserva
+resultados históricos verificados; no demuestra que una versión posterior o
+una suite ampliada hayan pasado.
 
 ## Licencia y copyright
 

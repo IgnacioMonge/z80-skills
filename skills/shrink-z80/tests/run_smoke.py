@@ -40,7 +40,10 @@ def main() -> int:
     assert "ASCII-hex without table or branch (6 bytes)" in blackbook_text
 
     research = (SKILL / "references" / "external-research.md").read_text(encoding="utf-8")
-    assert "Trigger Gate" in research and "Source Corridors" in research
+    method = "../../audit-z80/references/research-method.md"
+    assert f"]({method})" in research and "Research when" in research
+    shared_research = (SKILL / "references" / method).read_text(encoding="utf-8")
+    assert "Diversify sources:" in shared_research and "## Budget and stop" in shared_research
 
     for relative in (
         "references/hard-contract.md",

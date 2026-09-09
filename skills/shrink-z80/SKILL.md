@@ -29,7 +29,8 @@ exact limitation and continue directly without claiming delegated execution.
 
 - `help`: summarize modes from this file and stop.
 - `preflight`: profile artifacts and pressure targets, then stop.
-- `scan` (default): adaptive full size pass.
+- `scan` (default): start with the smallest evidence-led pass and expand only
+  when the pressure target or surviving evidence requires another lane.
 - Focused: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
   `arch`, `libpull`, `blackbelt`, `reserve`.
 - `diverge`: force a broad candidate search but retain normal proof gates.
@@ -46,17 +47,16 @@ Classify after preflight and pass the result to `$workflow` when it is in
   A light route is normally sufficient.
 - **Standard**: multiple plausible size mechanisms or uncertain linked impact.
   A medium route can isolate the highest-value uncertainty.
-- **Deep**: broad scan, multi-target ceilings, banks/overlays, mixed source and
-  generated artifacts, insufficient SAFE wins, or an explicit black-belt /
-  exhaustive request. A heavy route can investigate independent high-yield
-  lanes.
+- **Deep**: an explicit broad/exhaustive request, or several independent
+  high-risk size mechanisms whose evidence cannot be resolved in one stream. A
+  heavy route can investigate independent high-yield lanes.
 
 An explicit workflow level wins. Missing agents reduce parallelism, not byte
-accounting or safety. An adaptive `Deep` pass may select only the two or three
-highest-payload lanes, but must record the remaining applicable lanes as
-skipped and explain why. An explicitly broad, exhaustive, or `diverge` pass
-takes precedence and must cover every applicable high-yield lane, or state that
-the pass is incomplete.
+accounting or safety. A default `scan` begins with the highest-payload evidenced
+lane; it is not a full-project promise. Expand only while another lane can
+materially change the result. An explicitly broad, exhaustive, or `diverge`
+pass must cover every applicable high-yield lane, or state that the pass is
+incomplete.
 
 ## First Actions
 
@@ -92,5 +92,7 @@ the pass is incomplete.
 - Preserve behavior unless the user explicitly accepts more risk.
 - Rank larger SAFE wins before AGGRESSIVE or EXPERIMENTAL ideas.
 - Never sum dependent, subsumed, mutually exclusive, or unbuilt candidates.
+- Exact artifact claims require the freshness gate; stale or unbound artifacts
+  remain `REQUIERE BUILD`.
 - Compression claims use net storage and separate peak-RAM accounting.
 - If only micro wins survive, state which higher-yield categories were checked.

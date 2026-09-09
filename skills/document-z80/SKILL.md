@@ -37,6 +37,12 @@ independent or widen the write boundary. Treat every maintained language
 variant and cross-linked page in the same repository as one coupled mutable
 surface with one owner; never split its languages across parallel writers.
 
+In `auto`, `Focused` uses the shared workflow's Light route with only the named
+document, repository instructions, and direct fact sources needed for the
+changed claim. Do not create a documentation-specific control plane or load a
+repository-wide documentation map, translation set, or release history unless
+the localized change depends on it.
+
 A review request is read-only. A create, rewrite, or synchronization request
 authorizes edits only to the public human-facing documentation in scope. It
 does not authorize source, build configuration, release, generated-artifact,

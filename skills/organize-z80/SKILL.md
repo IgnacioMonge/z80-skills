@@ -67,7 +67,7 @@ Load only the references selected by the following signals:
 | Planned or applied move, split, include change, or validation | `references/migration-and-validation.md` |
 | C/ASM, z88dk, SDCC, assembler scope, linker, CRT, or toolchain seam | `references/toolchain-layout.md` |
 | Persistent current, recommended, final, or stale project map | `references/persistent-project-map.md` |
-| Deliverable or handoff | `references/reporting.md` |
+| Formal/durable deliverable, or Standard/Deep report | `references/reporting.md` |
 
 Use these workflow steps, stopping once the selected mode and demand are
 satisfied: **S** scope; **B** baseline; **E** execution map; **M** state,
@@ -87,6 +87,10 @@ Do not build merely to decorate a read-only proposal. For `Focused`, inspect
 only the affected boundary. For `Standard`, map coupled execution and data
 paths. For `Deep`, cover every active responsibility and placement class or
 name the unmapped remainder.
+
+For a non-durable `Focused` result, do not load `references/reporting.md`.
+Return only the decision or finding, its current anchor, the preserved boundary,
+the narrow check or next step, and material residual risk.
 
 ## Apply gate
 

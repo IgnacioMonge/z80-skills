@@ -26,8 +26,8 @@ availability from this table or transfer Codex model IDs to another host.
 
 | Assignment | Preferred model | Initial reasoning effort |
 | --- | --- | --- |
-| Narrow lookup, mechanical edit, or verification with explicit criteria | `gpt-5.6-luna` | `max` |
-| Cohesive coding, debugging, or code review needing implementation judgment | `gpt-5.6-sol` | `high` |
+| Narrow lookup, mechanical edit, or execution of predefined checks with supplied expected results and acceptance rules | `gpt-5.6-luna` | `max` |
+| Cohesive coding, debugging, code review, or designing checks and judging evidence sufficiency | `gpt-5.6-sol` | `high` |
 | General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-5.6-sol` | `high` |
 | Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-5.6-sol` | `xhigh` |
 
@@ -55,12 +55,20 @@ worker's prose.
 
 Workers must not spawn children; the main thread owns dispatch and model changes.
 
+Executing predefined checks and recording their outcomes is mechanical;
+designing checks, assessing coverage, or deciding whether evidence proves a
+contract requires judgment, even when the acceptance criterion is explicit.
+Mechanical execution does not certify correctness beyond the supplied checks.
+Choose the model for the hardest reasoning obligation in a mixed assignment;
+the `verifier` role never determines the model.
+
 - **Investigator:** remain read-only; trace the assigned surface and return
   evidence with paths, symbols, commands, and unresolved uncertainty.
 - **Implementer:** own only named files or responsibility; preserve unrelated
   work; make the smallest coherent change and run the requested check.
 - **Verifier:** independently test the supplied acceptance criteria; do not fix
-  defects; return exact commands, outcomes, and residual risk.
+  production, test, fixture, mock, or test-data defects. Return exact commands,
+  outcomes, and residual risk; send repairs to the assigned implementer.
 
 ## Upward report contract
 
@@ -73,12 +81,6 @@ test output in the retained worker thread or a referenced artifact. The main
 thread opens that detail only for a material contradiction, uncertainty, or
 high-risk integration boundary.
 
-All permissions are the intersection of the role, project instructions,
-domain skill, parent sandbox, and user authorization. Classify each assignment
-as **primary-tree read-only**, **disposable-worktree-only**, or **authorized
-primary-tree mutation** before spawning it. Investigators and verifiers remain
-read-only; implementers may write only in the classified surface. Assign one
-owner to each mutable file set; parallel implementers must use disjoint
-surfaces. A role never widens a network, approval, or mutation boundary.
-
-The role contract remains identical regardless of model.
+Apply the [mutation boundary](../SKILL.md#mutation-boundary) before spawning.
+Investigators and verifiers remain read-only; implementers own only the assigned
+write surface. The role contract remains identical regardless of model.

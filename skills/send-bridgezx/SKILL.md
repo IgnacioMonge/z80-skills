@@ -43,13 +43,16 @@ Run `scripts/bridgezx_transfer.py` with a host-approved Python 3.10+ interpreter
 The executor imports the official `bridgezx` package; it does not implement the
 wire protocol.
 
-Try an already importable installation first. Otherwise resolve one bounded,
-verified client checkout from an explicit path, `BRIDGEZX_CLIENT_ROOT`, the
-active workspace, or a sibling workspace directory. A valid root contains
-either `bridgezx/__init__.py` or `client/bridgezx/__init__.py`; pass it as
-`--client-root`. Do not search the entire filesystem, clone, install, or modify
-BridgeZX. If no client is available, ask only for its installation or checkout
-path.
+Client resolution follows the executor's actual precedence: explicit
+`--client-root`, then `BRIDGEZX_CLIENT_ROOT`, then an already importable
+`bridgezx` package. A supplied root must contain either
+`bridgezx/__init__.py` or `client/bridgezx/__init__.py`. A supplied but invalid
+root is an error, not permission to fall through to another installation.
+If no root was supplied and the package is unavailable, check only the active
+workspace and bounded sibling workspace candidates for a verified client;
+pass a discovered checkout as `--client-root`. Do not search the entire
+filesystem, clone, install, or modify BridgeZX. Ask for its path only when
+these bounded checks find no client.
 
 ## Transfer
 

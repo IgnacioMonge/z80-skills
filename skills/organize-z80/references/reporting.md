@@ -1,135 +1,71 @@
 # Reporting
 
-Return a decision artifact, not a transcript.
+Return a decision artifact, not a transcript. Use the common fields once,
+then only the section matching the requested mode.
 
-## Contents
+## Common fields
 
-1. [Map or review](#map-or-review)
-2. [Target design](#target-design)
-3. [Migration plan](#migration-plan)
-4. [Applied migration handoff](#applied-migration-handoff)
+- Scope/mode; demand (`Focused | Standard | Deep`); targets/toolchains/configurations.
+- Evidence, freshness, references loaded; persistent-map path/status, freshness,
+  planned update or refresh point.
+- Preserved contracts, authorized exceptions, residual unknowns/coupling,
+  severity/confidence where applicable, and next decision or approved phase.
+- Organizational cost: calls, resident bytes, bank switches, indirection,
+  validation; accepted trade-offs.
+- Repository/worktree and recovery state for migrations.
+- `NO REORGANIZATION NEEDED`: yes/no and reason.
+- Handoff and question: correctness → `audit-z80`; bytes → `shrink-z80`;
+  speed/RAM/latency → `optimize-z80`; otherwise none.
 
 ## Map or review
 
+Describe contexts, responsibilities, state/memory owners, dependencies/cycles,
+runtime placement/banks/overlays, and generated/build boundaries.
+
+For each finding:
 ```text
-Scope and mode:
-Demand: Focused | Standard | Deep
-Targets/toolchains/configurations:
-Evidence, freshness, and references loaded:
-Persistent map: path | not present | not requested; freshness:
-
-Current topology:
-- execution contexts
-- responsibilities and owners
-- state/memory ownership
-- dependency directions and cycles
-- runtime placement/banking/overlay map
-- generated/build boundaries
-
-Findings (BLOCKER | HIGH | MEDIUM | LOW):
-[severity] title
-Anchor/evidence:
-Owner or boundary problem:
-Runtime/maintenance impact:
+Severity: BLOCKER | HIGH | MEDIUM | LOW
+Title / anchor / evidence:
+Owner or boundary problem / runtime or maintenance impact:
 Smallest correction:
 Confidence: VERIFIED | LIKELY | ASSUMED | UNVERIFIED | NEEDS BUILD
-Organizational cost: calls | resident bytes | bank switches | indirection | validation
-
-Residual unknowns:
-NO REORGANIZATION NEEDED: yes|no + reason
-Handoff: audit-z80 | shrink-z80 | optimize-z80 | none + question
 ```
 
-Prioritize findings by risk and leverage:
-
-1. memory corruption, invalid lifetime, ABI, ISR, bank/page, loader, update, or
-   format hazards;
-2. multiple writers or missing ownership;
-3. cycles and hidden reverse dependencies;
-4. policy in rendering/storage/transport/platform code;
-5. scattered target and layout facts;
-6. change coupling, build friction, and navigation cost;
-7. aesthetic inconsistency.
-
-Do not inflate style preferences into architecture findings.
+Rank runtime hazards first (memory/lifetime/ABI/ISR/banks/loaders/formats), then
+ownership, cycles, misplaced policy, scattered layout facts, change/build cost,
+and aesthetics. Do not inflate style preferences into architecture findings.
 
 ## Target design
 
-```text
-Scope and mode:
-Demand: Focused | Standard | Deep
-Targets/toolchains/configurations:
-Evidence, freshness, and references loaded:
-Persistent map: path | not present | not requested; planned update:
+State selected principles and rejected patterns, then:
 
-Design principles selected for this project:
-Rejected patterns and why:
+- components: owner, exclusions, public boundary, dependencies, state/lifetime,
+  placement, targets, verification;
+- dependency arrows and logical component → files/sections → bank/overlay →
+  generated inputs;
+- proposed tree containing only justified directories/files;
+- expected runtime effect: neutral, measured delta, or unknown/needs build.
 
-Target components:
-component | owns | does not own | public boundary | dependencies |
-state/lifetime | placement | targets | verification
-
-Dependency direction:
-<compact arrows or matrix>
-
-Logical-to-physical mapping:
-logical component | files/sections | bank/page/overlay | generated inputs
-
-Proposed tree:
-<only directories/files justified now>
-
-Preserved contracts:
-Intentional exceptions:
-Expected runtime effect: neutral | measured delta | unknown/needs build
-Organizational cost: calls | resident bytes | bank switches | indirection | validation
-NO REORGANIZATION NEEDED: yes|no + reason
-Handoff: audit-z80 | shrink-z80 | optimize-z80 | none + question
-```
-
-Explain why each new boundary exists. Do not list empty future modules.
+Explain each new boundary; no empty future modules.
 
 ## Migration plan
 
 ```text
-Phase N - outcome
-Scope/files:
-Ownership or dependency change:
-Preconditions:
-Preserved contracts:
-Checks and affected targets:
-Rollback:
-Blocked/unknown:
+Phase N / outcome / scope/files:
+Ownership or dependency change / preconditions:
+Preserved contracts / checks and affected targets:
+Rollback / blockers:
 ```
 
-End with:
-
-- ordered phases and dependencies;
-- first smallest useful phase;
-- checks passed, failed, blocked, and not run;
-- expected temporary compatibility code and deletion point;
-- residual coupling intentionally retained;
-- organizational cost and accepted trade-off;
-- mode, demand, references loaded, severity/confidence, and required handoff;
-- repository/worktree status;
-- persistent-map path, decision state, and required refresh point.
+Order phases by dependencies and name the first useful slice. Include checks
+passed/failed/blocked/not run, temporary compatibility code and its deletion
+point, and persistent-map decision state.
 
 ## Applied migration handoff
 
-Report:
+Report boundaries established, removed paths, exact changed files, authorized
+behavior/format changes, relevant binary/map/size/timing differences, per-target
+checks passed/failed/blocked/not run, and final-map freshness or why it is stale.
 
-- scope, mode, demand, targets, and references loaded;
-- boundaries established and old paths removed;
-- exact files changed;
-- behavior or formats intentionally changed, if authorized;
-- relevant binary/map/size/timing differences;
-- per-target validation results;
-- unresolved risks and next approved phase;
-- branch/worktree and recovery state;
-- persistent-map path and final-map freshness, or why it was marked stale.
-
-State `NO REORGANIZATION NEEDED` when the smallest justified correction is no
-structural change. Hand off correctness questions to `audit-z80`, byte claims to
-`shrink-z80`, and speed/RAM/latency trade-offs to `optimize-z80`.
-
-Never claim sustainability, performance, size, or correctness as proven merely
-because files moved or builds passed.
+Moving files or passing builds alone proves neither sustainability nor
+performance, size, or correctness.

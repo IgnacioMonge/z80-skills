@@ -1,14 +1,9 @@
 # Measurement
 
-Measure only when a number can change the ranking. Use a detached disposable
-worktree in a safe host temporary directory; never modify the primary tree or
-its ignore files. Canonicalize the discovered `SKILL.md` path by following
-symlinks and Windows junctions, set `SKILL_DIR` to its physical parent, and
-verify `RUNNER` at `"$SKILL_DIR/../../scripts/run_in_worktree.py"`. Do not
-declare the runner missing from an uncanonicalized catalog alias. Every command
-that builds, tests, measures, patches, or compares the disposable worktree must
-be launched through `RUNNER` with the primary and worktree roots; never use the
-temporary directory as the wrapper `cwd`.
+Measure only when a number can change the ranking. Before commands, apply the
+canonical path, disposable-worktree, runner, cleanup, and contamination rules
+in `hard-contract.md`; this reference defines measurement choices, not a second
+worktree contract.
 
 ## Baseline
 

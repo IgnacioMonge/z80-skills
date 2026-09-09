@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Route engineering work through a portable adaptive workflow with light, medium, and heavy execution levels. Use when the user invokes `$workflow`, asks to use the workflow, requests a light/medium/heavy route, wants automatic effort selection, or wants bounded parallel workers coordinated by the main agent.
+description: Choose light, medium, or heavy execution for engineering work. Use for `$workflow`, explicit effort selection, or bounded parallel workers coordinated by the main agent.
 ---
 
 # Workflow
@@ -21,7 +21,9 @@ Prefer the lower level when borderline. Change level only when evidence material
 
 ## Common rules
 
-1. Read applicable project instructions and only necessary context.
+1. Read applicable project instructions and only necessary context. Reuse
+   already-read instructions within the task unless they change; recheck source
+   evidence when its revision, configuration, or relevant files change.
 2. If project instructions define route names, selection policy, or spawning
    limits, those definitions win. Map the workflow level only when unambiguous;
    otherwise report the conflict instead of overriding the project.
@@ -29,10 +31,15 @@ Prefer the lower level when borderline. Change level only when evidence material
 4. Establish acceptance criteria before non-trivial edits.
 5. Trace the real code path and preserve contracts and unrelated work.
 6. Make the smallest coherent root-cause change.
-7. Verify proportionately and report observed evidence.
+7. Before any build or check, apply [verification reuse](references/verification.md):
+   run only missing or invalidated evidence; never repeat valid checks.
+   Report observed evidence.
 8. Inspect final diff and repository status after edits when Git is present.
 
-Do not create project workflow scaffolding or documentation unless requested or already required by the repository.
+Do not create project workflow scaffolding or documentation unless requested or
+already required by the repository. Light loads verification rules only when
+building or checking; do not load
+Medium, Heavy, or model-selection references for direct work.
 
 ## Compose with domain skills
 
@@ -44,49 +51,26 @@ When another skill names `$workflow` as its execution core:
   contract, and mutation permissions.
 - Domain restrictions win. A workflow level never authorizes edits, builds,
   network access, or other effects forbidden by the domain skill or project.
-- Before any Heavy dispatch, classify the effective mutation boundary:
-  - **primary-tree read-only:** use only `explorer` or read-only `default`
-    roles; do not spawn an implementer.
-  - **disposable-worktree-only:** an executor may edit or build only inside a
-    verified, domain-gated disposable worktree, never the primary tree.
-  - **authorized primary-tree mutation:** an executor may edit and run checks
-    only within its assigned surface and effective authorization.
-  The most restrictive applicable user, project, or domain rule determines the
-  class.
 - In `auto`, treat domain `Focused`, `Standard`, and `Deep` classifications as
   inputs to light, medium, and heavy selection, not as a second control plane.
 - In `auto`, run the required domain preflight directly at Light, then announce
   the selected level after classification. Do not report that normal selection
   as an escalation.
 
-## Heavy control plane
+## Mutation boundary
 
-For Heavy, use the portable roles in
-[references/roles.md](references/roles.md) and keep a flat topology:
+For every route, use the intersection of user authorization, project rules,
+domain contract, and runtime permissions. Classify before executing or delegating:
 
-1. Keep the main thread as the controller; do not spawn a separate planning or
-   controller agent.
-2. Spawn only when at least two concrete, bounded, independent workstreams can
-   proceed concurrently or independent comparison is required.
-3. Start independent workers together. Use at most two by default; add a third
-   only for a genuinely separate workstream.
-4. Give every worker a self-contained task capsule containing the objective,
-   exact scope and inputs, constraints, acceptance criteria, protected areas,
-   required evidence or artifact, and stop condition.
-5. Assign one owner to each mutable file set. Parallel implementers may write
-   only to disjoint surfaces.
-6. While workers run, advance only unassigned architecture, contract, and
-   integration work. Do not duplicate delegated discovery, diagnostics,
-   implementation, or checks. Integrate worker reports once at the smallest
-   shared boundary.
-7. Run deterministic checks before adding an independent verifier. Add one only
-   when risk, uncertainty, or required coverage justifies the extra call.
+- **primary-tree read-only:** inspect and verify; never edit production files
+  or assign an implementer to this surface.
+- **disposable-worktree-only:** edits and builds stay inside a verified,
+  domain-gated disposable worktree, never the primary tree.
+- **authorized primary-tree mutation:** edit and check only the authorized
+  surface; delegated writers own disjoint file sets.
 
-Use only documented built-in `worker`, `explorer`, or `default` types.
-Task names identify workflow roles; they are not external custom-agent profiles.
-Pass a type only when the runtime exposes `agent_type`; otherwise put the role
-in the capsule. Choose model and reasoning effort per assignment using
-`references/roles.md`, not from the workflow level or task name.
+Investigation and verification roles remain read-only. A role never widens
+network, approval, or mutation permissions.
 
 ## Run the route
 
@@ -94,11 +78,10 @@ in the capsule. Choose model and reasoning effort per assignment using
 - **Medium:** read [references/medium.md](references/medium.md), then work
   directly; do not spawn agents.
 - **Heavy:** read [references/roles.md](references/roles.md), then
-  [references/heavy.md](references/heavy.md); spawn only when the Heavy dispatch
-  gate holds.
+  [references/heavy.md](references/heavy.md). Keep the main thread as the controller;
+  spawn only when the dispatch gate holds. These references alone own role/model
+  selection, capsules, parallel ownership, repair, and upward reporting.
 
 If subagents are unavailable, continue directly unless the user explicitly
-required multi-agent execution; then report the exact limitation. For model or
-effort availability, use the selection and fallback rules in
-[references/roles.md](references/roles.md). Never substitute an explicit user
-choice or claim a model ran without child-thread or runtime evidence.
+required multi-agent execution; then report the exact limitation. Never claim
+delegation or a model identity without runtime evidence.

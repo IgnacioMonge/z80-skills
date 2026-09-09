@@ -10,33 +10,8 @@ artifacts are required for promoted findings, size claims, and optimization
 claims. Scanners, external research, and delegated agents produce candidates;
 the main agent verifies and ranks them.
 
-The skills have distinct responsibilities:
-
-- `route-z80`: implicitly selects one specialist from a natural-language Z80
-  request, including unambiguous matches, or plain workflow for ordinary
-  engineering work; it does not select execution effort.
-- `send-bridgezx`: sends named files or directories through the official
-  BridgeZX client using its explicit or last-known IP, with optional target,
-  remote destination, and ordered-operation safeguards.
-- `develop-z80`: specification-driven development for an explicit ZX or Next
-  product initiative or existing dossier, through autonomously managed
-  specification, milestone, task, implementation, and verification stages.
-- `document-z80`: creates, restructures, reviews, and synchronizes public
-  repository documentation with verified Z80/ZX facts and language parity.
-- `port-spectranext`: drives an existing ZX consumer port through the external
-  Spectranext cartridge pipeline while keeping its checkout and canon
-  authoritative and consumer state isolated.
-- `debug-z80`: evidence-bounded root-cause diagnosis for an observed failure
-  with unresolved causality, plus an authorized minimal repair after its gate.
-- `audit-z80`: read-only correctness and risk auditing.
-- `organize-z80`: ownership, dependency, placement, and incremental
-  reorganization; source edits are limited to an approved `apply` slice.
-- `shrink-z80`: binary-size, residency, BSS/stack, bank, overlay, and linked
-  library reduction.
-- `optimize-z80`: multi-objective ranking across size, speed, RAM, rendering,
-  latency, ABI, banking, and hardware constraints.
-- `workflow`: reusable Light, Medium, and Heavy execution control composed with
-  the domain skills without replacing their evidence and safety gates.
+Skill responsibilities and entry points are listed in the
+[README catalog](../README.md#what-is-included).
 
 Domain selection and execution effort are separate decisions: `route-z80`
 chooses the contract, while `workflow` chooses the smallest sufficient route.

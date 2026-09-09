@@ -18,6 +18,7 @@ from scan_common import (  # noqa: E402
     LISTING_EXTS,
     add_hit,
     conditional_call,
+    directive_symbols,
     explicit_label,
     print_pattern_hits,
     read_text_lines,
@@ -145,7 +146,6 @@ INLINE_ASM_TOUCH_RE = re.compile(
     re.IGNORECASE,
 )
 EXPORT_RE = re.compile(r"^\s*(?:PUBLIC|GLOBAL|XDEF|EXPORT|\.globl)\s+(.+)", re.IGNORECASE)
-SYMBOL_RE = re.compile(r"[A-Za-z_.$][\w.$?@]*")
 ARRAY_DECL_RE = re.compile(r"\b(?:uint8_t|char|unsigned\s+char)\s+(\w+)\s*\[(\d+)\]")
 ARRAY_WRITE_RE = re.compile(r"\b(\w+)\s*\[[^]]+\]\s*=")
 
@@ -187,18 +187,6 @@ def apply_level(hits: dict[str, list[Hit]], level: str) -> dict[str, list[Hit]]:
     if keep is None:
         return hits
     return defaultdict(list, {key: value for key, value in hits.items() if key in keep})
-
-
-def rel(path: Path, root: Path) -> str:
-    return rel_path(path, root)
-
-
-def directive_symbols(line: str, regex: re.Pattern[str]) -> list[str]:
-    match = regex.search(line)
-    if not match:
-        return []
-    body = re.split(r";|//", match.group(1), 1)[0]
-    return [token for token in re.split(r"[\s,]+", body.strip()) if SYMBOL_RE.fullmatch(token)]
 
 
 def exported_labels(clean: list[str]) -> set[str]:
@@ -611,7 +599,7 @@ def main() -> int:
     print("dirs_skipped: " + ", ".join(sorted(EXCLUDE_DIRS)))
     print("files_skipped_too_large: " + (str(len(skipped_too_large)) if skipped_too_large else "0"))
     for path in skipped_too_large[:20]:
-        print(f"  {rel(path, root)} {path.stat().st_size} bytes")
+        print(f"  {rel_path(path, root)} {path.stat().st_size} bytes")
     print("purpose: adversarial hints only; every item needs local proof before reporting")
     print_pattern_hits(root, hits)
 

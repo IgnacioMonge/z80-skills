@@ -5,8 +5,8 @@ description: Read-only strategy engine for optimizing Z80 and ZX Spectrum projec
 
 # Optimize Z80
 
-Read `references/hard-contract.md` before promoting any candidate. The primary
-project tree remains read-only during analysis.
+Read `references/hard-contract.md` before any command or promoted candidate.
+The primary project tree remains read-only during analysis.
 
 ## Workflow Core
 
@@ -19,21 +19,13 @@ exact limitation and continue directly without claiming delegated execution.
 
 ## Runtime Portability
 
-- Treat the catalog path to this file as an alias. Canonicalize the `SKILL.md`
-  path while following symlinks and Windows junctions (for example,
-  `Path(<skill-file>).resolve(strict=True)`), then set `SKILL_DIR` to its
-  parent. Never derive shared paths from an uncanonicalized catalog path.
 - Use the Python 3 interpreter exposed by the host or explicitly provided by
   the user; never assume a platform-specific path.
-- Invoke bundled scripts through `"$SKILL_DIR/scripts/<name>.py"` (or an
-  equivalent absolute path), never a project-relative `scripts/<name>.py`.
+- Resolve canonical `SKILL_DIR`, bundled scripts, and the shared worktree runner
+  exactly as required by `references/hard-contract.md`; invoke only verified
+  absolute paths.
 - `"$SKILL_DIR/scripts/preflight.py"` is the sole preflight entry point. Do not
   infer a preflight Markdown reference.
-- Resolve `RUNNER` from canonical `SKILL_DIR` as
-  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` and verify that it is a file.
-  A missing path below the logical catalog alias is not proof that the runner
-  is absent. Run every build, test, measurement, or experiment command against
-  a disposable worktree through `RUNNER`.
 
 ## Modes
 
@@ -45,9 +37,8 @@ exact limitation and continue directly without claiming delegated execution.
   candidate in a disposable worktree, then remove it unless the user explicitly
   asks to retain it.
 
-Choose a safe temporary/worktree location supported by the host. Do not assume
-a branch name, directory layout, shell, or operating system. Never modify a
-tracked ignore file merely to host experiments.
+Worktree setup, command routing, cleanup, and primary-tree contamination checks
+are owned by `references/hard-contract.md`.
 
 This skill ranks cross-metric optimization strategy. Use `shrink-z80` for an
 exhaustive size-only harvest and `audit-z80` for correctness auditing; neither

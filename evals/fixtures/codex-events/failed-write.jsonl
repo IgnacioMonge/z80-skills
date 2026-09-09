@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"fixture-thread"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item-1","type":"file_change","changes":[{"path":"src/renderer.asm","kind":"update"}],"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item-1","type":"file_change","changes":[{"path":"src/renderer.asm","kind":"update"}],"status":"failed"}}
+{"type":"turn.completed","usage":{"input_tokens":20,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":5,"reasoning_output_tokens":0}}

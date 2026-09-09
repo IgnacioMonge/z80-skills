@@ -1,6 +1,6 @@
 {
   "name": "z80-skills",
-  "version": "0.8.0",
+  "version": "0.8.2",
   "description": "Adaptive workflow and specialists for Z80 and ZX Spectrum development.",
   "contextFileName": "AGENTS.md"
 }

@@ -42,11 +42,14 @@ For every real task, read `references/hard-contract.md` first.
 2. Verify that the candidate contains `AGENTS.md`, `docs/porting.md`, and the
    platform-appropriate `tools/dev` or `tools/dev.cmd` entry point. If no
    verified checkout exists, ask only for its path.
-3. Read the external `AGENTS.md` and `docs/porting.md`. They are binding and may
-   have changed since this skill was published.
+3. Read the external `AGENTS.md` and `docs/porting.md` at the start of every
+   real task. They are binding and may have changed since this skill was
+   published.
 4. Load only the external surface documents required by the manifest and the
-   current blocker. Follow its `AGENTS.md` routing rules; do not cache their
-   contents in this plugin.
+   current blocker. Within the same task, reuse a read only after verifying the
+   authority files are unchanged; refresh them when canonical state or the
+   blocker changes. Follow `AGENTS.md` routing rules and keep no cross-task or
+   plugin cache.
 
 The consumer repository root is always the command working directory. Invoke
 the verified development entry point by absolute path.

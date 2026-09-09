@@ -1,0 +1,4 @@
+{"type":"turn.started"}
+not-json
+[]
+{"type":"turn.completed","usage":{"input_tokens":12}}

@@ -22,7 +22,6 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 - [What it adds beyond generic analysis](#what-it-adds-beyond-generic-analysis)
 - [Adaptive and multi-agent execution](#adaptive-and-multi-agent-execution)
 - [Targeted external research](#targeted-external-research)
-- [Skill details](#skill-details)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Recommended artifacts](#recommended-artifacts)
@@ -35,17 +34,17 @@ clearly distinguish proven evidence, estimates, and hypotheses.
 
 | Skill | Primary question | Result |
 |---|---|---|
-| `workflow` | What is the smallest sufficient execution level for this engineering task? | Direct Light or Medium execution in the main thread, or flat Heavy coordination with bounded built-in workers. |
-| `route-z80` | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
-| `send-bridgezx` | Which named files or directories should be delivered to a ZX or Next? | A guarded BridgeZX transfer using the explicit or last-known IP, optional destination, and requested sequence. |
-| `develop-z80` | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
-| `document-z80` | How should this repository's public documentation be structured and kept accurate across languages? | An evidence-grounded README and documentation hierarchy with verified commands, hardware requirements, and EN/ES parity. |
-| `port-spectranext` | How does an existing ZX program move through the Spectranext cartridge's consumer pipeline? | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and final handoff. |
-| `debug-z80` | What causes this observed failure, and which component owns the repair? | One falsifiable causal explanation and, when requested, one verified root-cause fix. |
-| `audit-z80` | Are there latent defects or broad correctness risks? | Read-only findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
-| `organize-z80` | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
-| `shrink-z80` | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
-| `optimize-z80` | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
+| [workflow](skills/workflow/SKILL.md) | What is the smallest sufficient execution level for this engineering task? | Direct Light or Medium execution in the main thread, or flat Heavy coordination with bounded built-in workers. |
+| [route-z80](skills/route-z80/SKILL.md) | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
+| [send-bridgezx](skills/send-bridgezx/SKILL.md) | Which named files or directories should be delivered to a ZX or Next? | A guarded BridgeZX transfer using the explicit or last-known IP, optional destination, and requested sequence. |
+| [develop-z80](skills/develop-z80/SKILL.md) | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
+| [document-z80](skills/document-z80/SKILL.md) | How should this repository's public documentation be structured and kept accurate across languages? | An evidence-grounded README and documentation hierarchy with verified commands, hardware requirements, and EN/ES parity. |
+| [port-spectranext](skills/port-spectranext/SKILL.md) | How does an existing ZX program move through the Spectranext cartridge's consumer pipeline? | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and final handoff. |
+| [debug-z80](skills/debug-z80/SKILL.md) | What causes this observed failure, and which component owns the repair? | One falsifiable causal explanation and, when requested, one verified root-cause fix. |
+| [audit-z80](skills/audit-z80/SKILL.md) | Are there latent defects or broad correctness risks? | Read-only findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
+| [organize-z80](skills/organize-z80/SKILL.md) | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
+| [shrink-z80](skills/shrink-z80/SKILL.md) | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
+| [optimize-z80](skills/optimize-z80/SKILL.md) | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
 
 `workflow` is independent of Z80 and routes execution effort. `route-z80` is
 the sole implicit entry point for natural-language Z80 domain selection,
@@ -155,225 +154,6 @@ remains a hypothesis.
 
 To protect private projects, searches use only minimal normalized signatures;
 they must never upload private code or project identifiers.
-
-## Skill details
-
-### `route-z80`
-
-Thin implicit domain dispatch for natural-language Z80 requests. It routes an
-unambiguous specialist match immediately and asks a focused question only when
-multiple primary outcomes remain. Ordinary known-cause fixes, source-code
-comments, agent instructions, refactors, tests, and builds go to plain
-`workflow`. It does not choose Light, Medium, or Heavy or load every candidate
-skill.
-
-### `send-bridgezx`
-
-Guarded delivery of named local files or directories through the official
-BridgeZX Python client. It uses an explicit IP or BridgeZX's last-known host,
-probes and locks Classic/Next before sending, passes an optional relative remote
-destination, and turns an explicit order into sequential operations that stop
-at the first failure. It never retries an uncertain transfer automatically.
-
-### `document-z80`
-
-Evidence-grounded creation, restructuring, synchronization, and review of
-public GitHub documentation for Z80 and ZX projects. It treats the root README
-as the landing page, keeps tutorials, goal-oriented guides, exact reference,
-architecture explanations, and release history in their smallest useful homes,
-and avoids duplicating facts.
-
-It verifies commands, paths, artifact names, target machines, peripherals, and
-toolchain requirements against the repository. Maintained language variants
-keep the same topology and facts without forcing literal translation or a new
-filename convention. Existing branding, screenshots, and retro voice remain
-project-specific.
-
-### `develop-z80`
-
-Specification-driven development from an initial idea to verified code. It
-shapes the concept, defines observable behavior, chooses the ZX/Next platform
-profile, plans runnable milestones, creates dependency-aware tasks, implements
-ready tasks, and reconciles every acceptance criterion with evidence.
-
-The user does not operate those stages. The skill infers where to begin,
-advances automatically, and asks only for material product decisions or missing
-authorization before product-code mutation.
-
-Small work keeps one SDD dossier in the conversation. Multi-session projects
-can persist the same single dossier in the repository instead of scattering
-idea, requirements, plan, tasks, and status across several files.
-
-`auto` remains the normal experience; optional `idea`, `spec`, `plan`, `tasks`,
-`implement`, and `verify` ceilings support targeted work. Evidence, platform
-decisions, dossier format, and milestone verification load progressively from
-separate references.
-
-### `port-spectranext`
-
-Thin orchestration for an existing ZX program's port to the Spectranext
-cartridge. It discovers and re-reads the current external Spectranext checkout,
-runs its absolute `tools/dev port request` entry point from the consumer root,
-and follows the state and next command emitted by that fail-closed gate.
-
-The consumer owns its manifest, seam, artifacts, reports, worktree, and Git
-history. The Spectranext checkout remains the authority for cartridge code,
-documentation, and pipeline mechanics. The skill adds workflow effort routing,
-authorization boundaries, progressive context loading, hardware checkpoints,
-and evidence reporting without copying the manifest schema or pipeline.
-
-### `debug-z80`
-
-Evidence-bounded root-cause debugging for one observed failure whose cause is
-not yet established. It accepts crashes, wrong output, build/link failures,
-nondeterminism, regressions, hardware/emulator divergence, and failed repairs;
-it rejects known-cause fixes, speculative audits, and improvement work without
-a failing behavior.
-
-The skill preserves the request's modality: diagnosis stays read-only, while a
-request to diagnose and fix may cross the repair gate only after a falsifiable
-hypothesis identifies the owner and narrow acceptance check. Builds, probes,
-measurements, and candidate repairs run in a verified disposable worktree.
-Primary-tree edits are limited to the proven repair and require prior user
-authorization.
-
-Its Z80 symptom router starts from the smallest relevant boundary: first build
-diagnostic, C/ASM ABI and stack, ISR ordering, bank/page restoration, generated
-code, target delta, or hardware/emulator assumption. It returns
-`NOT_DEBUGGING`, `READY_TO_FIX`, `NEEDS_EVIDENCE`, `EXTERNAL`, or `FIXED` rather
-than a catalogue of plausible causes.
-
-### `audit-z80`
-
-Preventive or broad read-only auditing for finding real defects and
-reproducible risks without turning one observed failure into a general scan.
-
-**Coverage**
-
-- C/ASM boundaries, calling conventions, registers, flags, and stack;
-- ISRs, `DI`/`EI`, reentrancy, and shared state;
-- memory maps, BSS, stack gap, banks, and overlays;
-- firmware, ROM, RST 8, esxDOS, divMMC, and differences among models;
-- C semantics, buffers, promotion, signedness, and lifetime;
-- generated ASM/listings, copt rules, and z88dk/SDCC behavior;
-- ULA, contention, ports, timing, and user-visible regressions.
-
-**Modes**
-
-- `auto`: preflight and adaptive depth.
-- `preflight`: profile and escalation signals without a full audit.
-- `full` / `diverge`: broad coverage with the same evidence gates.
-- Focus areas: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
-  `toolchain`, `copt`, and `map`.
-
-**Primary helpers**
-
-- `preflight_scan.py`: inventory of sources, artifacts, and risk signals.
-- `z80_pattern_scan.py`: structural ASM/C patterns.
-- `abi_inventory.py`: declarations, conventions, and C/ASM boundaries.
-- `map_summary.py`: symbols, addresses, and stack-gap approximation.
-- `smoke_test.py`: reproducible checks for the analyzers.
-
-The output puts findings that pass the promotion gate first. If none survive,
-it says so and identifies the most important residual risk instead of padding
-the report with weak observations.
-
-### `organize-z80`
-
-Evidence-first architecture and reorganization workflow for Z80 projects.
-
-**Coverage**
-
-- ownership, dependencies, mutable state, source layout, and runtime placement;
-- an optional persistent current, recommended, and verified-final project map;
-- pure ASM and mixed C/ASM seams, maps, symbols, generated inputs, and targets;
-- incremental migrations that preserve ABI, timing, banking, formats, and build contracts.
-
-**Modes**
-
-- `map`, `design`, `plan`, `apply`, and `review`, plus `help`.
-- Demand scales as `Focused`, `Standard`, or `Deep`; `apply` executes one approved, reversible slice only.
-
-It reports severity, confidence, organizational cost, validation evidence, and
-`NO REORGANIZATION NEEDED` when the current structure is already proportionate.
-
-### `shrink-z80`
-
-Size optimizer based on measurement and net accounting.
-
-**Separate objectives**
-
-- storage size;
-- linked CODE/DATA;
-- resident memory;
-- BSS and stack headroom;
-- bank or overlay ceiling;
-- minimum reserve per target.
-
-**Modes**
-
-- `scan`: complete adaptive analysis.
-- `preflight`: artifact and pressure profile.
-- Focus areas: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
-  `arch`, `libpull`, `blackbelt`, and `reserve`.
-- `diverge`: broad exploration without relaxing the proof requirements.
-
-**Order of attack**
-
-1. Architecture, residency, data, and linked libraries.
-2. Generated code, helpers, and repeated representations.
-3. Compression with net cost and peak RAM accounted for separately.
-4. Micro-optimizations and higher-risk techniques only when they can matter.
-
-It does not add together proposals that are dependent, subsumed, incompatible,
-or not yet built. It distinguishes safety (`SAFE`, `AGGRESSIVE`,
-`EXPERIMENTAL`) and measurement quality (`EXACTO`, `ESTIMADO`,
-`REQUIERE BUILD`).
-
-**Primary helpers**
-
-- `preflight_scan.py` and `artifact_freshness.py`;
-- `map_summary.py`, `deadcode_scan.py`, and `libpull_scan.py`;
-- `generated_helper_scan.py` and `literal_dup_scan.py`;
-- `z80_pattern_scan.py`;
-- `net_compression_check.py`, which separates storage savings from peak RAM.
-
-### `optimize-z80`
-
-Multi-objective strategy engine for deciding what to optimize first and how to
-validate it.
-
-**Areas**
-
-- size, cycles, and latency;
-- RAM, stack, and data layout;
-- rendering, contention, and I/O;
-- banks, overlays, and transitions;
-- C-to-ASM, ABI, libraries, code generation, and toolchain;
-- model- and hardware-specific constraints.
-
-**Modes**
-
-- `Triage`: read-only inspection without a build. Stale artifacts limit
-  confidence.
-- `Measurement`: reproducible baseline in a disposable worktree.
-- `Experiment`: requires explicit approval, changes a single variable, and is
-  deleted unless the user asks to keep it.
-
-It first identifies the dominant bottleneck. It then applies policy and target
-vetoes, merges duplicates, audits the finalists, and recommends no more than
-three next experiments.
-
-Each candidate includes:
-
-- evidence anchor and freshness;
-- area, mechanism, and expected impact;
-- effect on size, cycles/latency, RAM/stack, and UX where applicable;
-- risk, targets, constraints, rollback, and validation;
-- confidence (`PROVEN`, `LIKELY`, or `SPECULATIVE`);
-- the reason it currently outranks the alternatives.
-
-Static cycle, map, or pattern estimators do not constitute proof by themselves.
 
 ## Installation
 
@@ -619,76 +399,12 @@ configuration, and recipe must belong to the same baseline.
 
 ## Repository structure
 
-```text
-LICENSE
-README.md
-README.es.md
-.codex-plugin/
-  plugin.json
-evals/
-  baseline.json
-  routing.jsonl
-  evidence.jsonl
-  fixtures/
-  schemas/
-scripts/
-  install-for-grok.ps1
-  install_personal_marketplace.py
-  run_behavior_evals.py
-  run_in_worktree.py
-  test_behavior_evals.py
-skills/
-  workflow/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  route-z80/
-    SKILL.md
-    agents/openai.yaml
-  send-bridgezx/
-    SKILL.md
-    agents/openai.yaml
-    scripts/
-  document-z80/
-    SKILL.md
-    agents/openai.yaml
-  develop-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  port-spectranext/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  debug-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  audit-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-  organize-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-  shrink-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-    tests/
-  optimize-z80/
-    SKILL.md
-    agents/openai.yaml
-    references/
-    scripts/
-```
+- `skills/<name>/`: `SKILL.md`, agent metadata, references, and analyzers.
+- `scripts/`: installation, worktree runner, and tests.
+- `evals/`: routing/evidence cases and fixtures; generated results are ignored.
+- `agent_docs/`: maintained project context.
 
-Each skill keeps its core instructions in `SKILL.md` and selective-loading
-details in `references/`; skills with reproducible analyzers keep them in
-`scripts/`.
+See the [repository map](agent_docs/project_structure.md) for file ownership.
 
 ## Validation
 
@@ -726,9 +442,19 @@ python3 scripts/run_behavior_evals.py --suite evals/evidence.jsonl
 
 The runner refuses a stale installed plugin version unless explicitly
 overridden, records per-route precision and recall, and writes ignored JSON
-results under `evals/results/`. `evals/baseline.json` keeps the small,
-non-sensitive verified summary and distinguishes full runs from targeted
-repair replays.
+results and per-case runtime traces under `evals/results/`. Use `--model` and
+`--reasoning-effort` to make a comparison explicit. Results distinguish requested
+settings from runtime-confirmed data, record reported token usage and observed
+actions, and compare each fixture's files before and after execution. Unobserved
+shell or tool side effects remain unknown; a model's final JSON is not proof
+that no writes were attempted. Traces can contain fixture content and local
+paths; inspect them before sharing.
+
+Reports fingerprint the authored plugin and evaluation inputs; that fingerprint
+does not by itself prove the installed copy matches. Hold cases, fixture inputs,
+model, and effort fixed when comparing skill revisions for quality or cost.
+`evals/baseline.json` retains historical verified results; it is not
+evidence that a later release or expanded suite passed.
 
 ## License
 

@@ -98,26 +98,14 @@ capacity reduces parallelism, not evidence or checkpoint requirements.
 
 ## Product-Code Apply Gate
 
-Authorize product-code mutation only when the request explicitly names product
-implementation, such as “implement T-03”, “build the first playable milestone”,
-or “add joystick support to the game”. Generic verbs aimed at documents or
-decisions—“create a design”, “add to the dossier”, “change the scope”—do not
-authorize product-code edits. Interpret authorization by object and bounded
-scope, never by verb alone.
-
-Before editing, require a relevant baseline, an accepted specification, linked
-acceptance criteria, a ready task, one active milestone, and rollback. Before
-the first greenfield product-code mutation, show scope, non-goals, all active ACs,
-and the first milestone, then record explicit user acceptance. An `ASSUMED`
-specification permits planning and disposable spikes, never that first mutation.
-A broad “build this game” authorizes the first playable vertical slice, not every
-future milestone.
-
-At each milestone boundary, present the runnable or inspectable result and pause
-for one product checkpoint. Continue automatically only when the user explicitly
-authorized end-to-end continuation in the current session or the dossier records
-a matching session ID and a positive remaining milestone limit. Never inherit
-auto-advance authorization into a later session.
+Use the mutation boundary and product-code entry conditions in
+`references/hard-contract.md`; use `references/dossier.md` for specification
+acceptance state and `references/verification.md` for milestone checkpoints.
+Product-code edits still require explicit authorization for the named behavior
+or bounded slice. The first greenfield mutation still requires explicit user
+acceptance of the presented scope, non-goals, active criteria, and first
+milestone; broad authorization reaches only the first playable slice unless the
+current session explicitly grants more.
 
 ## Handoffs
 
@@ -135,14 +123,11 @@ or authorize implementation.
 
 ## Output Contract
 
-Return a decision artifact, not a workflow transcript:
-
-- mode ceiling, inferred stage, demand, targets, and references loaded;
-- effective mutation-boundary class and specification-acceptance state;
-- dossier path or `conversation-only`, plus evidence classes and open decisions;
-- changed product/spec decisions, affected acceptance criteria, and task status;
-- checks as `PASS`, `FAIL`, `BLOCKED`, or `NOT RUN` with fresh evidence;
-- product checkpoint, residual risk, rollback, and next automatic action.
+For idea, specification, or planning work, return the decision artifact, current
+stage/scope, acceptance state, evidence or open decisions, dossier/task status,
+and next step. Do not load verification guidance just to format this response.
+For implementation or verification, use the closing record in
+`references/verification.md` with checks, checkpoint, residual risk, and rollback.
 
 Prefer the smallest idea, dossier, task set, and implementation that proves the
 intended experience. Never weaken criteria or widen the active milestone merely

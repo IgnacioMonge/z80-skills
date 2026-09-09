@@ -38,6 +38,7 @@ TOP_LEVEL_FILES = {
 }
 ASM_MNEMONICS = {"adc", "add", "and", "bit", "call", "ccf", "cp", "cpd", "cpdr", "cpi", "cpir", "cpl", "daa", "dec", "di", "djnz", "ei", "ex", "exx", "halt", "im", "in", "inc", "ind", "indr", "ini", "inir", "jp", "jr", "ld", "ldd", "lddr", "ldi", "ldir", "neg", "nop", "or", "otdr", "otir", "out", "pop", "push", "res", "ret", "reti", "retn", "rl", "rla", "rlc", "rlca", "rld", "rr", "rra", "rrc", "rrca", "rrd", "rst", "sbc", "scf", "set", "sla", "sra", "srl", "sub", "xor"}
 LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):\s*(.*)$")
+DIRECTIVE_SYMBOL_RE = re.compile(r"[A-Za-z_.$][\w.$?@]*")
 BARE_LABEL_RE = re.compile(r"^[A-Za-z_.$?@][\w.$?@]*$")
 BRANCH_TARGET_RE = re.compile(r"\b(?:call|jp|jr)\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
 CALL_TARGET_RE = re.compile(r"\bcall\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
@@ -95,6 +96,14 @@ def rel_path(path: Path, base: Path) -> str:
 
 def strip_line_comment(line: str) -> str:
     return line.split(";", 1)[0].split("//", 1)[0].rstrip()
+
+
+def directive_symbols(line: str, regex: re.Pattern[str]) -> list[str]:
+    match = regex.search(line)
+    if not match:
+        return []
+    body = re.split(r";|//", match.group(1), 1)[0]
+    return [token for token in re.split(r"[\s,]+", body.strip()) if DIRECTIVE_SYMBOL_RE.fullmatch(token)]
 
 
 def add_hit(
