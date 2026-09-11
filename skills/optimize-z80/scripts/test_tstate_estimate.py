@@ -4,9 +4,48 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tstate_estimate import clean, estimate
+
 MODULE = Path(__file__).with_name("tstate_estimate.py")
 
 class TstateEstimateTest(unittest.TestCase):
+    def test_index_halves_and_sll_timings(self):
+        cases = {"sll a": 8, "sll (hl)": 15, "sll (ix+1)": 23,
+                 "sll (iy-2),b": 23, "ld h,(ix+1)": 19,
+                 "ld (iy-2),l": 19, "out (c),0": 12}
+        for pair in ("ix", "iy"):
+            for half in (pair + "h", pair + "l"):
+                for register in ("a", "b", "c", "d", "e", pair + "h", pair + "l"):
+                    cases[f"ld {register},{half}"] = 8
+                    cases[f"ld {half},{register}"] = 8
+                for immediate in ("0", "$ff", "255", "limit-1"):
+                    cases[f"ld {half},{immediate}"] = 11
+                for op in ("inc", "dec"):
+                    cases[f"{op} {half}"] = 8
+                for op in ("add", "adc", "sbc", "sub", "and", "or", "xor", "cp"):
+                    cases[f"{op} a,{half}"] = 8
+                    cases[f"{op} {half}"] = 8
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                self.assertEqual(estimate(*clean(source)), expected)
+
+    def test_unencodable_index_halves_and_sll_are_unknown(self):
+        for source in ("ld ixh,iyl", "ld iyh,ixl", "ld h,ixh", "ld iyl,l",
+                       "ld ixh,(hl)", "ld ixh,(ix+1)", "ld (iy+1),iyl",
+                       "ld ixh,bc", "ld ixh,", "inc ixh,a", "add ixh,a",
+                       "bit 0,ixh", "push iyl", "sll ixh", "sll (hl),a",
+                       "sll a,b", "sll 3", "sll (ix+1),ixh"):
+            with self.subTest(source=source):
+                self.assertIsNone(estimate(*clean(source)))
+
+    def test_annotation_audit_undocumented_timings(self):
+        result = self.run_audit("ld a,ixh ; 8T\ninc iyl ; 8T\nsll a ; 8T\n")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        result = self.run_audit("ld a,ixh ; 7T\ninc ixh ; 4T\nld ixh,iyl ; 8T\n")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout.count("mismatch:"), 2)
+        self.assertIn("unknown:", result.stdout)
+
     def run_audit(self, source):
         with tempfile.TemporaryDirectory() as tmp:
             asm = Path(tmp) / "audit.asm"

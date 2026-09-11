@@ -38,6 +38,7 @@ REPEAT = {"ldir", "lddr", "cpir", "cpdr", "otir", "otdr", "inir", "indr"}
 R8 = {"a", "b", "c", "d", "e", "h", "l"}
 R16 = {"bc", "de", "hl", "sp"}
 IDX = {"ix", "iy"}
+IDX8 = {"ixh", "ixl", "iyh", "iyl"}
 CONDITIONS = {"nz", "z", "nc", "c", "po", "pe", "p", "m"}
 LABEL_RE = re.compile(r"^\s*[A-Za-z_.$@?][\w.$@?]*:\s*")
 ANNOTATION_PAIR_RE = re.compile(r"(?<!\d)(\d+)\s*/\s*(\d+)\s*T(?:states?)?\b", re.I)
@@ -85,6 +86,16 @@ def is_mem(x):
     return "(" in x and ")" in x
 
 def estimate_ld(dst, src):
+    if dst in IDX8 or src in IDX8:
+        # One prefix selects one index pair and replaces both H and L.
+        index = dst[:2] if dst in IDX8 else src[:2]
+        registers = (R8 - {"h", "l"}) | {index + "h", index + "l"}
+        if dst in registers and src in registers:
+            return 8
+        if (dst in IDX8 and src and not is_mem(src) and "," not in src
+                and src not in R8 | R16 | IDX | IDX8 | {"i", "r", "af", "af'"}):
+            return 11  # Immediate expression; range/encoding belongs to assembler.
+        return None
     if (dst == "a" and src in {"i", "r"}) or (src == "a" and dst in {"i", "r"}):
         return 9
     if dst in R8 and src in R8:
@@ -137,6 +148,15 @@ def estimate_ld(dst, src):
 
 def estimate(op, args):
     dst, src = split_args(args)
+    if op == "ld":
+        return estimate_ld(dst, src)
+    if dst in IDX8 or src in IDX8:
+        if op in {"inc", "dec"} and dst in IDX8 and not src:
+            return 8
+        if op in {"add", "adc", "sbc", "and", "or", "xor", "cp", "sub"}:
+            if (dst == "a" and src in IDX8) or (dst in IDX8 and not src):
+                return 8
+        return None
     if op == "jp":
         if dst == "(hl)":
             return 4
@@ -153,8 +173,6 @@ def estimate(op, args):
         return 11 if dst in CONDITIONS else 10
     if op in SIMPLE:
         return SIMPLE[op]
-    if op == "ld":
-        return estimate_ld(dst, src)
     if op in {"inc", "dec"}:
         if dst in R8:
             return 4
@@ -188,7 +206,12 @@ def estimate(op, args):
         if is_idx_mem(args):
             return 20
         return 8
-    if op in {"set", "res", "rl", "rr", "sla", "sra", "srl"}:
+    if op == "sll" and not re.fullmatch(
+        r"(?:[abcdehl]|\(hl\)|\((?:ix|iy)(?:\s*[+-]\s*[^(),]+)?\)(?:\s*,\s*[abcdehl])?)",
+        args.strip().lower(),
+    ):
+        return None
+    if op in {"set", "res", "rl", "rr", "sla", "sra", "srl", "sll"}:
         if is_hl_mem(args):
             return 15
         if is_idx_mem(args):

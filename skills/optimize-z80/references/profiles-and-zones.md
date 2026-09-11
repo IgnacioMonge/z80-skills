@@ -34,8 +34,17 @@ graphics-heavy:
 - likely zones: render, sprites, tables, screen layout, generated assets
 
 demoscene-intro:
-- pressures: size first, hardware timing, procedural generation, code=data
+- pressures: explicit size budget or frame/raster deadline, procedural generation, code=data
 - likely zones: sizecoding, SMC, floating bus, undocumented opcodes, compression, audio players
+
+For demoscene work, select the objective independently of the profile name:
+sizecoding minimizes bytes; throughput/timing minimizes worst-path cycles or
+meets a raster deadline, sometimes with larger code/tables. Use the existing
+policy `priority` (for example `["speed", "size"]`) and record both the byte
+ceiling and timing deadline. If unstated, retain size-first for constrained
+intros; explicit performance intent wins. Neither objective waives target,
+interrupt, compatibility or measurement gates. See
+[demoscene paths](optimization-paths.md#demoscene).
 
 c-heavy-z88dk-sdcc:
 - pressures: codegen, lib pulls, stack spills, calling convention, generated asm
@@ -77,7 +86,7 @@ graphics-heavy:
 - reject: SP blit/floating bus unless target and validation allow
 
 demoscene-intro:
-- first moves: size budget, procedural data, shared tails, fallthrough, SMC immediates
+- first moves: choose sizecoding or throughput/timing; follow the matching demoscene path
 - allow: DANGEROUS lanes with explicit target and validation path
 - reject: maintainability objections only if policy is release/normal rather than sizecoding
 

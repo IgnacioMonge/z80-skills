@@ -85,6 +85,12 @@ reports the limitation.
 8. `references/external-research.md` only when its trigger gate fires.
 9. `references/usage-examples.md` only when the user requests examples.
 
+For hot loops/data traversal, load `references/loops-and-data.md`; for math
+hotspots, `references/arithmetic.md`. Use `references/technique-coverage.md`
+only for catalogue audits or gaps in the normal route, then load the matching
+entry. These references expand candidate discovery, not execution permissions
+or the evidence required for promotion.
+
 Bundled helpers are evidence-selective: start with
 `"$SKILL_DIR/scripts/preflight.py"`; use the corresponding resolved paths for
 `pattern_scan.py`, `asm_callgraph.py`, `map_hotspots.py`,

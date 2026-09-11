@@ -2,6 +2,11 @@
 
 Use techniques only when project policy, target, profile, and bottleneck match. Cleverness is not evidence.
 
+For detailed [loop/data transforms](loops-and-data.md) or
+[arithmetic choices](arithmetic.md), load only the relevant reference. For
+catalogue questions, use the [coverage map](technique-coverage.md), which also
+records mentioned and absent subfamilies.
+
 ## Technique Template
 
 Each recommended technique must state:
@@ -114,6 +119,28 @@ Peepholes are cleanup, not strategy:
 - Validation: static T-states with loop multiplier; map/listing byte diff; render/copy correctness test.
 - Fallback: existing copy primitive.
 
+Nominal Z80 costs, excluding setup, contention, waits and interrupts:
+
+| Operation | Transfer cost | Instruction storage |
+| --- | --- | --- |
+| `LDIR`, N transfers | `21*(N-1)+16 = 21*N-5` T | 2 bytes |
+| N unrolled `LDI` | `16*N` T | `2*N` bytes |
+| N/2 unrolled `PUSH HL/DE/BC/AF` (even N) | `11*N/2` T | `N/2` bytes |
+
+`LDIR` with initial BC=0 transfers 65536 bytes, not zero. PUSH is a fill
+only when the register contains the intended two-byte pattern; copying also
+needs source reads. Include loop control and SP save/restore in routine totals.
+Sources: [Zilog CPU manual](https://www.zilog.com/docs/z80/um0080.pdf),
+LDI/LDIR/PUSH instruction entries.
+
+For a 6144-byte bitmap, derived transfer-only totals are 129019 T (`LDIR`),
+98304 T (`LDI` chain), and 33792 T (PUSH fill). A seeded overlapping LDIR
+fill copies only the remaining 6143 bytes: count its seed and setup separately.
+Attributes add 768 bytes. Do not quote "CLS = 37172 T" without the exact
+routine, cleared region and counting boundary. Even the PUSH lower bound
+exceeds the initial approximately 14336 T window; see
+[model timing](zx-spectrum-models.md#frame-window-planning).
+
 ### stack blit / stack fill
 
 - Lane: DANGEROUS
@@ -202,6 +229,57 @@ Peepholes are cleanup, not strategy:
 - Validation: ISR stress test; run on every emulator in the workflow plus
   hardware.
 - Fallback: EXX shadow set if ISR ownership allows, or memory temp.
+
+Nominal costs: register-to-register LD involving an index half, INC/DEC,
+and accumulator ALU operations take 8 T; `LD IXH,n` and sibling immediates
+take 11 T. One DD/FD prefix selects one pair: `LD IXH,IXL` is encodable;
+`LD IXH,IYL` and `LD H,IXH` are not. In `LD H,(IX+d)`, H remains ordinary H.
+Do not add the halves to a generic register set that also permits CB or ED
+operations. See [DD/FD opcode research](https://worldofspectrum.org/faq/reference/z80reference.htm).
+
+### SLL and OUT (C),0
+
+- Lane: DANGEROUS; `undocumented`, explicit opt-in and pinned CPU/core.
+- Pattern: SLL (`CB 30`-`37`) computes `((value << 1) | 1) & 255`;
+  carry gets old bit 7, S/Z/parity follow the result, H/N clear. It is not
+  interchangeable with SLA when bit 0 or flags matter. Nominal costs are
+  8 T for a register, 15 T for `(HL)`, 23 T for indexed memory. An indexed
+  copy-result form writes memory and the selected ordinary register.
+- Expected win: combine shift and bit insertion when the algorithm needs both;
+  compare live flags as well as bytes/T-states.
+- Pattern: `OUT (C),0` (`ED 71`, 12 nominal T) avoids preparing a zero register,
+  but emits $00 on tested NMOS CPUs and $FF on tested CMOS CPUs. BC supplies
+  the entire port address; device side effects and I/O waits still apply.
+- Reject if: a supported CPU/core differs, flags are incompatible, the port
+  is unsafe, or undocumented operations are forbidden.
+- Validation: inspect emitted bytes, test all SLL input values and live flags,
+  and verify output data on each supported CPU/device.
+- Fallback: documented shift plus bit insertion with the required flags;
+  for output, explicitly load a zero register and use `OUT (C),r`.
+
+Sources: [CB opcode research](https://worldofspectrum.org/faq/reference/z80reference.htm),
+[Zilog shift timing](https://www.zilog.com/docs/z80/um0080.pdf) (same CB access
+costs), and [Charles's physical NMOS/CMOS tests](https://www.smspower.org/forums/11212-CPUQuestions#52404).
+
+### R sampling and refresh
+
+R is an eight-bit register; automatic counting wraps only bits 0-6. Count
+M1 fetches, not source instructions: ordinary CB/ED/DD/FD instructions usually
+add two, DDCB/FDCB also add two, and LDIR adds two per transfer. HALT and
+interrupt activity affect sampling. `LD A,R` costs 9 T and observes its own
+fetch increments; it also changes flags (P/V reflects IFF2, not parity).
+Refresh is already included in opcode-fetch timing: never add it again.
+Sources: [R research](https://worldofspectrum.org/faq/reference/z80reference.htm)
+and [Zilog refresh and LD A,R specification](https://www.zilog.com/docs/z80/um0080.pdf).
+
+Use sampling only as timing-dependent input to a non-security seed when
+external event timing provides variation. A fixed execution path can repeat
+or correlate samples; R alone is not a general PRNG or entropy guarantee.
+Prefer an explicit-state PRNG for reproducible simulation. Do not repeatedly
+reset R to manufacture a sequence on DRAM hardware; that can impair refresh.
+Validate repeated-start sequences and the target's refresh requirements.
+For Spectrum I/refresh interaction, see
+[IM2 and snow](zx-spectrum-models.md#im2-i-and-refresh-safety).
 
 ### size dark-art families (condensed index)
 

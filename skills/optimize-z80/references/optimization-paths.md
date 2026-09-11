@@ -37,7 +37,12 @@ Use paths to produce an ordered strategy, not a bag of tricks. Pick the path mat
 5. Convert only hot, small, stable kernels to ASM.
 6. Reject ASM conversion when bottleneck is I/O, overlays, or algorithm.
 
-## Demoscene / Sizecoding
+## Demoscene
+
+Choose the objective from policy and the requested result, not the demo label.
+Both paths retain compatibility, interrupt and runtime validation gates.
+
+### Sizecoding
 
 1. Confirm sizecoding tolerance and target hardware.
 2. Reduce data first: procedural generation, shared constants, packed tables.
@@ -45,6 +50,19 @@ Use paths to produce an ordered strategy, not a bag of tricks. Pick the path mat
 4. Use `call/pop`, `jp (hl)`, dynamic unrolled entry, and SMC immediates when they save bytes.
 5. Consider code=data overlap and undocumented opcodes only with target validation.
 6. Keep a fallback or explicit compatibility waiver.
+
+### Throughput / Raster Timing
+
+1. Pin the machine, worst-path/frame deadline and code/table memory ceiling.
+2. Remove redundant work, then place hot code, tables and stack in verified
+   uncontended memory; see [frame windows](zx-spectrum-models.md#frame-window-planning).
+3. Compare copy/fill costs including setup, control, contention and interrupt
+   windows; see [transfer costs](z80-techniques.md#ldi-chains-vs-ldir-vs-manual-copy).
+4. Consider unrolling, compiled sprites, SMC and vertical address stepping
+   where extra bytes buy a measured timing win.
+5. Consider raster sync and undocumented operations only within policy;
+   validate the worst phase and each supported model, retaining a fallback
+   or explicit model restriction.
 
 ## Overlay / Banking
 

@@ -47,6 +47,24 @@ Compare one variable at a time:
 
 Do not mix CRT/clib/compiler/flags changes in one experiment.
 
+## Linked Runtime And Initialization
+
+For size/load-time pressure, inspect the selected CRT, console, heap and
+format converters in the linked map. Remove only unused features through
+existing toolchain controls; exact options depend on the installed version
+and library. Do not replace working I/O with dummy stubs unless its callers
+are proved unreachable. Check boot, error paths and return-to-host behavior.
+
+On ROM targets, initialized mutable data may occupy both a ROM initializer
+and RAM. Truly immutable data can live in a read-only section; verify the
+compiler's actual placement and pointer contract. Skipping BSS clearing breaks
+C's zero-initialization guarantee unless every affected value is initialized
+before any read, including ISR/runtime reads. Prefer eliminating unused data
+or narrowing initialization rather than disabling it globally. Compare final
+ROM, resident RAM, boot time and cold-path functionality; keep the original
+CRT/sections when those invariants cannot be proved.
+Source: [z88dk runtime and section guidance](https://github.com/z88dk/z88dk/wiki/WritingOptimalCode).
+
 ## z88dk-copt
 
 Use as a possible MEDIUM lane when repeated generated-ASM patterns are proven.

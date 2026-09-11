@@ -14,6 +14,12 @@ repository; these entries track development toward the first published release.
 
 ### Changed
 
+- Optimize references quantify copy/fill costs, explain model-specific raster
+  windows, screen stepping, refresh/snow and undocumented operations, and
+  separate demoscene sizecoding from throughput/timing objectives.
+  A coverage map distinguishes developed, mentioned and absent families;
+  selectively loaded loop/data and arithmetic references, sprite specialization
+  and runtime guidance add cost boundaries and executable example checks.
 - Behavior evaluations record runtime traces, token usage, observed actions,
   fixture changes, timeouts, and source fingerprints; requested settings remain
   separate from runtime-confirmed data. Additional unprompted evidence cases
@@ -38,6 +44,9 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- Optimize's T-state estimator accounts for IX/IY half-register loads,
+  INC/DEC and accumulator arithmetic, recognizes SLL, and reports unsupported
+  half-register combinations as unknown instead of assigning fallback costs.
 - BridgeZX instructions now match the executor's client-resolution precedence
   and reject an invalid supplied root without silently selecting another client.
 - Audit reports place findings before profile details outside preflight mode.
