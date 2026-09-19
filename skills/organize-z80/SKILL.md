@@ -1,6 +1,6 @@
 ---
 name: organize-z80
-description: Evidence-first architecture and code-organization workflow for Z80 projects, including pure assembly, mixed C/ASM, z88dk or SDCC applications, ROMs, games, tools, drivers, and banked or overlay-based systems. Use to map ownership and dependencies, separate RAM, rendering, storage, input, audio, protocol, hardware, resources, and application logic, design a sustainable target structure, maintain a persistent current/recommended/final project map, or plan and safely execute an incremental reorganization without imposing a framework or breaking ABI, memory, timing, binary, storage, or multi-target contracts. Uses the shared workflow skill to scale planning, implementation, and verification without weakening apply gates.
+description: Map Z80 ownership and dependencies, design boundaries, or plan and apply an approved reorganization. Use for structural work and persistent project maps in ASM/C, z88dk/SDCC, banked or overlay projects while preserving behavior, ABI, memory, and timing.
 ---
 
 # Organize Z80
@@ -9,6 +9,9 @@ Design the smallest sustainable organization justified by the current project.
 Treat source structure, runtime placement, ownership, and dependency direction as
 separate decisions: on Z80, a tidy directory tree can still produce a worse
 binary, extra calls, bank switches, duplicated state, or an unsafe memory map.
+Cover applications, ROMs, games, tools, and drivers, including RAM, rendering,
+storage, input, audio, protocols, hardware, resources, and application logic.
+Preserve binary, storage, and multi-target contracts without imposing a framework.
 
 ## Workflow Core
 
@@ -107,9 +110,11 @@ If any condition is absent, remain read-only and state the missing gate.
 
 ## Persistent project map
 
-When a canonical project map already exists, load it in every analysis mode
-except `help` and verify volatile claims against current source; treat it as
-routed context, not proof.
+When a canonical project map already exists, read the sections relevant to the
+requested ownership, dependencies, placement, or migration. For a named local
+boundary, do not load the full map unless unresolved dependencies or an explicit
+project requirement make it necessary. In `help`, do not load it. Verify volatile
+claims used in the answer against current source; routed context is not proof.
 Create or update it only after an explicit request. A map-only write may edit
 the approved map and routing pointer without authorizing source, build, or
 configuration changes. Follow `references/persistent-project-map.md` for its

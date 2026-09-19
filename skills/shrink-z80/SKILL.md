@@ -62,9 +62,14 @@ incomplete.
 
 1. Identify the exact pressure target: storage, linked CODE/DATA, resident
    memory, BSS/stack gap, bank/overlay ceiling, or a per-target reserve.
-2. Run `python3 "$SKILL_DIR/scripts/preflight_scan.py"` and
-   `python3 "$SKILL_DIR/scripts/artifact_freshness.py"`; use
-   `python3 "$SKILL_DIR/scripts/map_summary.py"` for selected maps.
+2. Select scripts through `references/dispatcher.md`. Run
+   `preflight_scan.py` for requested inventory or unresolved source/toolchain
+   context. Before artifact-based exact claims, run `artifact_freshness.py`
+   unless an equivalent gate remains valid under workflow verification rules.
+   Use `map_summary.py` only for selected maps needed by the analysis. A local,
+   source-only pass requires neither a repository-wide scan nor artifact checks.
+   Invoke selected scripts as `python3 "$SKILL_DIR/scripts/<script>.py"` with
+   their required arguments and the host interpreter described above.
 3. Read `references/agent-orchestration.md` only when independent lanes add
    value, then pass selected briefs to `$workflow`.
 4. Attack SAFE high-impact mechanisms before micro or dark-art tricks.

@@ -116,6 +116,20 @@ Before dispatch, workflow classifies each surface as primary-tree read-only,
 disposable-worktree-only, or authorized primary-tree mutation and selects only
 roles that fit that boundary.
 
+Explicit user instructions override skill defaults within their authorized
+scope; unchanged project constraints, evidence requirements, and runtime limits
+remain in force. Skill-induced stops identify the exact rule using the shared
+[authorization policy](skills/workflow/references/authorization.md).
+
+Delegation keeps the existing Luna/Sol defaults. For a named difficult causal or
+high-risk analysis only, an explicit user request may select **Astra Medium**
+(`gpt-6-astra`, reasoning effort `medium`). It is never an automatic escalation,
+fallback, inherited default, or permission for other workers. See the canonical
+[model policy](skills/workflow/references/roles.md#explicit-astra-medium-opt-in).
+The host must support and enforce the requested settings; a skill is not a
+runtime spending control. The main thread's model and workflow dispatch gates
+remain unchanged.
+
 ## Targeted external research
 
 External research is activated to resolve a specific uncertainty, not to
@@ -218,26 +232,20 @@ Plugin changes update the committed manifest version so Codex creates a fresh
 installed copy. Never edit `~/.codex/plugins/cache` directly. After updating,
 open a new task again.
 
-### Grok Build and Claude sync
+### Grok Build
 
-On Windows, install all eleven skills into Grok Build with the host adaptations
-derived from the canonical `workflow` sources:
+Grok Build reads this checkout in place. Do not copy the eleven skills into
+`~/.grok/skills` or `~/.claude/skills`; those copies go stale.
 
 ```powershell
 pwsh -File .\scripts\install-for-grok.ps1
 ```
 
-The installer includes `route-z80`, preserves existing destination skills in a
-timestamped backup by default, bundles the disposable-worktree runner, and
-patches only the installed copies. Add `-SyncClaude` to also copy the same eleven
-canonical skill trees, without Grok adaptations, into `~/.claude/skills`:
-
-```powershell
-pwsh -File .\scripts\install-for-grok.ps1 -SyncClaude
-```
-
-Use `-SkipBackup` only for disposable test destinations. Open a new Grok or
-Claude task after installation so its skill catalog reloads.
+The installer adds `<repo>/skills` to `~/.grok/config.toml` `[skills].paths`
+and deletes obsolete copies of the eleven bundled skills from `~/.grok/skills`
+and `~/.claude/skills`. Unrelated personal skills in those directories are left
+untouched. After a `git pull`, Grok already sees the updated trees; open a new
+Grok task so the catalog reloads.
 
 ## Usage
 
@@ -455,6 +463,20 @@ does not by itself prove the installed copy matches. Hold cases, fixture inputs,
 model, and effort fixed when comparing skill revisions for quality or cost.
 `evals/baseline.json` retains historical verified results; it is not
 evidence that a later release or expanded suite passed.
+
+The optional `evals/policy.jsonl` suite checks decisions about model opt-ins,
+authorization, selective reads, and reuse. It is not part of the default suites.
+Its scenarios ask for decisions only: no delegated calls, builds, edits, or
+transfers. See [policy evaluation](evals/POLICY.md) for scope and limitations.
+Validate the extra dataset locally with:
+
+```sh
+python3 scripts/run_behavior_evals.py --suite evals/policy.jsonl --dry-run
+```
+
+A live run must be requested separately with a chosen model and effort; it uses
+paid inference and tests policy interpretation, not runtime enforcement. No live
+Astra validation or cost/quality improvement is claimed for revision 0.8.3.
 
 ## License
 

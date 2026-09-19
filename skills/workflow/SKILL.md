@@ -24,9 +24,12 @@ Prefer the lower level when borderline. Change level only when evidence material
 1. Read applicable project instructions and only necessary context. Reuse
    already-read instructions within the task unless they change; recheck source
    evidence when its revision, configuration, or relevant files change.
-2. If project instructions define route names, selection policy, or spawning
-   limits, those definitions win. Map the workflow level only when unambiguous;
-   otherwise report the conflict instead of overriding the project.
+2. Explicit user instructions override skill defaults within their scope.
+   Preserve higher-priority instructions, evidence truth, runtime limits, and
+   unmodified project constraints. For conflicts, overrides, or skill-induced
+   stops, apply [authorization](references/authorization.md). If project
+   instructions define route names or spawning limits, retain them unless
+   explicitly changed.
 3. State the selected level briefly.
 4. Establish acceptance criteria before non-trivial edits.
 5. Trace the real code path and preserve contracts and unrelated work.
@@ -49,8 +52,9 @@ When another skill names `$workflow` as its execution core:
   verification, and integration.
 - The domain skill owns its modes, evidence gates, lane definitions, output
   contract, and mutation permissions.
-- Domain restrictions win. A workflow level never authorizes edits, builds,
-  network access, or other effects forbidden by the domain skill or project.
+- Domain restrictions apply after resolving explicit overrides. A workflow
+  level alone never authorizes effects forbidden by the effective domain
+  contract or project.
 - In `auto`, treat domain `Focused`, `Standard`, and `Deep` classifications as
   inputs to light, medium, and heavy selection, not as a second control plane.
 - In `auto`, run the required domain preflight directly at Light, then announce
@@ -59,8 +63,8 @@ When another skill names `$workflow` as its execution core:
 
 ## Mutation boundary
 
-For every route, use the intersection of user authorization, project rules,
-domain contract, and runtime permissions. Classify before executing or delegating:
+After resolving authorization, intersect its scope with applicable project and
+domain rules and runtime permissions. Classify before executing or delegating:
 
 - **primary-tree read-only:** inspect and verify; never edit production files
   or assign an implementer to this surface.

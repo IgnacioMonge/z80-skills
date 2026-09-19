@@ -7,6 +7,12 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- Revision 0.8.3 adds an explicit, assignment-scoped Astra Medium option for
+  causal/high-risk delegation; Luna/Sol defaults remain unchanged. Automatic
+  fallback, inheritance, unverified defaults, and effort upgrades cannot enable it.
+- Opt-in policy decision cases cover authorization, model selection, selective
+  context, and verification reuse without replacing historical evaluation results.
+
 - Portable workflow, Z80 domain routing, eight engineering specialists, and
   guarded BridgeZX delivery, with installation tooling and English/Spanish
   documentation.
@@ -39,10 +45,17 @@ repository; these entries track development toward the first published release.
 - Verification now reuses valid results across phases and trees, executes only
   missing or invalidated checks, inspects aggregate build dependencies, and
   combines compatible validation and delivery builds to avoid duplicate work.
-- Grok workflow installation derives from canonical sources; an installation
-  regression check covers preservation of the shared verification rules.
+- Grok Build loads the canonical `skills/` trees in place through
+  `[skills].paths`. The Grok installer no longer copies or patches skill trees
+  into `~/.grok/skills`; it removes those obsolete copies instead.
 
 ### Fixed
+
+- Workflow distinguishes explicit user overrides from still-applicable project,
+  domain, runtime, and evidence requirements; skill-induced stops identify their
+  exact source. Organization maps and shrink scans are now scope-conditional.
+- Develop and organize activation descriptions are shorter, with their detailed
+  scope and exclusions retained in the skill body.
 
 - Optimize's T-state estimator accounts for IX/IY half-register loads,
   INC/DEC and accumulator arithmetic, recognizes SLL, and reports unsupported

@@ -1,6 +1,6 @@
 ---
 name: develop-z80
-description: Specification-driven lifecycle for starting or resuming a complete Z80, ZX Spectrum, or ZX Spectrum Next product initiative—application, game, demo, tool, or generic port—from an explicit idea through accepted specification, milestones, implementation, and verification. Use when the user explicitly invokes develop-z80, asks to design or build a complete product or deliberate vertical slice, requests an SDD dossier or milestone plan, or resumes an existing develop-z80 dossier or task. Do not use for routine bug fixes, isolated repository features, refactors, reviews, maintenance, build/test/documentation fixes, internal architecture proposals, or a consumer port to the Spectranext cartridge; use port-spectranext, workflow, or the relevant specialist unless the user explicitly places the work under an active product dossier.
+description: Develop a complete Z80/ZX/Next product or deliberate vertical slice from an explicit initiative, or resume its SDD dossier and milestones. Do not use for routine bug fixes, isolated repository features, or Spectranext cartridge consumer ports.
 ---
 
 # Develop Z80
@@ -12,8 +12,14 @@ otherwise inspectable product checkpoints.
 ## Activation Boundary
 
 Enter this lifecycle only for an explicit product initiative or an existing
-develop dossier. Repository language, a Z80 target, or generic verbs such as
-plan, design, implement, feature, and verify are not sufficient activation.
+develop dossier, or an explicit develop-z80 invocation. This covers applications,
+games, demos, tools, and generic ports from idea through specification, milestones,
+implementation, and verification. Repository language, a Z80 target, or generic
+verbs such as plan, design, implement, feature, and verify are
+not sufficient activation. Routine bug fixes, isolated features, refactors,
+reviews, build/test
+or documentation fixes, and internal architecture proposals stay outside this
+lifecycle unless explicitly placed under an active product dossier.
 Route ordinary maintenance and bounded repository changes through `$workflow`;
 use `audit-z80`, `organize-z80`, `shrink-z80`, or `optimize-z80` only when their
 specialist question is the requested result.

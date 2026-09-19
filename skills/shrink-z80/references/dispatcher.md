@@ -7,8 +7,12 @@ Use this after `SKILL.md` for every real shrink pass except `help`. Obey
 
 Run only scripts relevant to the selected mode:
 
-- `preflight_scan.py`: source/toolchain/artifact inventory.
-- `artifact_freshness.py`: freshness gate before artifact-based exact claims.
+- `preflight_scan.py`: requested source/toolchain/artifact inventory, or when
+  unresolved inventory affects scope or target selection. Skip for a local
+  source-only pass whose necessary context is already known.
+- `artifact_freshness.py`: freshness gate before artifact-based exact claims;
+  reuse an equivalent still-valid gate under workflow verification rules.
+  No artifact-based claim means no freshness scan solely to satisfy a checklist.
 - `map_summary.py`: selected map, sections, stack gap, resident/banked and
   startup hints.
 - `libpull_scan.py` and `generated_helper_scan.py`: linked/generated helper

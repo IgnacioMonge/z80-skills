@@ -15,9 +15,7 @@ GROK_INSTALLER = ROOT / "scripts" / "install-for-grok.ps1"
 class WorkflowContextEfficiencyTest(unittest.TestCase):
     def test_heavy_policy_is_loaded_from_one_owner(self) -> None:
         skill = (WORKFLOW / "SKILL.md").read_text(encoding="utf-8")
-        heavy = (WORKFLOW / "references" / "heavy.md").read_text(
-            encoding="utf-8"
-        )
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
         self.assertIn("references/heavy.md", skill)
         self.assertIn("Do not duplicate delegated discovery", heavy)
         self.assertIn("unassigned architecture, contract, and", heavy)
@@ -27,8 +25,14 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
         skill = WORKFLOW / "SKILL.md"
         definitions = {}
         for path in WORKFLOW.rglob("*.md"):
-            for name in re.findall(r"^- \*\*([^*]+):\*\*", path.read_text(encoding="utf-8"), re.MULTILINE):
-                if name in {"primary-tree read-only", "disposable-worktree-only", "authorized primary-tree mutation"}:
+            for name in re.findall(
+                r"^- \*\*([^*]+):\*\*", path.read_text(encoding="utf-8"), re.MULTILINE
+            ):
+                if name in {
+                    "primary-tree read-only",
+                    "disposable-worktree-only",
+                    "authorized primary-tree mutation",
+                }:
                     definitions.setdefault(name, []).append(path)
         self.assertEqual(len(definitions), 3)
         self.assertTrue(all(paths == [skill] for paths in definitions.values()))
@@ -43,9 +47,7 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
             self.assertLessEqual(len(text.split()), 650, name)
 
     def test_routine_repairs_bypass_the_main_thread(self) -> None:
-        heavy = (WORKFLOW / "references" / "heavy.md").read_text(
-            encoding="utf-8"
-        )
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
         normalized = " ".join(heavy.split())
         self.assertIn("## Direct repair loop", heavy)
         self.assertIn("each other's canonical task names", normalized)
@@ -55,12 +57,8 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
         self.assertIn("repairs also belong to the implementer", normalized)
 
     def test_upward_reports_are_bounded_knowledge_deltas(self) -> None:
-        roles = (WORKFLOW / "references" / "roles.md").read_text(
-            encoding="utf-8"
-        )
-        heavy = (WORKFLOW / "references" / "heavy.md").read_text(
-            encoding="utf-8"
-        )
+        roles = (WORKFLOW / "references" / "roles.md").read_text(encoding="utf-8")
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
         self.assertIn("within 250 words", roles)
         self.assertIn("Decision required: none", roles)
         self.assertIn("raw logs, large diffs, diagnostics", roles)
@@ -70,16 +68,32 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
         overlay = ROOT / "scripts" / "grok-overlay" / "workflow"
         self.assertFalse(overlay.exists() and any(overlay.rglob("*.md")))
         installer = GROK_INSTALLER.read_text(encoding="utf-8")
-        self.assertIn("Patch-WorkflowForGrok", installer)
+        self.assertIn("Set-GrokSkillsPath", installer)
+        self.assertNotIn("Patch-WorkflowForGrok", installer)
         self.assertNotIn("Apply-WorkflowOverlay", installer)
+        self.assertNotIn("Copy-SkillTree", installer)
 
-    def test_grok_install_preserves_canonical_efficiency_contract(self) -> None:
+    def test_grok_install_points_at_canonical_skills_and_removes_copies(self) -> None:
         shell = shutil.which("pwsh") or shutil.which("powershell")
         if shell is None:
             self.skipTest("PowerShell is unavailable")
 
+        canonical_skills = (ROOT / "skills").resolve()
         with tempfile.TemporaryDirectory(prefix="z80-grok-install-") as raw_tmp:
-            destination = Path(raw_tmp) / "skills"
+            tmp = Path(raw_tmp)
+            destination = tmp / "grok-skills"
+            claude = tmp / "claude-skills"
+            config = tmp / "config.toml"
+            stale = destination / "optimize-z80"
+            stale.mkdir(parents=True)
+            (stale / "SKILL.md").write_text("stale grok copy\n", encoding="utf-8")
+            claude_stale = claude / "workflow"
+            claude_stale.mkdir(parents=True)
+            (claude_stale / "SKILL.md").write_text(
+                "stale claude copy\n", encoding="utf-8"
+            )
+            config.write_text('[ui]\ntheme = "auto"\n', encoding="utf-8")
+
             result = subprocess.run(
                 [
                     shell,
@@ -88,6 +102,10 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
                     str(GROK_INSTALLER),
                     "-Dest",
                     str(destination),
+                    "-GrokConfig",
+                    str(config),
+                    "-ClaudeSkills",
+                    str(claude),
                     "-SkipBackup",
                 ],
                 cwd=ROOT,
@@ -97,77 +115,22 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-            installed = destination / "workflow"
-            self.assertTrue((destination / "route-z80" / "SKILL.md").is_file())
-            installed_document = (
-                destination / "document-z80" / "SKILL.md"
-            ).read_text(encoding="utf-8")
-            self.assertIn("~/.grok/skills/workflow/SKILL.md", installed_document)
-            self.assertIn("## Runtime Portability", installed_document)
-            skill = (installed / "SKILL.md").read_text(encoding="utf-8")
-            medium = (installed / "references" / "medium.md").read_text(
-                encoding="utf-8"
-            )
-            heavy = (installed / "references" / "heavy.md").read_text(
-                encoding="utf-8"
-            )
-            roles = (installed / "references" / "roles.md").read_text(
-                encoding="utf-8"
-            )
-
-            self.assertIn("Host runtime (Grok Build)", skill)
-            self.assertIn("spawn_subagent", roles)
+            config_text = config.read_text(encoding="utf-8")
+            toml_path = canonical_skills.as_posix()
+            self.assertIn(toml_path, config_text)
+            self.assertIn("[skills]", config_text)
+            self.assertFalse(stale.exists())
+            self.assertFalse(claude_stale.exists())
+            self.assertTrue((canonical_skills / "optimize-z80" / "SKILL.md").is_file())
+            self.assertTrue((WORKFLOW / "references" / "verification.md").is_file())
+            skill = (WORKFLOW / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("references/heavy.md", skill)
-            self.assertIn("Do not duplicate delegated discovery", heavy)
-            self.assertIn("without editing files or weakening assertions", " ".join(heavy.split()))
-            self.assertIn("## Direct repair loop", heavy)
-            self.assertIn("within 250 words", roles)
-            for text in (skill, heavy, roles):
-                self.assertNotIn("sol_executor", text)
-                self.assertNotIn("gpt-", text)
-            self.assertIn("Workers must not spawn children", roles)
-            self.assertIn("supported models and reasoning controls", roles)
-            canonical_roles = (WORKFLOW / "references" / "roles.md").read_text(
-                encoding="utf-8"
-            )
-            self.assertEqual(
-                roles.split("## Capsule contracts", 1)[1],
-                canonical_roles.split("## Capsule contracts", 1)[1],
-            )
-            self.assertEqual(
-                medium,
-                (WORKFLOW / "references" / "medium.md").read_text(
-                    encoding="utf-8"
-                ),
-            )
-            # Conditional verification rules must remain reachable and intact
-            # after installation, just like the execution-level references.
-            reference = "references/verification.md"
-            for entrypoint in (WORKFLOW / "SKILL.md", installed / "SKILL.md"):
-                links = re.findall(
-                    r"\]\(([^)]+)\)", entrypoint.read_text(encoding="utf-8")
-                )
-                self.assertIn(reference, links)
-                self.assertTrue((entrypoint.parent / reference).is_file())
-            self.assertEqual(
-                (installed / reference).read_bytes(),
-                (WORKFLOW / reference).read_bytes(),
-            )
-            for name in ("audit-z80", "shrink-z80", "optimize-z80"):
-                relative = Path(name) / "references" / "external-research.md"
-                source = ROOT / "skills" / relative
-                copied = destination / relative
-                self.assertEqual(source.read_bytes(), copied.read_bytes())
-                links = re.findall(r"\]\(([^)]*research-method\.md)\)", copied.read_text())
-                self.assertEqual(len(links), 1)
-                self.assertEqual(
-                    (source.parent / links[0]).read_bytes(),
-                    (copied.parent / links[0]).read_bytes(),
-                )
+            self.assertIn("references/verification.md", skill)
 
         installer = GROK_INSTALLER.read_text(encoding="utf-8")
         self.assertIn('"route-z80"', installer)
         self.assertIn("foreach ($name in $SkillNames)", installer)
+        self.assertIn("Do not copy", installer)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selected_model",
+    "selected_effort",
+    "delegate_allowed",
+    "request_new_approval",
+    "primary_edit_authorized",
+    "load_full_map",
+    "run_inventory",
+    "run_freshness",
+    "repeat_valid_checks",
+    "exact_artifact_metric_allowed",
+    "blocker_source",
+    "rationale"
+  ],
+  "properties": {
+    "selected_model": {
+      "type": "string",
+      "enum": [
+        "gpt-5.6-luna",
+        "gpt-5.6-sol",
+        "gpt-6-astra",
+        "NONE"
+      ]
+    },
+    "selected_effort": {
+      "type": "string",
+      "enum": [
+        "max",
+        "high",
+        "xhigh",
+        "medium",
+        "NONE"
+      ]
+    },
+    "delegate_allowed": {
+      "type": "boolean"
+    },
+    "request_new_approval": {
+      "type": "boolean"
+    },
+    "primary_edit_authorized": {
+      "type": "boolean"
+    },
+    "load_full_map": {
+      "type": "boolean"
+    },
+    "run_inventory": {
+      "type": "boolean"
+    },
+    "run_freshness": {
+      "type": "boolean"
+    },
+    "repeat_valid_checks": {
+      "type": "boolean"
+    },
+    "exact_artifact_metric_allowed": {
+      "type": "boolean"
+    },
+    "blocker_source": {
+      "type": "string",
+      "maxLength": 240
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 1000
+    }
+  }
+}

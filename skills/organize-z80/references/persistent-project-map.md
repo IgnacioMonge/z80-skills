@@ -84,7 +84,10 @@ map to `.mex/ROUTER.md` only with explicit approval. Otherwise add a concise
 pointer to an existing root `AGENTS.md` or project router when approved; do not
 create a broad instruction scaffold merely to route one file.
 
-At the start of later `organize-z80` work, load the routed map and check its
-revision, named paths, targets, owners, and placement facts against the changed
-scope. Mark it `STALE` when evidence diverges. Update surgically; do not rewrite
-unchanged sections or claim that a date alone proves freshness.
+For later `organize-z80` work outside `help`, read only routed-map sections
+relevant to the changed scope. A named local boundary does not require the full
+map unless unresolved dependencies or an explicit project requirement demand
+it. Check the revision, paths, targets, owners, and placement claims actually
+used against current source. Report `STALE` when evidence diverges; write that
+status only when the map write gate is satisfied. Update surgically; do not
+rewrite unchanged sections or claim that a date alone proves freshness.

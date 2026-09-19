@@ -35,21 +35,48 @@ Use the table's initial effort for each assignment. Reserve `max` for the
 narrow Luna assignments listed above; do not set Sol to `max` merely because a
 delegate or workflow is Heavy. Other effort levels require explicit user choice
 or task-specific evidence, and must be supported by the selected model.
+The Astra opt-in below is an additional restriction, not an automatic escalation.
+
+### Explicit Astra Medium opt-in
+
+The four defaults above remain unchanged. For difficult causal reasoning,
+conflicting evidence, or high-risk contract analysis only, the user may explicitly
+request **Astra Medium**: `gpt-6-astra` with reasoning effort `medium`, subject to
+the live runtime catalog. This is model effort, not the workflow Medium level.
+
+- Require an explicit request naming Astra for the current assignment. Record
+  its scope and source in the capsule. This policy, examples, past use, the main
+  thread's model, high risk, a failed worker, or "use the best model" are not
+  authorization. Do not solicit an upgrade merely because a task is difficult.
+- Never choose Astra automatically, as a fallback, by parent-model inheritance,
+  or through an unverified runtime default. The same restriction applies to
+  runtime-advertised Astra aliases and variants; do not infer availability.
+- Pin `medium`; do not increase its effort or substitute Astra Pro. If the exact
+  requested model/effort cannot be selected, report the limitation before the
+  dependent delegation. Do not silently substitute a different configuration.
+- Authorization covers only the named causal/high-risk assignment and ends with
+  it or when revoked. It neither changes the defaults nor authorizes other
+  workers, future tasks, wider mutations, or extra agents. Existing dispatch
+  gates still apply; keep the main thread on its current model.
 
 Select a suitable model upfront; do not require a failed Luna attempt before
 using Sol. Missing inputs, tools, permissions, or reproduction
 evidence require fixing the capsule or reporting a blocker, not more reasoning.
 If a worker's reasoning falls short, retain its evidence, identify the gap, and
-choose either more effort or a better-suited model. Stop the prior worker before
+choose either more effort or a better-suited model within the authorization
+policy; this never grants an Astra opt-in. Stop the prior worker before
 transferring mutable ownership; do not replay completed checks without cause.
 
-An explicit user model or effort wins; never silently substitute it. For an
-unavailable preference, select another advertised model suited to the same
-assignment; if none can be selected, use the runtime default. Disclose the
-fallback and any lost effort pinning. If an explicit choice cannot be honored,
-report the limitation before dependent work. Record requested settings and
-runtime-confirmed settings separately; do not infer actual identity from a
-worker's prose.
+An explicit user model or effort wins within the authorization policy; never
+silently substitute it. For an unavailable non-explicit preference, select
+another advertised, permitted model suited to the same assignment. Use the
+runtime default only when its identity is verified and the Astra restriction is
+satisfied. If no permitted selection can be established, do not dispatch; report
+the limitation and continue authorized direct work unless multi-agent execution
+was explicitly required. Disclose any fallback and lost effort pinning. If an
+explicit choice cannot be honored, report the limitation before dependent work.
+Record requested settings and runtime-confirmed settings separately; do not
+infer actual identity from a worker's prose.
 
 ## Capsule contracts
 

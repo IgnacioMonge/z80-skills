@@ -1,38 +1,46 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Install z80-skills into Grok Build (~/.grok/skills) with Grok runtime adaptations.
+  Point Grok Build at this checkout's canonical skill trees.
 
 .DESCRIPTION
-  Canonical skill sources remain under ./skills (Codex/plugin layout).
-  This script:
-    1. Copies all eleven skills into ~/.grok/skills (repo = canonical on name conflict)
-    2. Copies run_in_worktree.py into each skill that needs disposable worktrees
-    3. Rewrites ../../scripts/run_in_worktree.py paths for the flat Grok layout
-    4. Derives Grok workflow adaptations from the canonical workflow sources
-    5. Patches domain SKILL.md Runtime Portability notes for Grok Build
+  Canonical skill sources remain under ./skills. Grok Build reads them in
+  place through ~/.grok/config.toml [skills].paths.
 
-  Does NOT modify ./skills sources.
+  This script:
+    1. Adds <repo>/skills to Grok's extra skill paths
+    2. Removes obsolete copies of the eleven bundled skills from
+       ~/.grok/skills (and ~/.claude/skills unless -SkipClaudeCleanup)
+    3. Leaves unrelated personal skills untouched
+
+  It does not copy, patch, or overlay skill trees into ~/.grok/skills.
+
+.PARAMETER GrokConfig
+  Grok config.toml to update. Default: $HOME/.grok/config.toml
 
 .PARAMETER Dest
-  Destination skills root. Default: $HOME/.grok/skills
+  Grok user skills directory to clean of bundled copies.
+  Default: $HOME/.grok/skills
 
-.PARAMETER SyncClaude
-  Also install pure (unadapted) skill trees into ~/.claude/skills for parity.
+.PARAMETER ClaudeSkills
+  Claude user skills directory to clean of bundled copies.
+  Default: $HOME/.claude/skills
+
+.PARAMETER SkipClaudeCleanup
+  Do not remove copies under the Claude skills directory.
 
 .PARAMETER SkipBackup
-  Do not backup existing destination skills before overwrite.
+  Accepted for compatibility. Copies are removed, not archived.
 
 .EXAMPLE
   .\scripts\install-for-grok.ps1
-
-.EXAMPLE
-  git pull --ff-only; .\scripts\install-for-grok.ps1 -SyncClaude
 #>
 [CmdletBinding()]
 param(
+    [string]$GrokConfig = (Join-Path $HOME ".grok\config.toml"),
     [string]$Dest = (Join-Path $HOME ".grok\skills"),
-    [switch]$SyncClaude,
+    [string]$ClaudeSkills = (Join-Path $HOME ".claude\skills"),
+    [switch]$SkipClaudeCleanup,
     [switch]$SkipBackup
 )
 
@@ -41,7 +49,6 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $SkillsSrc = Join-Path $RepoRoot "skills"
-$SharedScript = Join-Path $RepoRoot "scripts\run_in_worktree.py"
 
 $SkillNames = @(
     "audit-z80",
@@ -67,347 +74,168 @@ function Assert-Path([string]$Path, [string]$Label) {
     }
 }
 
-function Backup-Skill([string]$SkillDir, [string]$ArchiveRoot) {
-    if (-not (Test-Path -LiteralPath $SkillDir)) { return }
-    $name = Split-Path $SkillDir -Leaf
-    $target = Join-Path $ArchiveRoot $name
-    if (Test-Path -LiteralPath $target) {
-        Remove-Item -LiteralPath $target -Recurse -Force
-    }
-    Copy-Item -LiteralPath $SkillDir -Destination $target -Recurse -Force
-    Write-Host "    backup: $name"
+function ConvertTo-TomlPath([string]$Path) {
+    return ($Path -replace '\\', '/')
 }
 
-function Copy-SkillTree([string]$Name, [string]$DestRoot) {
-    $src = Join-Path $SkillsSrc $Name
-    $dst = Join-Path $DestRoot $Name
-    Assert-Path $src "skill source $Name"
-    if (Test-Path -LiteralPath $dst) {
-        Remove-Item -LiteralPath $dst -Recurse -Force
-    }
-    Copy-Item -LiteralPath $src -Destination $dst -Recurse -Force
-    Write-Host "    installed: $Name"
+function Test-ReparsePoint([string]$Path) {
+    $item = Get-Item -LiteralPath $Path -Force
+    return [bool]($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
 }
 
-function Copy-RunInWorktree([string]$DestRoot) {
-    Assert-Path $SharedScript "run_in_worktree.py"
-    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "optimize-z80", "shrink-z80")) {
-        $scripts = Join-Path $DestRoot "$name\scripts"
-        if (-not (Test-Path -LiteralPath $scripts)) {
-            New-Item -ItemType Directory -Path $scripts -Force | Out-Null
+function Test-SamePath([string]$Left, [string]$Right) {
+    $leftFull = [System.IO.Path]::GetFullPath($Left).TrimEnd('\', '/')
+    $rightFull = [System.IO.Path]::GetFullPath($Right).TrimEnd('\', '/')
+    return [string]::Equals($leftFull, $rightFull, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Remove-SkillDirSafely([string]$Path, [string]$CanonicalPath) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    if (Test-SamePath $Path $CanonicalPath) {
+        Write-Host "    skip canonical: $Path"
+        return $false
+    }
+    if (Test-ReparsePoint $Path) {
+        $code = 0
+        cmd.exe /c "rmdir `"$Path`"" | Out-Null
+        $code = $LASTEXITCODE
+        if ($code -ne 0 -or (Test-Path -LiteralPath $Path)) {
+            throw "Failed to remove reparse point without touching target: $Path"
         }
-        Copy-Item -LiteralPath $SharedScript -Destination (Join-Path $scripts "run_in_worktree.py") -Force
+        Write-Host "    unlinked: $Path"
+        return $true
     }
-    $shared = Join-Path $DestRoot "_z80-shared\scripts"
-    New-Item -ItemType Directory -Path $shared -Force | Out-Null
-    Copy-Item -LiteralPath $SharedScript -Destination (Join-Path $shared "run_in_worktree.py") -Force
+    Remove-Item -LiteralPath $Path -Recurse -Force
+    Write-Host "    removed: $Path"
+    return $true
 }
 
-function Patch-WorktreePaths([string]$DestRoot) {
-    $mdFiles = Get-ChildItem -LiteralPath $DestRoot -Recurse -Filter "*.md" -File |
-        Where-Object {
-            $_.FullName -notmatch '[\\/]_backup' -and
-            $_.FullName -notmatch '[\\/]skill-archives' -and
-            $_.FullName -notmatch '[\\/]_z80-shared'
-        }
-    foreach ($file in $mdFiles) {
-        # Only touch files under the skill trees we just installed
-        $rel = $file.FullName.Substring($DestRoot.Length).TrimStart('\', '/')
-        $top = ($rel -split '[\\/]')[0]
-        if ($SkillNames -notcontains $top) { continue }
-
-        $text = [System.IO.File]::ReadAllText($file.FullName)
-        $orig = $text
-        $text = $text.Replace('<skill-dir>/../../scripts/run_in_worktree.py', '`$SKILL_DIR/scripts/run_in_worktree.py')
-        $text = $text.Replace('$SKILL_DIR/../../scripts/run_in_worktree.py', '$SKILL_DIR/scripts/run_in_worktree.py')
-        $text = $text.Replace('../../scripts/run_in_worktree.py', '$SKILL_DIR/scripts/run_in_worktree.py')
-        # Fix accidental double-backtick forms from prior partial patches
-        $text = $text.Replace('``$SKILL_DIR/scripts/run_in_worktree.py`', '`$SKILL_DIR/scripts/run_in_worktree.py`')
-        $text = $text.Replace('``$SKILL_DIR/scripts/run_in_worktree.py', '`$SKILL_DIR/scripts/run_in_worktree.py')
-        if ($text -ne $orig) {
-            [System.IO.File]::WriteAllText($file.FullName, $text)
-            Write-Host "    path-fix: $rel"
+function Remove-BundledCopies([string]$Root) {
+    if (-not (Test-Path -LiteralPath $Root)) { return 0 }
+    if (Test-SamePath $Root $SkillsSrc) {
+        throw "Refusing to delete the canonical skills directory: $SkillsSrc"
+    }
+    $removed = 0
+    foreach ($name in $SkillNames) {
+        $copy = Join-Path $Root $name
+        $canonical = Join-Path $SkillsSrc $name
+        if (Remove-SkillDirSafely -Path $copy -CanonicalPath $canonical) {
+            $removed += 1
         }
     }
+    $shared = Join-Path $Root "_z80-shared"
+    $sharedCanonical = Join-Path $RepoRoot "scripts"
+    if (Remove-SkillDirSafely -Path $shared -CanonicalPath $sharedCanonical) {
+        $removed += 1
+    }
+    return $removed
 }
 
-function Set-TextFile([string]$Path, [string]$Text) {
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    [System.IO.File]::WriteAllText($Path, $Text, $utf8NoBom)
-}
-
-function Patch-WorkflowForGrok([string]$DestRoot) {
-    $workflow = Join-Path $DestRoot "workflow"
-    $skillPath = Join-Path $workflow "SKILL.md"
-    $rolesPath = Join-Path $workflow "references\roles.md"
-    $heavyPath = Join-Path $workflow "references\heavy.md"
-    foreach ($path in @($skillPath, $rolesPath, $heavyPath)) {
-        Assert-Path $path "canonical workflow input"
+function Set-GrokSkillsPath([string]$ConfigPath, [string]$SkillsPath) {
+    $tomlPath = ConvertTo-TomlPath $SkillsPath
+    $quoted = '"' + $tomlPath.Replace('"', '\"') + '"'
+    $dir = Split-Path -Parent $ConfigPath
+    if (-not (Test-Path -LiteralPath $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
 
-    $skill = [System.IO.File]::ReadAllText($skillPath)
-    $nl = if ($skill.Contains("`r`n")) { "`r`n" } else { "`n" }
-    if ($skill -notmatch '(?m)^## Host runtime \(Grok Build\)$') {
-        $hostSection = @(
-            '## Host runtime (Grok Build)',
-            '',
-            '- Spawn workers with `spawn_subagent`; use the mappings in `references/roles.md`.',
-            '- Prefer native tools for read, search, and shell work.',
-            '- On Windows, invoke `python` or the interpreter named by the user; do not',
-            '  hardcode `python3` paths.',
-            '- Domain Z80 skills and `workflow` live as siblings under `~/.grok/skills/`.'
-        ) -join $nl
-        $skill = $skill.Replace('## Select effort', "$hostSection$nl$nl## Select effort")
-    }
-    Set-TextFile -Path $skillPath -Text $skill
-
-    $roles = [System.IO.File]::ReadAllText($rolesPath)
-    $nl = if ($roles.Contains("`r`n")) { "`r`n" } else { "`n" }
-    $rolesPrefix = @(
-        '# Portable Agent Roles (Grok Build)',
-        '',
-        'Use Grok''s `spawn_subagent` tool. Role behavior comes from the',
-        'self-contained task capsule, not from custom profiles.',
-        '',
-        '| Workflow role | Task label | `subagent_type` | `capability_mode` | Isolation |',
-        '| --- | --- | --- | --- | --- |',
-        '| Investigator | `explorer` | `explore` | `read-only` | `none` |',
-        '| Implementer | `executor` | `general-purpose` | `read-write` or `all` | boundary-dependent |',
-        '| Verifier | `verifier` | `general-purpose` | `read-only` or `execute` | `none` |',
-        '',
-        '## Spawn rules (Grok)',
-        '',
-        '- Call `spawn_subagent` with a fresh, self-contained task capsule.',
-        '- Put the workflow role in `description`; prefer `background: true` and collect',
-        '  results with `get_command_or_subagent_output`.',
-        '- Do not pass `model` unless the user explicitly requested one.',
-        '- Check the live host schema for supported models and reasoning controls.',
-        '  Honor explicit user settings; if unsupported, report the limitation before',
-        '  dependent work. Do not import Codex model IDs or effort defaults.',
-        '- Report requested settings separately from runtime-confirmed settings.',
-        '- Map Codex `explorer` to `explore`, and `worker` or `default` to',
-        '  `general-purpose`. A fresh spawn replaces `fork_turns="none"`.',
-        '- For disposable-worktree-only mutation, require `isolation="worktree"` or',
-        '  another verified disposable worktree.'
-    ) -join $nl
-    $roles = [regex]::Replace(
-        $roles,
-        '(?s)\A# Portable Agent Roles.*?\r?\n## Capsule contracts',
-        "$rolesPrefix$nl$nl## Capsule contracts",
-        1
-    )
-    Set-TextFile -Path $rolesPath -Text $roles
-
-    $heavy = [System.IO.File]::ReadAllText($heavyPath)
-    $nl = if ($heavy.Contains("`r`n")) { "`r`n" } else { "`n" }
-    $oldSpawn = @(
-        '3. Spawn each worker with `fork_turns="none"` and a self-contained capsule of',
-        '   at most 400 words.'
-    ) -join $nl
-    $newSpawn = @(
-        '3. Spawn each worker through `spawn_subagent` with a fresh, self-contained',
-        '   capsule of at most 400 words.'
-    ) -join $nl
-    $heavy = $heavy.Replace($oldSpawn, $newSpawn)
-    Set-TextFile -Path $heavyPath -Text $heavy
-
-    Write-Host "    workflow adapted from canonical sources"
-}
-
-function Patch-SkillMarkdown([string]$SkillMd) {
-    if (-not (Test-Path -LiteralPath $SkillMd)) { return }
-    $name = Split-Path (Split-Path $SkillMd -Parent) -Leaf
-    $text = [System.IO.File]::ReadAllText($SkillMd)
-    $orig = $text
-
-    # 1) Sibling workflow path (idempotent)
-    $needle = 'Apply the sibling `$workflow` skill at `../workflow/SKILL.md` as the execution'
-    $replacement = @(
-        'Apply the sibling `$workflow` skill at `../workflow/SKILL.md` (or'
-        '`~/.grok/skills/workflow/SKILL.md` on Grok Build) as the execution'
-    ) -join "`r`n"
-    if ($text.Contains($needle) -and -not $text.Contains('~/.grok/skills/workflow/SKILL.md')) {
-        $text = $text.Replace($needle, $replacement)
+    $text = ""
+    if (Test-Path -LiteralPath $ConfigPath) {
+        $text = [System.IO.File]::ReadAllText($ConfigPath)
     }
 
-    # 2) Windows python note inside Runtime Portability (idempotent)
-    if ($text -notmatch 'prefer `python` when `python3`') {
-        $text = $text.Replace(
-            'never assume a platform-specific path.',
-            "never assume a platform-specific path. On Windows hosts, prefer`r`n  ``python`` when ``python3`` is not on ``PATH``."
-        )
-        $text = $text.Replace(
-            'never assume a Windows, macOS, or Linux path.',
-            "never assume a Windows, macOS, or Linux path. On Windows hosts,`r`n  prefer ``python`` when ``python3`` is not on ``PATH``."
-        )
+    if ($text -match [regex]::Escape($tomlPath)) {
+        Write-Host "    config already lists $tomlPath"
+        return
     }
 
-    # 3) Grok bullets (skip if already adapted — require the bullet form, not the path hint)
-    if ($text -notmatch '(?m)^- On Grok Build') {
-        $bullets = switch ($name) {
-            'optimize-z80' {
-                @(
-                    '- On Grok Build, `spawn_subagent` with `isolation="worktree"` is an equivalent'
-                    '  disposable sandbox when preferred.'
-                    '- On Grok Build: load sibling `$workflow` from `~/.grok/skills/workflow/SKILL.md`'
-                    '  when needed; prefer native tools for read/search/shell.'
-                ) -join "`r`n"
-            }
-            'develop-z80' {
-                @(
-                    '- On Grok Build: prefer native tools for read/search/shell; Heavy agents use'
-                    '  `spawn_subagent` per `$workflow`. On Windows, prefer `python` when `python3`'
-                    '  is missing. Disposable spikes may use `isolation="worktree"` or'
-                    '  `"$SKILL_DIR/scripts/run_in_worktree.py"`.'
-                ) -join "`r`n"
-            }
-            'organize-z80' {
-                @(
-                    '- On Grok Build: prefer native tools for read/search/shell; Heavy agents use'
-                    '  `spawn_subagent` per `$workflow`. On Windows, prefer `python` when `python3`'
-                    '  is missing.'
-                ) -join "`r`n"
-            }
-            default {
-                @(
-                    '- On Grok Build: load sibling `$workflow` from `~/.grok/skills/workflow/SKILL.md`'
-                    '  when needed; prefer native tools for read/search/shell; Heavy agents use'
-                    '  `spawn_subagent` per the workflow skill.'
-                ) -join "`r`n"
-            }
-        }
-
-        if ($text -match '(?m)^## Runtime Portability\s*$') {
-            $text = [regex]::Replace(
-                $text,
-                '(?ms)(## Runtime Portability\r?\n)(.*?)(\r?\n## )',
-                {
-                    param($m)
-                    $body = $m.Groups[2].Value.TrimEnd()
-                    return $m.Groups[1].Value + $body + "`r`n" + $bullets + $m.Groups[3].Value
-                },
-                1
-            )
+    $nl = "`r`n"
+    $pathsMatch = [regex]::Match($text, '(?m)^paths\s*=\s*\[([^\]]*)\]')
+    if ($pathsMatch.Success) {
+        $inner = $pathsMatch.Groups[1].Value.Trim()
+        if ($inner.Length -eq 0) {
+            $replacement = "paths = [$quoted]"
         }
         else {
-            $insert = "`r`n## Runtime Portability`r`n`r`n$bullets`r`n"
-            $text = [regex]::Replace(
-                $text,
-                '(?ms)(## Workflow Core\r?\n.*?)(\r?\n## )',
-                { param($m) $m.Groups[1].Value.TrimEnd() + $insert + $m.Groups[2].Value },
-                1
-            )
+            $trimmed = $inner.TrimEnd().TrimEnd(',')
+            $replacement = "paths = [$trimmed, $quoted]"
         }
+        $text = $text.Remove($pathsMatch.Index, $pathsMatch.Length).Insert($pathsMatch.Index, $replacement)
     }
-
-    # 4) optimize-z80 worktree helper line (flat layout)
-    if ($name -eq 'optimize-z80') {
-        $text = $text.Replace(
-            'disposable worktree through `$SKILL_DIR/../../scripts/run_in_worktree.py`.',
-            'disposable worktree through `"$SKILL_DIR/scripts/run_in_worktree.py"`.'
-        )
-        $text = $text.Replace(
-            'disposable worktree through $SKILL_DIR/../../scripts/run_in_worktree.py.',
-            'disposable worktree through `"$SKILL_DIR/scripts/run_in_worktree.py"`.'
+    elseif ($text -match '(?m)^\[skills\]\s*$') {
+        $text = [regex]::Replace(
+            $text,
+            '(?m)^\[skills\]\s*$',
+            "[skills]$nl" + "paths = [$quoted]",
+            1
         )
     }
-
-    if ($text -ne $orig) {
-        Set-TextFile -Path $SkillMd -Text $text
-        Write-Host "    portability: $name"
+    else {
+        if ($text.Length -gt 0 -and -not $text.EndsWith("`n")) {
+            $text += $nl
+        }
+        if ($text.Length -gt 0) {
+            $text += $nl
+        }
+        $text += "[skills]$nl"
+        $text += "# Canonical Z80 skill trees. Do not copy these into ~/.grok/skills.$nl"
+        $text += "paths = [$quoted]$nl"
     }
-}
 
-function Patch-DomainPortability([string]$DestRoot) {
-    foreach ($name in @("audit-z80", "debug-z80", "develop-z80", "document-z80", "optimize-z80", "organize-z80", "port-spectranext", "shrink-z80")) {
-        Patch-SkillMarkdown -SkillMd (Join-Path $DestRoot "$name\SKILL.md")
-    }
-}
-
-function Sync-ClaudeSkills {
-    $claude = Join-Path $HOME ".claude\skills"
-    New-Item -ItemType Directory -Path $claude -Force | Out-Null
-    Write-Step "Syncing pure (unadapted) skills to $claude"
-    foreach ($name in $SkillNames) {
-        Copy-SkillTree -Name $name -DestRoot $claude
-    }
-    Write-Host "    Claude copies are upstream layout (no Grok overlay)."
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($ConfigPath, $text, $utf8NoBom)
+    Write-Host "    wrote $quoted into $ConfigPath"
 }
 
 # --- main ---
-Write-Step "z80-skills → Grok Build installer"
+Write-Step "z80-skills → Grok Build (in-place)"
 Write-Host "    repo: $RepoRoot"
-Write-Host "    dest: $Dest"
+Write-Host "    skills: $SkillsSrc"
+Write-Host "    config: $GrokConfig"
+Write-Host "    grok skills dir: $Dest"
 
 Assert-Path $SkillsSrc "skills/"
-Assert-Path $SharedScript "scripts/run_in_worktree.py"
-
-New-Item -ItemType Directory -Path $Dest -Force | Out-Null
-
-if (-not $SkipBackup) {
-    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $archive = Join-Path $HOME ".grok\skill-archives\z80-pre-install-$stamp"
-    New-Item -ItemType Directory -Path $archive -Force | Out-Null
-    Write-Step "Backing up existing skills to $archive"
-    foreach ($name in $SkillNames) {
-        Backup-Skill -SkillDir (Join-Path $Dest $name) -ArchiveRoot $archive
-    }
-}
-
-Write-Step "Installing skill trees from repo"
 foreach ($name in $SkillNames) {
-    Copy-SkillTree -Name $name -DestRoot $Dest
+    Assert-Path (Join-Path $SkillsSrc "$name\SKILL.md") "$name/SKILL.md"
 }
 
-Write-Step "Bundling run_in_worktree.py into skill scripts/"
-Copy-RunInWorktree -DestRoot $Dest
+if ($SkipBackup) {
+    Write-Host "    SkipBackup is accepted; copies are removed, not archived."
+}
 
-Write-Step "Rewriting worktree script paths for flat Grok layout"
-Patch-WorktreePaths -DestRoot $Dest
+Write-Step "Pointing Grok at canonical skills/"
+Set-GrokSkillsPath -ConfigPath $GrokConfig -SkillsPath $SkillsSrc
 
-Write-Step "Adapting canonical workflow for Grok"
-Patch-WorkflowForGrok -DestRoot $Dest
+Write-Step "Removing obsolete Grok copies"
+$removedGrok = Remove-BundledCopies -Root $Dest
+Write-Host "    grok copies removed: $removedGrok"
 
-Write-Step "Patching domain Runtime Portability for Grok"
-Patch-DomainPortability -DestRoot $Dest
-
-if ($SyncClaude) {
-    Sync-ClaudeSkills
+if (-not $SkipClaudeCleanup) {
+    Write-Step "Removing obsolete Claude copies"
+    $removedClaude = Remove-BundledCopies -Root $ClaudeSkills
+    Write-Host "    claude copies removed: $removedClaude"
 }
 
 Write-Step "Verify"
+$configText = [System.IO.File]::ReadAllText($GrokConfig)
+$tomlPath = ConvertTo-TomlPath $SkillsSrc
+if ($configText -notmatch [regex]::Escape($tomlPath)) {
+    throw "Grok config does not list canonical skills path: $tomlPath"
+}
 foreach ($name in $SkillNames) {
-    $skill = Join-Path $Dest "$name\SKILL.md"
-    Assert-Path $skill "$name/SKILL.md"
-    $line = (Select-String -Path $skill -Pattern '^description:' | Select-Object -First 1).Line
-    $clip = if ($line.Length -gt 72) { $line.Substring(0, 72) + "..." } else { $line }
-    Write-Host ("    {0,-14} {1}" -f $name, $clip)
-}
-$wf = Join-Path $Dest "workflow\SKILL.md"
-if (-not (Select-String -Path $wf -Pattern 'Host runtime \(Grok Build\)' -Quiet)) {
-    throw "Workflow adaptation missing Grok host section — install incomplete"
-}
-$workflowChecks = @(
-    @{ Path = $wf; Pattern = '## Mutation boundary' },
-    @{ Path = (Join-Path $Dest "workflow\references\heavy.md"); Pattern = 'Do not duplicate delegated discovery' },
-    @{ Path = (Join-Path $Dest "workflow\references\heavy.md"); Pattern = '## Direct repair loop' },
-    @{ Path = (Join-Path $Dest "workflow\references\roles.md"); Pattern = 'within 250 words' }
-)
-foreach ($check in $workflowChecks) {
-    if (-not (Select-String -LiteralPath $check.Path -Pattern $check.Pattern -SimpleMatch -Quiet)) {
-        throw "Canonical workflow contract missing after Grok adaptation: $($check.Pattern)"
+    Assert-Path (Join-Path $SkillsSrc "$name\SKILL.md") "canonical $name/SKILL.md"
+    $copy = Join-Path $Dest $name
+    if (Test-Path -LiteralPath $copy) {
+        throw "Obsolete Grok copy still present: $copy"
     }
 }
-$wt = Join-Path $Dest "optimize-z80\scripts\run_in_worktree.py"
-Assert-Path $wt "optimize-z80/scripts/run_in_worktree.py"
-$debugWt = Join-Path $Dest "debug-z80\scripts\run_in_worktree.py"
-Assert-Path $debugWt "debug-z80/scripts/run_in_worktree.py"
 
 Write-Host ""
-Write-Host "Done. Open a new Grok task (or wait for skill auto-reload) and use:" -ForegroundColor Green
-Write-Host "  /route-z80  /document-z80  /send-bridgezx  /port-spectranext  /debug-z80  /audit-z80  /shrink-z80  /optimize-z80  /develop-z80  /organize-z80  /workflow"
+Write-Host "Done. Grok reads the eleven skills from:" -ForegroundColor Green
+Write-Host "  $tomlPath"
+Write-Host "Open a new Grok task so the catalog reloads."
 Write-Host ""
 Write-Host "Update loop:"
 Write-Host "  cd $RepoRoot"
 Write-Host "  git pull --ff-only"
-Write-Host "  .\scripts\install-for-grok.ps1"
+Write-Host "  # no Grok reinstall needed; the checkout is the catalog"
