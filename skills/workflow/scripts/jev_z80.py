@@ -276,18 +276,28 @@ def validate_candidates(packet: Any, policy: dict[str,Any]) -> None:
             or not 1<=len(packet['candidates'])<=policy['max_candidates_per_task_input']):
         raise rt.RouterError('invalid_scoring_packet')
     seen=set()
-    for item in packet['candidates']:
-        if not isinstance(item,dict) or set(item)!={'id','baseline','context','gates'}:
-            raise rt.RouterError('invalid_candidate')
+    candidate_fields={'id','baseline','context','gates'}
+    context_fields={'title','anchor','mechanism','evidence','validation','risk','dependencies'}
+    for index,item in enumerate(packet['candidates']):
+        if not isinstance(item,dict):
+            raise rt.RouterError(f'candidates[{index}]: expected object')
+        unexpected=set(item)-candidate_fields
+        if unexpected:
+            names=', '.join(sorted(str(key) for key in unexpected))
+            destinations=[f'context.{key}' for key in sorted(unexpected) if key in context_fields]
+            expected=f"; expected {', '.join(destinations)}" if destinations else ''
+            raise rt.RouterError(f'candidates[{index}]: unexpected key {names}{expected}')
+        missing=candidate_fields-set(item)
+        if missing:
+            raise rt.RouterError(f"candidates[{index}]: missing key {', '.join(sorted(missing))}")
         if not isinstance(item['id'],str) or not ID_RE.fullmatch(item['id']) or item['id'] in seen:
             raise rt.RouterError('invalid_or_duplicate_id')
         seen.add(item['id'])
         if not isinstance(item['baseline'],dict):
             raise rt.RouterError('invalid_baseline')
         context=item['context']
-        allowed={'title','anchor','mechanism','evidence','validation','risk','dependencies'}
-        if (not isinstance(context,dict) or set(context)!=allowed
-                or any(not isinstance(context[k],str) for k in allowed-{'evidence'})
+        if (not isinstance(context,dict) or set(context)!=context_fields
+                or any(not isinstance(context[k],str) for k in context_fields-{'evidence'})
                 or not nonempty(context['title']) or not isinstance(context['evidence'],list)):
             raise rt.RouterError('invalid_candidate_context')
         for evidence in context['evidence']:
@@ -438,6 +448,25 @@ def actionable_score_ids(records: list[dict[str,Any]]) -> set[str]:
     return actionable
 
 
+def scoring_utility(records: list[dict[str,Any]], actionable: set[str], scores: dict[str,Any],
+                    baseline_order: list[str], recommended_order: list[str]) -> dict[str,Any]:
+    comparable_groups=0
+    start=0
+    while start<len(records):
+        end=start+1
+        while end<len(records) and records[end]['comparison_group']==records[start]['comparison_group']:
+            end+=1
+        if any(record['id'] in actionable for record in records[start:end]):
+            comparable_groups+=1
+        start=end
+    statuses=[scores[ident]['status'] for ident in actionable]
+    return {'comparable_groups':comparable_groups,
+            'orderable_candidates':len(actionable),
+            'scored_candidates':sum(status in {'accepted','coordinator_review'} for status in statuses),
+            'accepted_decisions':statuses.count('accepted'),
+            'changed_order':recommended_order!=baseline_order}
+
+
 def score_packet(packet: Any, task_dir: Path, policy: dict[str,Any], client: Path | None=None,
                  runner: rt.Runner=rt.run_client, *, profile: str='balanced',
                  policy_path: str | None=None, target: str | None=None,
@@ -477,16 +506,19 @@ def score_packet(packet: Any, task_dir: Path, policy: dict[str,Any], client: Pat
                 assessment['reason']=receipt.get('reason','no_response')
             scores[item['id']]=assessment
     order=recommend_order(records,scores)
+    baseline_order=[r['id'] for r in records]
+    utility=scoring_utility(records,actionable,scores,baseline_order,order)
     report={'ok':True,'operation':'score','domain':packet['domain'],
-            'baseline_order':[r['id'] for r in records], 'recommended_order':order,
+            'baseline_order':baseline_order, 'recommended_order':order,
             'candidates':[{**r,'jev':scores[r['id']]} for r in records], 'receipts':receipts,
             'scoring_applicable':bool(actionable),
+            'utility':utility, 'changed_order':utility['changed_order'],
             'scores_are_measurements':False, 'thresholds_calibrated':False,
             'audit_path':str(task_dir/'audit.jsonl')}
     rt.record_decisions(task_dir,{'ok':True,'operation':'score','domain':packet['domain'],
         'baseline_order':report['baseline_order'],'recommended_order':order,
         'scores':scores,'scoring_applicable':bool(actionable),
-        'changed_order':order!=report['baseline_order']})
+        'utility':utility,'changed_order':utility['changed_order']})
     return report
 
 

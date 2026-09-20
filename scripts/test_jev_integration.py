@@ -83,6 +83,9 @@ class JevCase(unittest.TestCase):
                 self.assertEqual(set(rows['A']['jev']['dimensions']),set(engine.DIMENSIONS))
                 self.assertFalse(result['scores_are_measurements'])
                 self.assertEqual(result['receipts'][0]['query_status'],'received')
+                self.assertEqual(result['utility'],{'comparable_groups':1,'orderable_candidates':2,
+                    'scored_candidates':2,'accepted_decisions':2,'changed_order':True})
+                self.assertTrue(result['changed_order'])
 
     def test_native_receipt_matches_actual_wire_bytes(self):
         result=self.score()
@@ -233,8 +236,31 @@ class JevCase(unittest.TestCase):
         result=self.score(packet)
         self.assertEqual(result['baseline_order'],result['recommended_order'])
         self.assertFalse(result['scoring_applicable'])
+        self.assertEqual(result['utility'],{'comparable_groups':0,'orderable_candidates':0,
+            'scored_candidates':0,'accepted_decisions':0,'changed_order':False})
         self.assertEqual(result['receipts'],[])
         self.assertEqual(self.calls,[])
+
+    def test_only_comparable_group_is_queried_and_reported(self):
+        packet=self.packet('audit')
+        template=packet['candidates'][1]
+        additions=[]
+        for ident,changes in (
+                ('C',{'severity':'LOW'}),
+                ('D',{'confidence':'PROVEN'}),
+                ('E',{'type':'ROBUSTNESS'})):
+            item=deepcopy(template)
+            item['id']=ident
+            item['baseline'].update(changes)
+            additions.append(item)
+        packet['candidates'].extend(additions)
+        result=self.score(packet)
+        run=next(payload for command,payload in self.calls if command=='run')
+        self.assertEqual(set(run['state']['items']),{'A','B'})
+        self.assertEqual(result['utility'],{'comparable_groups':1,'orderable_candidates':2,
+            'scored_candidates':2,'accepted_decisions':2,'changed_order':True})
+        self.assertEqual([row['jev']['reason'] for row in result['candidates'][2:]],
+                         ['hard_group_no_priority_effect']*3)
 
     def test_preference_default_and_round_trip_are_local(self):
         config=Path(self.temp.name)/'config'/'jev.json'
@@ -502,6 +528,15 @@ class JevCase(unittest.TestCase):
         for change in changes:
             packet=self.packet();change(packet)
             with self.subTest(change=change),self.assertRaises(rt.RouterError):self.score(packet)
+        self.assertEqual(self.calls,[])
+
+    def test_misplaced_candidate_field_reports_expected_path(self):
+        packet=self.packet('audit')
+        packet['candidates'][0]['evidence']=packet['candidates'][0]['context'].pop('evidence')
+        with self.assertRaisesRegex(
+                rt.RouterError,
+                r'^candidates\[0\]: unexpected key evidence; expected context\.evidence$'):
+            self.score(packet)
         self.assertEqual(self.calls,[])
 
     def test_malformed_field_types_fail_as_validation_errors(self):

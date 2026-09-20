@@ -52,6 +52,9 @@ Each candidate contains exactly:
   `in_scope`, supplied from local checks. These gates permit evaluation of the
   proposal, NOT implementation and NOT a declaration that it is correct.
 
+Exact-shape validation reports the failing candidate path and, for a misplaced
+known field, its expected nested path. It never includes field values in errors.
+
 Record alternatives, contradictions and unresolved checks honestly in these
 fields. Do not copy another candidate's evidence into its card. Lack of a current
 anchor/excerpt preserves the candidate as unscored for the coordinator. Do not
@@ -148,3 +151,8 @@ it without another query. Record exactly which candidates were scored and which
 retained baseline because of budget, missing evidence, low confidence, missing
 client or a service error. Do not invent a Jev result or claim that every proposal
 was scored if the shared two-attempt budget covered only part of a large set.
+
+The score result and audit decision include `utility`: `comparable_groups`,
+`orderable_candidates`, `scored_candidates`, `accepted_decisions`, and
+`changed_order`. `changed_order` also remains a top-level result field for direct
+inspection. These are observed counts, not a claim that Jev improved correctness.

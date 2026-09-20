@@ -58,7 +58,8 @@ repository; these entries track development toward the first published release.
 - Jev proposal scoring now rejects no-op hard-priority groups before any outbound
   request, requires authorization before session and packet creation, supports a
   reusable per-user `ask`/`always_allow`/`always_deny` preference, and keeps
-  skipped or unscored hooks out of user-facing reports.
+  skipped or unscored hooks out of user-facing reports. Scoring results now expose
+  aggregate utility counts and precise paths for misplaced candidate fields.
 - Workflow distinguishes explicit user overrides from still-applicable project,
   domain, runtime, and evidence requirements; skill-induced stops identify their
   exact source. Organization maps and shrink scans are now scope-conditional.
