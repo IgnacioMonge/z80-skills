@@ -22,6 +22,16 @@ Select an unambiguous match immediately. If size, structure, and performance
 appear together as alternatives without a primary outcome, remain in `route-z80`
 and ask one focused question. Alternatives are not competing acceptance criteria.
 
+### Optional classification, automatic execution
+
+After the explicit/unambiguous rules above, consult
+[the internal Jev adapter](references/jev.md) for a genuinely unresolved
+intent classification. Use action `specialist`; admit only existing routes that
+meet their boundaries. Jev cannot resolve alternatives where the user's primary
+objective is absent; retain the focused clarification rule above. Share the same
+session with the selected specialist/workflow. Do not load execution/model
+references merely to select a domain. No separate `$jev` invocation is needed.
+
 | Requested outcome / boundary | Route |
 | --- | --- |
 | Send named files/directories through BridgeZX, including build artifacts. Building or changing them is a separate objective. | [`send-bridgezx`](../send-bridgezx/SKILL.md) |

@@ -57,3 +57,11 @@ If you do not find a bug:
 ## Hard contract
 
 Obey `hard-contract.md`: current-code evidence only; primary read-only; disposable sandboxes deleted by default.
+
+## Internal priority overlay
+
+Before the ordering above, apply the automatic Jev hook from `../SKILL.md`.
+Keep these report fields and hard ordering rules unchanged. The internal score
+can break equivalent-priority ties, not change severity, evidence, measured net
+impact, safety, dependency totals or promotion. Low-confidence or unscored
+entries are not assigned zero and are not silently dropped.

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "snapshot": "synthetic-route-v1",
+  "external_data_authorized": true,
+  "level": "light",
+  "decisions": [
+    {
+      "id": "next_step",
+      "action": "procedure",
+      "context": "The next obligation is to locate the documented caller/callee register contract before reviewing the boundary.",
+      "allowed_routes": [
+        "locate_sources",
+        "code_review",
+        "interpret_results"
+      ],
+      "gates": {
+        "authorized": true,
+        "inputs_ready": true,
+        "read_only": true
+      }
+    }
+  ]
+}

@@ -81,3 +81,11 @@ Missing linked evidence is `REQUIERE BUILD`, never a partial confirmation.
 
 If a disposable worktree was used, state its path, primary-tree clean check,
 and whether it was deleted or retained by explicit user request.
+
+## Internal priority overlay
+
+Before the ordering above, apply the automatic Jev hook from `../SKILL.md`.
+Keep these report fields and hard ordering rules unchanged. The internal score
+can break equivalent-priority ties, not change severity, evidence, measured net
+impact, safety, dependency totals or promotion. Low-confidence or unscored
+entries are not assigned zero and are not silently dropped.

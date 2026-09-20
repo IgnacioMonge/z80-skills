@@ -487,3 +487,13 @@ Copyright © 2026 M. Ignacio Monge García.
 ## Author
 
 M. Ignacio Monge García
+
+## Jev integration (0.9.0)
+
+Routing and candidate scoring use the existing Jev/OpenCode client automatically
+from `workflow`, `route-z80`, `audit-z80`, `shrink-z80` and `optimize-z80`.
+No separate `$jev` invocation is needed. See
+[configuration and operating boundaries](skills/workflow/references/jev.md) and
+[domain-specific scoring](skills/workflow/references/jev-scoring.md).
+The quantitative optimizer, model defaults and UI strings are unchanged.
+The optional adapter requires Python 3.10+ (3.11+ for optimizer TOML policies).

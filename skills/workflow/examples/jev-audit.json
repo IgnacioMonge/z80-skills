@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "domain": "audit",
+  "snapshot": "synthetic-fixture-v1-not-project-data",
+  "objective": "Evaluate synthetic proposals for a bounded per-block transfer investigation. No code changes.",
+  "external_data_authorized": true,
+  "candidates": [
+    {
+      "id": "A",
+      "baseline": {
+        "severity": "HIGH",
+        "confidence": "LIKELY",
+        "type": "BUG"
+      },
+      "context": {
+        "title": "Synthetic candidate A",
+        "anchor": "synthetic:1",
+        "mechanism": "The supplied test record identifies repeated setup inside the per-block transfer path.",
+        "evidence": [
+          {
+            "ref": "synthetic:1",
+            "excerpt": "Synthetic observation: setup repeats on each block; interfile delays are outside this test.",
+            "current": true
+          }
+        ],
+        "validation": "Compare setup call counts for the same fixed input and ensure the byte stream is identical.",
+        "risk": "Only the named setup boundary is considered; timing and ABI require separate checks.",
+        "dependencies": "Independent investigation; no changes are authorized."
+      },
+      "gates": {
+        "policy_allowed": true,
+        "target_compatible": true,
+        "current_anchor": true,
+        "in_scope": true
+      }
+    },
+    {
+      "id": "B",
+      "baseline": {
+        "severity": "HIGH",
+        "confidence": "LIKELY",
+        "type": "BUG"
+      },
+      "context": {
+        "title": "Synthetic candidate B",
+        "anchor": "synthetic:1",
+        "mechanism": "The supplied test record identifies repeated setup inside the per-block transfer path.",
+        "evidence": [
+          {
+            "ref": "synthetic:1",
+            "excerpt": "Synthetic observation: setup repeats on each block; interfile delays are outside this test.",
+            "current": true
+          }
+        ],
+        "validation": "Compare setup call counts for the same fixed input and ensure the byte stream is identical.",
+        "risk": "Only the named setup boundary is considered; timing and ABI require separate checks.",
+        "dependencies": "Independent investigation; no changes are authorized."
+      },
+      "gates": {
+        "policy_allowed": true,
+        "target_compatible": true,
+        "current_anchor": true,
+        "in_scope": true
+      }
+    }
+  ]
+}

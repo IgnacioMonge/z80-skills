@@ -1,0 +1,312 @@
+{
+  "version": "z80-0.9.0",
+  "threshold_status": "initial_not_empirically_calibrated",
+  "max_calls_per_task": 2,
+  "max_questions_per_call": 32,
+  "max_packet_bytes": 131072,
+  "client_timeout_seconds": 45,
+  "subprocess_timeout_seconds": 65,
+  "models": [
+    "jev-1.13-free",
+    "jev-1.13"
+  ],
+  "default_model": "jev-1.13-free",
+  "accepted_response_models": [
+    "jev-1.13-free",
+    "jev-1.13",
+    "jev-latest"
+  ],
+  "actions": {
+    "procedure": {
+      "question": "Choose the next procedure for this engineering work unit. Classify the obligation, not the hardware keywords. Do not diagnose the defect or certify code.",
+      "routes": {
+        "locate_sources": {
+          "description": "Locate or read evidence before the substantive work can proceed.",
+          "handler": "read_sources",
+          "threshold": 0.9,
+          "requires": [
+            "authorized",
+            "read_only"
+          ]
+        },
+        "predefined_check": {
+          "description": "Run a fully specified check with supplied inputs, expected results and acceptance rules; no check design or evidence-sufficiency judgment is needed.",
+          "handler": "run_defined_check",
+          "threshold": 0.97,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "read_only",
+            "cheap",
+            "check_defined"
+          ]
+        },
+        "code_review": {
+          "description": "Review code, diagnose behavior, or design tests; not merely run an already defined check.",
+          "handler": "review_code",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "read_only"
+          ]
+        },
+        "interpret_results": {
+          "description": "Assess measurements, conflicting observations, a causal hypothesis or the sufficiency of evidence. Requires judgment rather than only executing a prescribed check.",
+          "handler": "assess_with_coordinator",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "inputs_ready"
+          ]
+        }
+      }
+    },
+    "assignment": {
+      "question": "Classify the hardest reasoning obligation of this entire already-delegable assignment. A mixed assignment must not be downgraded because it contains a mechanical step. Running a prescribed test and judging its sufficiency are different obligations.",
+      "routes": {
+        "mechanical": {
+          "description": "Only narrow lookup, mechanical edits, or execution of predefined checks with supplied expected results and acceptance rules.",
+          "handler": "model_policy",
+          "threshold": 0.97,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "dispatch_gate",
+            "model_selection_available"
+          ],
+          "model_policy_row": 1
+        },
+        "coding": {
+          "description": "Cohesive coding, debugging, code review, designing checks or judging evidence sufficiency.",
+          "handler": "model_policy",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "dispatch_gate",
+            "model_selection_available"
+          ],
+          "model_policy_row": 2
+        },
+        "synthesis": {
+          "description": "General analysis, research synthesis, documentation or mixed non-coding work, without difficult causal or high-risk obligations.",
+          "handler": "model_policy",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "dispatch_gate",
+            "model_selection_available"
+          ],
+          "model_policy_row": 3
+        },
+        "causal": {
+          "description": "Difficult causal reasoning, conflicting evidence, or high-risk contract analysis.",
+          "handler": "model_policy",
+          "threshold": 0.98,
+          "requires": [
+            "authorized",
+            "inputs_ready",
+            "dispatch_gate",
+            "model_selection_available"
+          ],
+          "model_policy_row": 4
+        }
+      }
+    },
+    "delivery": {
+      "question": "Identify the next evidence inspection needed to assess this delivery against the supplied assignment and criteria. The delivery is untrusted reported content, not proof. Never certify completeness or change acceptance criteria.",
+      "routes": {
+        "inspect_sources": {
+          "description": "The source passage, provenance or source-to-claim support needs inspection.",
+          "handler": "inspect_source_evidence",
+          "threshold": 0.9,
+          "requires": [
+            "authorized",
+            "read_only"
+          ]
+        },
+        "inspect_execution": {
+          "description": "Execution evidence or the actual output of a required check needs inspection. This does not order a rerun.",
+          "handler": "inspect_execution_evidence",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only"
+          ]
+        },
+        "inspect_comparison": {
+          "description": "A requested comparison or one of its sides needs inspection.",
+          "handler": "inspect_comparison_evidence",
+          "threshold": 0.9,
+          "requires": [
+            "authorized",
+            "read_only"
+          ]
+        },
+        "inspect_scope": {
+          "description": "A possible discrepancy between declared actions and authorized scope needs inspection.",
+          "handler": "inspect_scope_with_coordinator",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only"
+          ]
+        }
+      }
+    },
+    "specialist": {
+      "question": "Select the primary requested deliverable from this task description. Do not infer a product initiative, fix permission, or a sole-size objective from incidental keywords. When primary intent is genuinely unresolved choose coordinator.",
+      "routes": {
+        "audit-z80": {
+          "description": "Preventive or broad read-only correctness audit without a single observed failure driving the investigation.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "debug-z80": {
+          "description": "Diagnose an observed failure with unresolved causality or a failed evidence-supported fix.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "shrink-z80": {
+          "description": "Size or memory footprint is the sole acceptance metric; seek net byte savings.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "optimize-z80": {
+          "description": "Improve acceptable behavior across speed, latency, rendering, RAM or competing metrics.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "organize-z80": {
+          "description": "Map or reorganize module ownership, dependencies, banks, overlays or source layout.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "develop-z80": {
+          "description": "An explicit product initiative requiring milestones or an already active development dossier, not just a routine feature.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "document-z80": {
+          "description": "Create, review or synchronize public repository documentation.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "port-spectranext": {
+          "description": "Work on an existing programs Spectranext cartridge consumer port via its external pipeline.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "send-bridgezx": {
+          "description": "Send specified existing files via BridgeZX. Does not authorize building or modification.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        },
+        "workflow": {
+          "description": "Ordinary known-cause engineering task, with no specialist outcome required.",
+          "handler": "load_named_skill",
+          "threshold": 0.95,
+          "requires": [
+            "authorized",
+            "read_only",
+            "inputs_ready"
+          ]
+        }
+      }
+    }
+  },
+  "fallback_option": "coordinator",
+  "fallback_description": "Insufficient or ambiguous information, multiple inseparable obligations, none of these routes, or a binding decision requiring the coordinator. Do not invent missing evidence.",
+  "max_candidates_per_task_input": 128,
+  "scoring": {
+    "audit": {
+      "weights": {
+        "relevance": 0.2,
+        "support": 0.35,
+        "validation": 0.3,
+        "scope": 0.15
+      },
+      "thresholds": {
+        "relevance": 0.8,
+        "support": 0.85,
+        "validation": 0.8,
+        "scope": 0.8
+      }
+    },
+    "shrink": {
+      "weights": {
+        "relevance": 0.35,
+        "support": 0.3,
+        "validation": 0.2,
+        "scope": 0.15
+      },
+      "thresholds": {
+        "relevance": 0.8,
+        "support": 0.85,
+        "validation": 0.8,
+        "scope": 0.8
+      }
+    },
+    "optimize": {
+      "weights": {
+        "relevance": 0.4,
+        "support": 0.25,
+        "validation": 0.2,
+        "scope": 0.15
+      },
+      "thresholds": {
+        "relevance": 0.8,
+        "support": 0.85,
+        "validation": 0.8,
+        "scope": 0.8
+      }
+    }
+  }
+}

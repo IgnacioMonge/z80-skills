@@ -502,3 +502,13 @@ siempre que se conserven el aviso de copyright y el texto de la licencia.
 ## Autor
 
 M. Ignacio Monge García
+
+## Integración de Jev (0.9.0)
+
+`workflow`, `route-z80`, `audit-z80`, `shrink-z80` y `optimize-z80` utilizan
+automáticamente el cliente Jev/OpenCode ya instalado para enrutamiento y
+puntuación de candidatas; no hace falta escribir `$jev`. Véanse
+[configuración y límites](skills/workflow/references/jev.md) y
+[puntuación por especialidad](skills/workflow/references/jev-scoring.md).
+Se conservan el puntuador cuantitativo, los modelos y los textos de interfaz.
+El adaptador opcional requiere Python 3.10+ (3.11+ para políticas TOML).

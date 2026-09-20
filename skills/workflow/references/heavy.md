@@ -67,3 +67,11 @@ Trust child-thread events, runtime metadata, diffs, logs, and command results.
 Integrate only verified work and inspect critical hunks and boundaries. Finish
 with call counts by role and runtime-confirmed model/effort when available;
 otherwise label settings as requested, not confirmed.
+
+## Internal decision aid
+
+For an unresolved assignment classification or delivery inspection route, use
+[the shared Jev session](jev.md) before repeating coordinator classification.
+The dispatch gate, role contracts, ownership and the existing `roles.md` model
+table remain authoritative. Never consult Jev to override an explicit model
+choice or turn low confidence into an automatic model upgrade.

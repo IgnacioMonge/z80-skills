@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0 — 2026-09-20
+
+- Internal automatic Jev routing and four-dimensional proposal scoring for audit, shrink and optimize.
+- Shared two-attempt task budget, native receipts, confidence gates, cache and no automatic retries.
+- Existing optimizer functions, model defaults, hard contracts and interface strings preserved.
+- No live API or Codex behavioral execution claimed by local tests.
+
 ## [Unreleased]
 
 No published stable release or release tags are currently available in the

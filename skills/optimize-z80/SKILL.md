@@ -123,6 +123,22 @@ report that the TOML policy was not parsed.
    approval.
 10. Clean the disposable worktree and verify the primary tree stayed unchanged.
 
+## Automatic proposal scoring
+
+After merging current candidate cards and applying this skill's hard gates,
+execute the sibling workflow's [Jev scoring adapter](references/jev-scoring.md)
+with domain `optimize` before ordering findings/proposals or next validations.
+This hook applies to direct work as well as delegation; it does not require
+`$jev` or an uncertain domain route. Skip help/preflight-only passes and empty
+candidate sets. Use the shared task session, not one session per lane or batch.
+
+Keep the existing baseline, evidence labels, severity/safety, dependencies,
+measurements, promotion gates and reporting template. Jev supplies a separate
+scoring record, never proof or permission. Use its admitted ordering only inside
+hard-equivalent groups; uncertain, unscored or rejected candidates remain in the
+baseline. Retain all candidates and required coverage even after the call budget
+is exhausted. Record actual receipts internally without adding output banners.
+
 ## Candidate Contract
 
 Each candidate states:

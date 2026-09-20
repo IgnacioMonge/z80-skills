@@ -76,6 +76,8 @@ domain rules and runtime permissions. Classify before executing or delegating:
 Investigation and verification roles remain read-only. A role never widens
 network, approval, or mutation permissions.
 
+Apply [Jev](references/jev.md) for unresolved routing.
+
 ## Run the route
 
 - **Light:** work directly; do not spawn agents.
