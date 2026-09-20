@@ -134,7 +134,8 @@ class JevCase(unittest.TestCase):
         self.assertEqual(row['baseline']['score'],-999)
         self.assertFalse(row['eligible'])
         self.assertIsNone(row['jev']['score_0_100'])
-        self.assertNotIn('B',self.calls[-1][1]['state']['items'])
+        self.assertEqual(self.calls,[])
+        self.assertFalse(result['scoring_applicable'])
 
     def test_wrong_target_and_overlay_constraints(self):
         packet=self.packet()
@@ -209,7 +210,8 @@ class JevCase(unittest.TestCase):
                 packet['candidates'][0]['gates'][gate]=False
                 result=self.score(packet)
                 self.assertEqual(result['recommended_order'],['A','B'])
-                self.assertNotIn('A',self.calls[-1][1]['state']['items'])
+                self.assertEqual(self.calls,[])
+                self.assertFalse(result['scoring_applicable'])
 
     def test_empty_or_stale_evidence_unscored(self):
         for evidence in ([],[{'ref':'source:1','excerpt':'old','current':False}]):
@@ -218,6 +220,49 @@ class JevCase(unittest.TestCase):
             result=self.score(packet)
             self.assertEqual(result['candidates'][0]['jev']['reason'],'current_excerpt_required')
             self.assertIsNone(result['candidates'][0]['jev']['score_0_100'])
+            self.assertEqual(self.calls,[])
+
+    def test_singleton_groups_have_no_scoring_utility_or_local_side_effect(self):
+        packet=self.packet('audit')
+        packet['candidates'][1]['baseline']['severity']='LOW'
+        probe=Path(self.temp.name)/'utility-probe';probe.mkdir()
+        before=list(probe.iterdir())
+        records=engine.baseline_records(packet)
+        self.assertEqual(engine.actionable_score_ids(records),set())
+        self.assertEqual(list(probe.iterdir()),before)
+        result=self.score(packet)
+        self.assertEqual(result['baseline_order'],result['recommended_order'])
+        self.assertFalse(result['scoring_applicable'])
+        self.assertEqual(result['receipts'],[])
+        self.assertEqual(self.calls,[])
+
+    def test_preference_default_and_round_trip_are_local(self):
+        config=Path(self.temp.name)/'config'/'jev.json'
+        default=engine.read_preference(config)
+        self.assertEqual(default['authorization'],'ask')
+        self.assertEqual(default['source'],'default')
+        self.assertFalse(config.exists())
+        for value in engine.PREFERENCE_VALUES:
+            result=engine.write_preference(value,config)
+            self.assertEqual(result['authorization'],value)
+            self.assertEqual(result['source'],'updated')
+            self.assertFalse(result['network_attempted'])
+            self.assertEqual(engine.read_preference(config)['authorization'],value)
+
+    def test_persistent_deny_skips_and_allow_authorizes_score(self):
+        config=Path(self.temp.name)/'preference'/'jev.json'
+        scratch=Path(self.temp.name)/'authorization-scratch';scratch.mkdir()
+        engine.write_preference('always_deny',config)
+        decision=engine.read_preference(config)['authorization']
+        if decision=='always_allow':
+            rt.init_task(self.policy,scratch)
+        self.assertEqual(list(scratch.iterdir()),[])
+        engine.write_preference('always_allow',config)
+        packet=self.packet()
+        packet['external_data_authorized']=(engine.read_preference(config)['authorization']=='always_allow')
+        result=self.score(packet)
+        self.assertTrue(packet['external_data_authorized'])
+        self.assertEqual(result['receipts'][0]['requests_sent'],1)
 
     def test_no_external_authorization(self):
         packet=self.packet()
@@ -510,6 +555,10 @@ class JevCase(unittest.TestCase):
         data=json.loads(result.stdout)
         self.assertEqual(data['receipts'][0]['reason'],'task_call_budget_exhausted')
         self.assertEqual(list(directory.iterdir()),[])
+        help_result=subprocess.run([sys.executable,str(script),'--help'],cwd=directory,
+                                   capture_output=True,text=True)
+        self.assertEqual(help_result.returncode,0,help_result.stderr)
+        self.assertIn('preference',help_result.stdout)
 
     def test_no_paid_model_escalation(self):
         with self.assertRaises(rt.RouterError):rt.init_task(self.policy,Path(self.temp.name),model='gpt-6-astra')
@@ -532,6 +581,21 @@ class JevCase(unittest.TestCase):
             self.assertIn('jev-scoring.md',text)
         self.assertIn('Apply [Jev](references/jev.md) for unresolved routing.',(S/'SKILL.md').read_text())
         self.assertTrue((S/'agents'/'openai.yaml').is_file())
+
+    def test_scoring_gate_order_is_canonical_and_siblings_only_delegate(self):
+        shared=(S/'references'/'jev-scoring.md').read_text()
+        privacy=(S/'references'/'jev.md').read_text()
+        self.assertLess(shared.index('## Pre-session gates'),shared.index('## Prepare the candidates'))
+        self.assertIn('before invoking the adapter, running `init`, building',shared)
+        self.assertIn('at least two eligible candidates',shared)
+        for required in ('configured OpenCode API','path: N lines','hard-equivalent groups',
+                         'shared task calls'):
+            self.assertIn(required,privacy)
+        for skill in ('audit-z80','shrink-z80','optimize-z80'):
+            body=(ROOT/'skills'/skill/'SKILL.md').read_text()
+            reference=(ROOT/'skills'/skill/'references'/'jev-scoring.md').read_text()
+            self.assertIn('shared Jev scoring protocol',body)
+            self.assertNotIn('external_data_authorized',body+reference)
 
 
 if __name__=='__main__':unittest.main()

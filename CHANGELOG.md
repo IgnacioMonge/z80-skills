@@ -1,12 +1,5 @@
 # Changelog
 
-## 0.9.0 — 2026-09-20
-
-- Internal automatic Jev routing and four-dimensional proposal scoring for audit, shrink and optimize.
-- Shared two-attempt task budget, native receipts, confidence gates, cache and no automatic retries.
-- Existing optimizer functions, model defaults, hard contracts and interface strings preserved.
-- No live API or Codex behavioral execution claimed by local tests.
-
 ## [Unreleased]
 
 No published stable release or release tags are currently available in the
@@ -14,6 +7,10 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- Internal automatic Jev routing and four-dimensional proposal scoring for audit,
+  shrink, and optimize, with a shared two-attempt task budget, native receipts,
+  confidence gates, caching, and no automatic retries. Existing optimizer
+  functions, model defaults, hard contracts, and interface strings are preserved.
 - Revision 0.8.3 adds an explicit, assignment-scoped Astra Medium option for
   causal/high-risk delegation; Luna/Sol defaults remain unchanged. Automatic
   fallback, inheritance, unverified defaults, and effort upgrades cannot enable it.
@@ -58,6 +55,10 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- Jev proposal scoring now rejects no-op hard-priority groups before any outbound
+  request, requires authorization before session and packet creation, supports a
+  reusable per-user `ask`/`always_allow`/`always_deny` preference, and keeps
+  skipped or unscored hooks out of user-facing reports.
 - Workflow distinguishes explicit user overrides from still-applicable project,
   domain, runtime, and evidence requirements; skill-induced stops identify their
   exact source. Organization maps and shrink scans are now scope-conditional.

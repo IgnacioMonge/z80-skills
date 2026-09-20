@@ -1,10 +1,31 @@
 # Jev proposal scoring: audit, shrink, optimize
 
-The coordinator automatically runs this stage when the loaded specialist has
-current candidate cards. It is not conditional on a separate `$jev` mention or
-on a failed router. Help/preflight-only modes and empty sets do not score.
-Read [jev.md](jev.md) for session, privacy and execution. Numerical computation
-and proof remain with the original tools and domain gates.
+The coordinator considers this stage when the loaded specialist has current
+candidate cards. It is not conditional on a separate `$jev` mention or on a
+failed router. Help/preflight-only modes and empty sets do not score. Read
+[jev.md](jev.md) for session, privacy and execution. Numerical computation and
+proof remain with the original tools and domain gates.
+
+## Pre-session gates
+
+Apply these gates in order before invoking the adapter, running `init`, building
+a packet or creating a temporary file:
+
+1. Apply the domain's hard vetoes, evidence gates, deduplication and baseline
+   ordering. Form the contiguous hard-equivalent groups defined below.
+2. A group is actionable only when it contains at least two eligible candidates
+   and every member can be scored. Candidates in singleton groups, or in a group
+   frozen by an ineligible member, cannot change priority and are not queried.
+3. If no actionable group remains, record one internal `jev_score_skipped:no_priority_effect`
+   note and stop. Do not read the preference or ask the user.
+4. Apply the external-data preference and one-per-task authorization procedure in
+   [jev.md](jev.md). A denial, refusal, no answer or privacy restriction stops the
+   hook without a session or packet.
+5. Only now initialize or reuse the task session. Build the packet from actionable
+   groups only; keep every other candidate in the domain backlog at baseline.
+
+This order is canonical for audit, shrink and optimize. Sibling skills delegate
+to it and must not implement their own gate order.
 
 ## Prepare the candidates
 
@@ -17,7 +38,10 @@ overlay, not a new severity scale or a replacement for net-byte accounting.
 Use the matching `../examples/jev-audit.json`, `jev-shrink.json` or
 `jev-optimize.json` as a shape only; synthetic fixtures are not project evidence.
 The packet contains `schema_version:1`, `snapshot`, `external_data_authorized`,
-`domain`, `objective`, `candidates`. Each candidate contains exactly:
+`domain`, `objective`, `candidates`. Because the authorization gate already
+passed, new packets set `external_data_authorized:true`; `false` remains accepted
+for compatibility and runtime defense, not as a way to probe a skipped hook.
+Each candidate contains exactly:
 
 - `id`: stable ASCII letter-led ID with letters, digits, `_` or `-` (max 64).
 - `baseline`: original candidate record. Keep all measurements and evidence labels.
@@ -108,7 +132,7 @@ If any member is unscored, policy-rejected or below a dimension threshold, that
 whole group keeps the baseline; return the question to the current coordinator.
 An uncertain score is NOT zero. Groups cannot leapfrog measured gains, severity,
 safety, evidence classes, original optimizer scores, or intervening unmatched
-candidates. A single candidate is still assessed but cannot change its own rank.
+candidates. A single candidate is never sent because it cannot change priority.
 
 No field from Jev overwrites `PROVEN`, `LIKELY`, `EXACTO`, risk tags, net bytes,
 T-states, targets, required tests or acceptance criteria. No score authorizes
@@ -117,7 +141,8 @@ shrink coverage and reporting. A confidence of one is not proof of correctness.
 
 ## Inspect real participation
 
-The normal report keeps its format. The task's `audit.jsonl` contains actual
+The normal report keeps its format. A skipped hook is not mentioned. When a
+session exists, its `audit.jsonl` contains actual
 calls and the per-candidate scoring decisions. `status --task-dir ...` retrieves
 it without another query. Record exactly which candidates were scored and which
 retained baseline because of budget, missing evidence, low confidence, missing

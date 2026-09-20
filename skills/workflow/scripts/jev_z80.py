@@ -10,9 +10,11 @@ import argparse
 from copy import deepcopy
 import importlib.util
 import math
+import os
 from pathlib import Path
 import re
 import sys
+import tempfile
 from typing import Any
 
 import jev_runtime as rt
@@ -24,6 +26,7 @@ GATES = {'authorized','inputs_ready','read_only','cheap','check_defined',
          'explicit_model_selection','ambiguous_primary'}
 SCORE_GATES = {'policy_allowed','target_compatible','current_anchor','in_scope'}
 DIMENSIONS = ('relevance','support','validation','scope')
+PREFERENCE_VALUES = ('ask','always_allow','always_deny')
 RUBRICS = {
  'relevance': [
     'No stated connection to the requested outcome or active pressure.',
@@ -57,6 +60,54 @@ DOMAIN_GUIDANCE = {
 
 def nonempty(value: Any) -> bool:
     return isinstance(value,str) and bool(value.strip())
+
+
+def preference_path(config: Path | None=None) -> Path:
+    path=(config or Path.home()/'.config'/'z80-skills'/'jev.json').expanduser()
+    return Path(os.path.abspath(path))
+
+
+def read_preference(config: Path | None=None) -> dict[str,Any]:
+    path=preference_path(config)
+    if not path.exists():
+        return {'ok':True,'operation':'preference','authorization':'ask',
+                'source':'default','path':str(path),'network_attempted':False}
+    if path.is_symlink():
+        raise rt.RouterError('unsafe_preference_path')
+    value=rt.read_json(path,4096)
+    if (not isinstance(value,dict) or set(value)!={'schema_version','authorization'}
+            or type(value['schema_version']) is not int or value['schema_version']!=1
+            or value['authorization'] not in PREFERENCE_VALUES):
+        raise rt.RouterError('invalid_preference_file')
+    return {'ok':True,'operation':'preference','authorization':value['authorization'],
+            'source':'file','path':str(path),'network_attempted':False}
+
+
+def write_preference(value: str, config: Path | None=None) -> dict[str,Any]:
+    if value not in PREFERENCE_VALUES:
+        raise rt.RouterError('invalid_preference_value')
+    path=preference_path(config)
+    temporary: str | None=None
+    try:
+        path.parent.mkdir(parents=True,exist_ok=True)
+        if path.is_symlink():
+            raise rt.RouterError('unsafe_preference_path')
+        fd,temporary=tempfile.mkstemp(prefix='.jev-',dir=str(path.parent))
+        with os.fdopen(fd,'wb') as stream:
+            stream.write(rt.encode({'schema_version':1,'authorization':value}))
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary,path)
+    except rt.RouterError:
+        raise
+    except OSError as exc:
+        raise rt.RouterError('preference_write_failed') from exc
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
+    result=read_preference(path)
+    result['source']='updated'
+    return result
 
 
 def validate_header(packet: Any, policy: dict[str,Any]) -> None:
@@ -372,6 +423,21 @@ cannot be crossed by a high semantic score.
     return order
 
 
+def actionable_score_ids(records: list[dict[str,Any]]) -> set[str]:
+    """Return candidates in complete contiguous groups whose order can change."""
+    actionable=set()
+    start=0
+    while start<len(records):
+        end=start+1
+        while end<len(records) and records[end]['comparison_group']==records[start]['comparison_group']:
+            end+=1
+        group=records[start:end]
+        if len(group)>=2 and all(r['eligible'] for r in group):
+            actionable.update(r['id'] for r in group)
+        start=end
+    return actionable
+
+
 def score_packet(packet: Any, task_dir: Path, policy: dict[str,Any], client: Path | None=None,
                  runner: rt.Runner=rt.run_client, *, profile: str='balanced',
                  policy_path: str | None=None, target: str | None=None,
@@ -380,9 +446,12 @@ def score_packet(packet: Any, task_dir: Path, policy: dict[str,Any], client: Pat
     model=rt.task_model(task_dir,policy)
     records=baseline_records(packet,profile,policy_path,target,forbidden)
     by_id={c['id']:c for c in packet['candidates']}
-    pending=[by_id[r['id']] for r in records if r['eligible']]
+    actionable=actionable_score_ids(records)
+    pending=[by_id[r['id']] for r in records if r['id'] in actionable]
     scores={r['id']:{'status':'not_scored','score_0_100':None,'dimensions':{},
-                     'reason':r['reason'] or 'not_queried'} for r in records}
+                     'reason':r['reason'] or ('not_queried' if r['id'] in actionable
+                                             else 'hard_group_no_priority_effect')}
+            for r in records}
     receipts=[]
     batch_size=policy['max_questions_per_call']//len(DIMENSIONS)
     offset=0
@@ -411,11 +480,13 @@ def score_packet(packet: Any, task_dir: Path, policy: dict[str,Any], client: Pat
     report={'ok':True,'operation':'score','domain':packet['domain'],
             'baseline_order':[r['id'] for r in records], 'recommended_order':order,
             'candidates':[{**r,'jev':scores[r['id']]} for r in records], 'receipts':receipts,
+            'scoring_applicable':bool(actionable),
             'scores_are_measurements':False, 'thresholds_calibrated':False,
             'audit_path':str(task_dir/'audit.jsonl')}
     rt.record_decisions(task_dir,{'ok':True,'operation':'score','domain':packet['domain'],
         'baseline_order':report['baseline_order'],'recommended_order':order,
-        'scores':scores,'changed_order':order!=report['baseline_order']})
+        'scores':scores,'scoring_applicable':bool(actionable),
+        'changed_order':order!=report['baseline_order']})
     return report
 
 
@@ -426,6 +497,9 @@ def main(argv: list[str] | None=None) -> int:
     init.add_argument('--scratch',type=Path)
     init.add_argument('--max-calls',type=int)
     init.add_argument('--model',choices=('jev-1.13-free','jev-1.13'))
+    preference=sub.add_parser('preference')
+    preference.add_argument('--set',dest='authorization',choices=PREFERENCE_VALUES)
+    preference.add_argument('--config',type=Path)
     for command in ('route','score'):
         p=sub.add_parser(command)
         p.add_argument('--task-dir',type=Path,required=True)
@@ -445,6 +519,9 @@ def main(argv: list[str] | None=None) -> int:
         policy=rt.load_policy()
         if args.command=='init':
             result=rt.init_task(policy,args.scratch,args.max_calls,args.model)
+        elif args.command=='preference':
+            result=(write_preference(args.authorization,args.config) if args.authorization
+                    else read_preference(args.config))
         elif args.command=='doctor':
             result=rt.doctor(policy,args.client)
         elif args.command=='status':

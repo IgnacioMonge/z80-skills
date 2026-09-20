@@ -60,8 +60,7 @@ Obey `hard-contract.md`: current-code evidence only; primary read-only; disposab
 
 ## Internal priority overlay
 
-Before the ordering above, apply the automatic Jev hook from `../SKILL.md`.
-Keep these report fields and hard ordering rules unchanged. The internal score
-can break equivalent-priority ties, not change severity, evidence, measured net
-impact, safety, dependency totals or promotion. Low-confidence or unscored
-entries are not assigned zero and are not silently dropped.
+When the shared Jev protocol referenced by `../SKILL.md` admits an ordering, use
+it only to break equivalent-priority ties. Keep these report fields, severity,
+evidence and promotion rules unchanged. A skipped or unscored hook leaves the
+domain order unchanged and is not mentioned in the report.
