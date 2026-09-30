@@ -444,7 +444,7 @@ class JevCase(unittest.TestCase):
         self.choice='causal'
         result=self.call_route(packet)
         row=result['decisions'][0]['model_preference']
-        self.assertEqual(row['requested_model'],'gpt-5.6-sol')
+        self.assertEqual(row['requested_model'],'gpt-6.1-sol')
         self.assertEqual(row['requested_effort'],'xhigh')
         self.assertFalse(row['runtime_confirmed']);self.assertFalse(row['worker_spawned'])
 
@@ -566,9 +566,9 @@ class JevCase(unittest.TestCase):
             self.assertLessEqual(len(rt.encode(payload)),self.policy['max_packet_bytes'])
             self.assertEqual(len(next(iter(payload['state']['items'].values()))['evidence'][0]['excerpt']),extra)
 
-    def test_local_model_rows_all_match_original_defaults(self):
-        expected=[('gpt-5.6-luna','max'),('gpt-5.6-sol','high'),
-                  ('gpt-5.6-sol','high'),('gpt-5.6-sol','xhigh')]
+    def test_local_model_rows_all_match_current_defaults(self):
+        expected=[('gpt-6.1-sol','max'),('gpt-6.1-sol','high'),
+                  ('gpt-6.1-sol','high'),('gpt-6.1-sol','xhigh')]
         for number,(model,effort) in enumerate(expected,1):
             result=engine.model_preference(number)
             self.assertEqual((result['requested_model'],result['requested_effort']),(model,effort))
