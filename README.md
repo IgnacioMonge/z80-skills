@@ -121,8 +121,9 @@ scope; unchanged project constraints, evidence requirements, and runtime limits
 remain in force. Skill-induced stops identify the exact rule using the shared
 [authorization policy](skills/workflow/references/authorization.md).
 
-Delegation keeps the existing Luna/Sol defaults. For a named difficult causal or
-high-risk analysis only, an explicit user request may select **Astra Medium**
+Delegation defaults to Sol 6.1 with the existing per-assignment reasoning efforts.
+For a named difficult causal or high-risk analysis only, an explicit user request
+may select **Astra Medium**
 (`gpt-6-astra`, reasoning effort `medium`). It is never an automatic escalation,
 fallback, inherited default, or permission for other workers. See the canonical
 [model policy](skills/workflow/references/roles.md#explicit-astra-medium-opt-in).

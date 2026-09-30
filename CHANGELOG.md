@@ -11,9 +11,9 @@ repository; these entries track development toward the first published release.
   shrink, and optimize, with a shared two-attempt task budget, native receipts,
   confidence gates, caching, and no automatic retries. Existing optimizer
   functions, model defaults, hard contracts, and interface strings are preserved.
-- Revision 0.8.3 adds an explicit, assignment-scoped Astra Medium option for
-  causal/high-risk delegation; Luna/Sol defaults remain unchanged. Automatic
-  fallback, inheritance, unverified defaults, and effort upgrades cannot enable it.
+- Explicit, assignment-scoped Astra Medium option for causal/high-risk delegation.
+  Automatic fallback, inheritance, unverified defaults, and effort upgrades cannot
+  enable it.
 - Opt-in policy decision cases cover authorization, model selection, selective
   context, and verification reuse without replacing historical evaluation results.
 
@@ -24,6 +24,10 @@ repository; these entries track development toward the first published release.
 
 ### Changed
 
+- Workflow delegation uses Sol 6.1 instead of Luna/Sol 5.6, preserving each
+  assignment's reasoning effort and the explicit Astra Medium opt-in. Current
+  documentation and policy evaluation cases follow the new defaults; historical
+  evaluation results retain their recorded models.
 - Optimize references quantify copy/fill costs, explain model-specific raster
   windows, screen stepping, refresh/snow and undocumented operations, and
   separate demoscene sizecoding from throughput/timing objectives.

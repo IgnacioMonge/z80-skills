@@ -26,13 +26,13 @@ availability from this table or transfer Codex model IDs to another host.
 
 | Assignment | Preferred model | Initial reasoning effort |
 | --- | --- | --- |
-| Narrow lookup, mechanical edit, or execution of predefined checks with supplied expected results and acceptance rules | `gpt-5.6-luna` | `max` |
-| Cohesive coding, debugging, code review, or designing checks and judging evidence sufficiency | `gpt-5.6-sol` | `high` |
-| General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-5.6-sol` | `high` |
-| Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-5.6-sol` | `xhigh` |
+| Narrow lookup, mechanical edit, or execution of predefined checks with supplied expected results and acceptance rules | `gpt-6.1-sol` | `max` |
+| Cohesive coding, debugging, code review, or designing checks and judging evidence sufficiency | `gpt-6.1-sol` | `high` |
+| General analysis, research synthesis, documentation, or mixed non-coding work | `gpt-6.1-sol` | `high` |
+| Difficult causal reasoning, conflicting evidence, or high-risk contract analysis | `gpt-6.1-sol` | `xhigh` |
 
 Use the table's initial effort for each assignment. Reserve `max` for the
-narrow Luna assignments listed above; do not set Sol to `max` merely because a
+narrow mechanical assignments listed above; do not set Sol to `max` merely because a
 delegate or workflow is Heavy. Other effort levels require explicit user choice
 or task-specific evidence, and must be supported by the selected model.
 The Astra opt-in below is an additional restriction, not an automatic escalation.
@@ -59,8 +59,8 @@ the live runtime catalog. This is model effort, not the workflow Medium level.
   workers, future tasks, wider mutations, or extra agents. Existing dispatch
   gates still apply; keep the main thread on its current model.
 
-Select a suitable model upfront; do not require a failed Luna attempt before
-using Sol. Missing inputs, tools, permissions, or reproduction
+Select a suitable model and effort upfront; do not require a failed attempt
+at another effort first. Missing inputs, tools, permissions, or reproduction
 evidence require fixing the capsule or reporting a blocker, not more reasoning.
 If a worker's reasoning falls short, retain its evidence, identify the gap, and
 choose either more effort or a better-suited model within the authorization

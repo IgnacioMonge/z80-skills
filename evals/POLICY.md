@@ -6,7 +6,7 @@ and evidence datasets, schemas, runner code, and historical baseline are unchang
 
 ## Coverage
 
-- Preserve Luna/Sol defaults; allow only assignment-scoped explicit Astra Medium.
+- Preserve Sol 6.1 defaults; allow only assignment-scoped explicit Astra Medium.
 - Reject automatic cost escalation, parent inheritance, unverified defaults,
   unsupported settings, and permission spreading to other workers.
 - Distinguish workflow Medium from model reasoning effort `medium`.

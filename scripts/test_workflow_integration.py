@@ -90,8 +90,9 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "at least two concrete, bounded, independent workstreams",
             combined,
         )
-        self.assertIn("| `gpt-5.6-luna` | `max` |", roles)
-        self.assertEqual(roles.count("| `gpt-5.6-sol` | `high` |"), 2)
+        self.assertIn("| `gpt-6.1-sol` | `max` |", roles)
+        self.assertEqual(roles.count("| `gpt-6.1-sol` | `high` |"), 2)
+        self.assertIn("| `gpt-6.1-sol` | `xhigh` |", roles)
         self.assertNotIn("sol_executor", combined)
 
     def test_z80_skills_delegate_without_widening_permissions(self) -> None:

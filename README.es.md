@@ -126,8 +126,8 @@ restricciones del proyecto no modificadas, los requisitos de evidencia y los
 límites del runtime. Las paradas causadas por un skill identifican la regla
 exacta según la [política de autorización](skills/workflow/references/authorization.md).
 
-La delegación conserva los valores predeterminados de Luna/Sol. Solo para un
-análisis causal difícil o de alto riesgo identificado, una petición expresa
+La delegación usa Sol 6.1 por defecto y conserva el esfuerzo de cada asignación.
+Solo para un análisis causal difícil o de alto riesgo identificado, una petición expresa
 puede seleccionar **Astra Medium** (`gpt-6-astra`, esfuerzo `medium`). Nunca se
 activa por escalado automático, sustitución, herencia ni para otros workers.
 Véase la [política de modelos](skills/workflow/references/roles.md#explicit-astra-medium-opt-in).
