@@ -81,10 +81,3 @@ Missing linked evidence is `REQUIERE BUILD`, never a partial confirmation.
 
 If a disposable worktree was used, state its path, primary-tree clean check,
 and whether it was deleted or retained by explicit user request.
-
-## Internal priority overlay
-
-When the shared Jev protocol referenced by `../SKILL.md` admits an ordering, use
-it only to break equivalent-priority ties. Keep these report fields, measured
-net impact, safety, dependencies and promotion rules unchanged. A skipped or
-unscored hook leaves the domain order unchanged and is not mentioned in the report.

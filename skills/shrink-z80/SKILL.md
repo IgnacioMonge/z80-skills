@@ -92,14 +92,6 @@ incomplete.
   `references/reporting.md`
 - Guardrails: `references/blind-spots.md`
 
-## Automatic proposal scoring
-
-After merging current candidate cards and applying this skill's hard gates,
-follow the sibling workflow's [shared Jev scoring protocol](references/jev-scoring.md)
-with domain `shrink` before final ordering. The shared protocol exclusively owns
-utility, authorization, session, packet and output gates; this skill retains its
-baseline, byte-evidence, coverage and reporting contracts.
-
 ## Core Rules
 
 - Preserve behavior unless the user explicitly accepts more risk.

@@ -57,10 +57,3 @@ If you do not find a bug:
 ## Hard contract
 
 Obey `hard-contract.md`: current-code evidence only; primary read-only; disposable sandboxes deleted by default.
-
-## Internal priority overlay
-
-When the shared Jev protocol referenced by `../SKILL.md` admits an ordering, use
-it only to break equivalent-priority ties. Keep these report fields, severity,
-evidence and promotion rules unchanged. A skipped or unscored hook leaves the
-domain order unchanged and is not mentioned in the report.

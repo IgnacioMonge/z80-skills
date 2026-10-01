@@ -88,14 +88,6 @@ is incomplete.
   `references/spectrum-hardware-esxdos.md`,
   `references/promotion-gate.md`
 
-## Automatic proposal scoring
-
-After merging current candidate cards and applying this skill's hard gates,
-follow the sibling workflow's [shared Jev scoring protocol](references/jev-scoring.md)
-with domain `audit` before final ordering. The shared protocol exclusively owns
-utility, authorization, session, packet and output gates; this skill retains its
-baseline, promotion, coverage and reporting contracts.
-
 ## Core Rules
 
 - Findings first; except for `preflight` mode, place profile and coverage context

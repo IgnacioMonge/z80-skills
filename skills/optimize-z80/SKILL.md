@@ -123,14 +123,6 @@ report that the TOML policy was not parsed.
    approval.
 10. Clean the disposable worktree and verify the primary tree stayed unchanged.
 
-## Automatic proposal scoring
-
-After merging current candidate cards and applying this skill's hard gates,
-follow the sibling workflow's [shared Jev scoring protocol](references/jev-scoring.md)
-with domain `optimize` before final ordering. The shared protocol exclusively owns
-utility, authorization, session, packet and output gates; this skill retains its
-native scorer, policy, evidence, experiment and reporting contracts.
-
 ## Candidate Contract
 
 Each candidate states:
