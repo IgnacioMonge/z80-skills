@@ -63,7 +63,8 @@ Los skills enrutados se solapan solo donde es útil:
 - Usa `port-spectranext` para portar un programa ZX existente al cartucho
   Spectranext, no para targets ZX Spectrum Next ni trabajo sobre el backend.
 - Usa `debug-z80` para un fallo observado cuyo owner causal sigue sin conocerse.
-- Usa `audit-z80` para revisión preventiva o amplia de corrección en solo lectura.
+- Usa `audit-z80` para revisión preventiva o amplia de corrección en solo lectura,
+  o en modo `diff` para el riesgo de corrección de un conjunto de cambios.
 - Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
 - Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
   tamaño.
@@ -324,6 +325,11 @@ Prioriza ABI, ISR y memoria; informa únicamente hallazgos anclados al código a
 ```text
 Usa audit-z80 en modo full. Revisa las diferencias entre los targets 48K y 128K,
 incluidos paging, ROM, stack, interrupciones y artefactos generados.
+```
+
+```text
+Usa audit-z80 en modo diff contra main. Comprueba si los cambios de esta rama en
+la ISR y en C/ASM rompen el ABI, los registros preservados, el estado compartido o el mapa de memoria.
 ```
 
 ### Organización

@@ -29,7 +29,7 @@ and ask one focused question. Alternatives are not competing acceptance criteria
 | Explicit product initiative needing specification and milestones, or an active develop dossier. A routine feature, plan, or implementation alone does not qualify. | [`develop-z80`](../develop-z80/SKILL.md) |
 | Create, restructure, review, or synchronize public repository documentation, including one README. | [`document-z80`](../document-z80/SKILL.md) |
 | Diagnose, or diagnose and repair, one observed failure with unresolved causality, conflicting evidence, or a failed evidence-supported fix. Includes regression against a known baseline. | [`debug-z80`](../debug-z80/SKILL.md) |
-| Preventive or broad read-only correctness audit: ABI, ISR, memory, firmware, toolchain, or hardware risks, without one failure driving the investigation. | [`audit-z80`](../audit-z80/SKILL.md) |
+| Preventive or broad read-only correctness audit, or the correctness risk of a change set (diff, branch, PR): ABI, ISR, memory, firmware, toolchain, or hardware risks, without one failure driving the investigation. | [`audit-z80`](../audit-z80/SKILL.md) |
 | Map or reorganize ownership, dependencies, modules, source layout, banks, overlays, or runtime placement. | [`organize-z80`](../organize-z80/SKILL.md) |
 | Size or memory footprint is the sole acceptance metric; prove net byte savings. | [`shrink-z80`](../shrink-z80/SKILL.md) |
 | Improve acceptable behavior: identify bottlenecks and rank speed, size, RAM, rendering, latency, or competing metrics. | [`optimize-z80`](../optimize-z80/SKILL.md) |

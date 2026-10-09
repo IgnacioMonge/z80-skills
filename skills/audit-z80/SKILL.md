@@ -1,6 +1,6 @@
 ---
 name: audit-z80
-description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
+description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits, or for the correctness risk of a change set (diff, branch, or PR) without an observed failure, involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
 ---
 
 # Audit Z80
@@ -23,7 +23,8 @@ limitation and continue directly without claiming delegated execution.
 - Resolve `SKILL_DIR` as the directory containing this file before invoking a
   bundled script.
 - Use the Python 3 interpreter exposed by the host or explicitly provided by
-  the user; never assume a platform-specific path.
+  the user (written `<python>` in references); never assume a platform-specific
+  path.
 - Invoke bundled scripts as `"$SKILL_DIR/scripts/<name>.py"` (or an equivalent
   absolute path), never as a project-relative `scripts/<name>.py`.
 
@@ -35,11 +36,15 @@ limitation and continue directly without claiming delegated execution.
 - `auto` (default): preflight, then choose focused, standard, or deep demand.
 - `full` / `diverge`: force broad category coverage; depth still adapts to the
   evidence and available agent capacity.
+- `diff [<base>..<head>]`: audit the correctness risk a change set introduces
+  or exposes; without a range, review the branch and uncommitted changes
+  against the default branch's merge base.
 - Focused modes: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
   `toolchain`, `copt`, `map`.
 
 For every real audit, read `references/hard-contract.md`,
-`references/dispatcher.md`, and `references/preflight.md`. Read
+`references/dispatcher.md`, and `references/preflight.md`; in `diff` mode, also
+read `references/change-review.md`. Read
 `references/agent-orchestration.md` only when more than one independent
 investigation lane is useful.
 
@@ -79,14 +84,14 @@ is incomplete.
 - Evidence and sandbox rules: `references/hard-contract.md`
 - Preflight and profile: `references/preflight.md`
 - Routing and scripts: `references/dispatcher.md`
+- Change-set scope and named risks: `references/change-review.md`
 - Domain lanes for delegated analysis: `references/agent-orchestration.md`
 - External discovery: `references/external-research.md`
 - Promotion: `references/promotion-gate.md`
 - Reporting: `references/reporting.md`
 - Domain checks: `references/asm-abi.md`, `references/c-memory.md`,
   `references/isr-map.md`, `references/sdcc-z88dk-quirks.md`,
-  `references/spectrum-hardware-esxdos.md`,
-  `references/promotion-gate.md`
+  `references/spectrum-hardware-esxdos.md`
 
 ## Core Rules
 

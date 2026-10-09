@@ -12,6 +12,11 @@ repository; these entries track development toward the first published release.
   enable it.
 - Opt-in policy decision cases cover authorization, model selection, selective
   context, and verification reuse without replacing historical evaluation results.
+- `audit-z80` `diff` mode reviews the correctness risk of a change set: merge-base
+  range by default, one focused check per named Z80 risk, and a `BLOCK` /
+  `VERIFY FIRST` / `NO BLOCKER FOUND` verdict. Routing and two routing
+  evaluation cases cover the boundary with `debug-z80` and generic `workflow`
+  review.
 
 - Portable workflow, Z80 domain routing, eight engineering specialists, and
   guarded BridgeZX delivery, with installation tooling and English/Spanish
@@ -19,6 +24,15 @@ repository; these entries track development toward the first published release.
 - Isolated-worktree tooling and routing/evidence evaluation infrastructure.
 
 ### Changed
+
+- Workflow delegation adds a closed worker status set, verifier finding triage,
+  bounded waits with worker resumption, file-less recovery after context
+  compaction, and one-worker batching of same-shape edits. Completion maps every
+  acceptance criterion to evidence and lists decisions made on the user's behalf.
+- Audit, shrink, and optimize hard contracts treat commit messages, change
+  descriptions, and asserting comments as search seeds, not proof. Audit coverage
+  states a reason for every skipped area, and audit and shrink instructions use
+  the host-selected Python interpreter instead of a hardcoded `python3`.
 
 - Workflow delegation uses Sol 6.1 instead of Luna/Sol 5.6, preserving each
   assignment's reasoning effort and the explicit Astra Medium opt-in. Current

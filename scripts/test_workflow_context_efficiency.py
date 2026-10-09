@@ -64,6 +64,43 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
         self.assertIn("raw logs, large diffs, diagnostics", roles)
         self.assertIn("## Layered evidence", heavy)
 
+    def test_worker_reports_use_a_closed_status_set(self) -> None:
+        roles = (WORKFLOW / "references" / "roles.md").read_text(encoding="utf-8")
+        normalized = " ".join(roles.split())
+        for status in ("DONE", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "BLOCKED"):
+            self.assertIn(f"- `{status}`:", roles)
+        self.assertIn("never resend it unchanged", normalized)
+
+    def test_verifier_triages_findings_without_prejudgment(self) -> None:
+        roles = (WORKFLOW / "references" / "roles.md").read_text(encoding="utf-8")
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
+        roles = " ".join(roles.split())
+        self.assertIn("as unverified claims", roles)
+        self.assertIn("missing, extra, or misunderstood", roles)
+        self.assertIn("Only blocking findings enter the repair loop", roles)
+        self.assertIn("never pre-judge findings", " ".join(heavy.split()))
+
+    def test_heavy_batches_resumes_and_recovers_without_status_files(self) -> None:
+        heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
+        normalized = " ".join(heavy.split())
+        self.assertIn("same-shape mechanical edits", normalized)
+        self.assertIn("## Waiting, resumption, and recovery", heavy)
+        self.assertIn("bounded stretches", normalized)
+        self.assertIn("Resume an existing worker", normalized)
+        self.assertIn("Never re-dispatch work", normalized)
+        self.assertIn("needs no status files", normalized)
+
+    def test_completion_maps_criteria_and_surfaces_decisions(self) -> None:
+        references = WORKFLOW / "references"
+        verification = (references / "verification.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "map every acceptance criterion to observed evidence",
+            " ".join(verification.split()),
+        )
+        for name in ("heavy", "medium"):
+            text = (references / f"{name}.md").read_text(encoding="utf-8")
+            self.assertIn("decision made on the user's behalf", " ".join(text.split()))
+
     def test_grok_workflow_has_no_forked_markdown(self) -> None:
         overlay = ROOT / "scripts" / "grok-overlay" / "workflow"
         self.assertFalse(overlay.exists() and any(overlay.rglob("*.md")))

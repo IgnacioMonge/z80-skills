@@ -1,18 +1,19 @@
 # Dispatcher
 
 Obey `hard-contract.md`. Use this file after `SKILL.md` for every real audit
-except `help`.
+except `help`. `<python>` is the interpreter selected under Runtime Portability
+in `SKILL.md`.
 
 ## Workflow
 
 1. **Profile once**
    - Read `preflight.md`.
-   - Run `python3 "$SKILL_DIR/scripts/preflight_scan.py"` when target, flags,
+   - Run `<python> "$SKILL_DIR/scripts/preflight_scan.py"` when target, flags,
      startup, or artifacts are unclear.
-   - Run `python3 "$SKILL_DIR/scripts/map_summary.py"` when `.map`/`.sym`,
+   - Run `<python> "$SKILL_DIR/scripts/map_summary.py"` when `.map`/`.sym`,
      fixed RAM, overlays, contention, or firmware addresses matter.
-   - Run `python3 "$SKILL_DIR/scripts/abi_inventory.py"` for mixed C/ASM.
-   - Run `python3 "$SKILL_DIR/scripts/z80_pattern_scan.py"` for broad ASM,
+   - Run `<python> "$SKILL_DIR/scripts/abi_inventory.py"` for mixed C/ASM.
+   - Run `<python> "$SKILL_DIR/scripts/z80_pattern_scan.py"` for broad ASM,
      ISR, timing, or unusual control flow.
    - Scanner output is a lead queue, never a finding.
 2. **Build a pressure map**
@@ -46,6 +47,9 @@ except `help`.
 - `auto`: run the workflow at the demand level supported by preflight.
 - `full` / `diverge`: cover every applicable domain, but collapse irrelevant
   domains into one concise `n/a` statement.
+- `diff`: complete step 1, then replace the broad pressure map with the scope
+  and named risks in `change-review.md`; load domain references only for those
+  risks.
 - Focused modes: run only the named domain plus any boundary required to prove
   it. For example, `abi` includes generated code when present; `spectrum-hw`
   includes interrupt/memory state when ports or paging depend on it.

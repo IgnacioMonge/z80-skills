@@ -57,6 +57,23 @@
       "failed": 0,
       "accuracy": 1.0
     },
+    "targeted_change_review_run": {
+      "plugin_version": "0.8.4",
+      "installed_version": "0.8.4",
+      "evaluated_at": "2026-10-09T22:18:36.707914+00:00",
+      "model": "runtime-default",
+      "case_ids": [
+        "indirect-audit",
+        "negative-refactor",
+        "ambiguous-crash",
+        "indirect-audit-change",
+        "negative-generic-review"
+      ],
+      "passed": 5,
+      "failed": 0,
+      "accuracy": 1.0,
+      "authored_source_changed_during_run": false
+    },
     "previous_suite": {
       "cases": 24,
       "status": "SUPERSEDED",

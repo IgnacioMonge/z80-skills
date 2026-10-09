@@ -14,6 +14,8 @@ defaults change only when the user explicitly requests that change.
   same source; opcode counts of those current bytes.
 - Forbidden as proof (may be used only as **search seeds / hypotheses**):
   - prior audits, session memory, chat history, or "we already found this"
+  - commit messages, PR or change descriptions, and code comments that assert
+    safety, correctness, or savings
   - forum posts, blackbooks, demoscene writeups, external optimizers
   - stale maps/listings/binaries whose mtime or content cannot be tied to the
     current source (treat as `REQUIERE BUILD` / non-proof prioritization only)

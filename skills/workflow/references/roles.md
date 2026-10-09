@@ -94,8 +94,15 @@ the `verifier` role never determines the model.
 - **Implementer:** own only named files or responsibility; preserve unrelated
   work; make the smallest coherent change and run the requested check.
 - **Verifier:** independently test the supplied acceptance criteria; do not fix
-  production, test, fixture, mock, or test-data defects. Return exact commands,
-  outcomes, and residual risk; send repairs to the assigned implementer.
+  production, test, fixture, mock, or test-data defects. Treat the implementer's
+  report and rationale as unverified claims and check them against the diff and
+  evidence. Classify each finding as missing, extra, or misunderstood against
+  the requested outcome, and as blocking (a failed criterion or a defect that
+  makes the work untrustworthy) or minor. Only blocking findings enter the repair
+  loop; report minor findings upward. Report a requirement the diff cannot prove
+  as unverifiable for the main thread instead of widening the search. Return
+  exact commands, outcomes, file:line references, and residual risk; send
+  repairs to the assigned implementer.
 
 ## Upward report contract
 
@@ -107,6 +114,20 @@ appropriate. Keep raw logs, large diffs, diagnostics, inventories, and verbose
 test output in the retained worker thread or a referenced artifact. The main
 thread opens that detail only for a material contradiction, uncertainty, or
 high-risk integration boundary.
+
+Status is exactly one of:
+
+- `DONE`: the assigned outcome is met with evidence.
+- `DONE_WITH_CONCERNS`: the outcome is met, but the worker names a doubt.
+  Resolve correctness or scope concerns before verification; record
+  observations.
+- `NEEDS_CONTEXT`: a named input is missing. Supply it and resume the same
+  worker.
+- `BLOCKED`: the capsule cannot be completed as written. Fix the capsule, split
+  the work, change model/effort under the selection policy, or rule on the
+  defect; never resend it unchanged.
+
+Workers report doubtful work as `DONE_WITH_CONCERNS`, never as `DONE`.
 
 Apply the [mutation boundary](../SKILL.md#mutation-boundary) before spawning.
 Investigators and verifiers remain read-only; implementers own only the assigned

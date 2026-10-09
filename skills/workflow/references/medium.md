@@ -18,6 +18,9 @@ remains direct unless the user changes the level.
 Avoid durable status files unless the repository already defines them or the
 user requests a cross-session handoff.
 
+On completion, list every decision made on the user's behalf, if any, with
+its reason and its cost if wrong.
+
 When blocked, report the failed step, evidence, completed work, affected
 acceptance criterion, and required decision. Do not present partial work as
 complete.

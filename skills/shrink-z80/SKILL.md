@@ -68,8 +68,9 @@ incomplete.
    unless an equivalent gate remains valid under workflow verification rules.
    Use `map_summary.py` only for selected maps needed by the analysis. A local,
    source-only pass requires neither a repository-wide scan nor artifact checks.
-   Invoke selected scripts as `python3 "$SKILL_DIR/scripts/<script>.py"` with
-   their required arguments and the host interpreter described above.
+   Invoke selected scripts as `<python> "$SKILL_DIR/scripts/<script>.py"` with
+   their required arguments, where `<python>` is the host interpreter described
+   above.
 3. Read `references/agent-orchestration.md` only when independent lanes add
    value, then pass selected briefs to `$workflow`.
 4. Attack SAFE high-impact mechanisms before micro or dark-art tricks.

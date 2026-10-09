@@ -62,7 +62,8 @@ useful:
 - Use `port-spectranext` for an existing ZX program's consumer port to the
   Spectranext cartridge, not for ZX Spectrum Next targets or backend work.
 - Use `debug-z80` for an observed failure whose causal owner remains unknown.
-- Use `audit-z80` for preventive or broad read-only correctness review.
+- Use `audit-z80` for preventive or broad read-only correctness review, or in
+  `diff` mode for the correctness risk of a change set.
 - Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
 - Use `shrink-z80` for an exhaustive search focused exclusively on size.
 - Use `optimize-z80` to decide among competing objectives and prioritize the
@@ -317,6 +318,11 @@ Prioritize ABI, ISR, and memory; report only findings anchored in the current co
 ```text
 Use audit-z80 in full mode. Review the differences between the 48K and 128K targets,
 including paging, ROM, stack, interrupts, and generated artifacts.
+```
+
+```text
+Use audit-z80 in diff mode against main. Check whether this branch's ISR and
+C/ASM changes break the ABI, preserved registers, shared state, or the memory map.
 ```
 
 ### Organization

@@ -311,6 +311,48 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertIn("hand the known-cause fix to `$workflow`", debug)
         self.assertIn("Do not use for root-cause diagnosis", audit)
 
+    def test_audit_change_review_is_scoped_by_named_risks(self) -> None:
+        audit_dir = ROOT / "skills" / "audit-z80"
+        audit = (audit_dir / "SKILL.md").read_text(encoding="utf-8")
+        references = audit_dir / "references"
+        change = " ".join(
+            (references / "change-review.md").read_text(encoding="utf-8").split()
+        )
+        reporting = " ".join(
+            (references / "reporting.md").read_text(encoding="utf-8").split()
+        )
+        router = " ".join((ROUTER / "SKILL.md").read_text(encoding="utf-8").split())
+
+        self.assertIn("- `diff [<base>..<head>]`:", audit)
+        self.assertIn("references/change-review.md", audit)
+        self.assertEqual(audit.count("references/promotion-gate.md"), 1)
+        for phrase in (
+            "Never default to `HEAD~1`",
+            "one focused check per named risk",
+            "belongs to `$debug-z80`",
+            "belongs to `$workflow`",
+            "disposable worktree",
+        ):
+            self.assertIn(phrase, change)
+        self.assertIn("## Change verdict", reporting)
+        self.assertIn("never certifies the change", reporting)
+        self.assertIn("each with its reason", reporting)
+        self.assertIn("correctness risk of a change set", router)
+        for path in (
+            references / "dispatcher.md",
+            references / "preflight.md",
+            ROOT / "skills" / "shrink-z80" / "SKILL.md",
+        ):
+            self.assertNotIn('python3 "$SKILL_DIR', path.read_text(encoding="utf-8"))
+        for name in ANALYSIS_SKILLS:
+            contract = (
+                ROOT / "skills" / name / "references" / "hard-contract.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn(
+                "commit messages, PR or change descriptions",
+                " ".join(contract.split()),
+            )
+
     def test_spectranext_port_route_uses_the_external_consumer_pipeline(self) -> None:
         router = (ROUTER / "SKILL.md").read_text(encoding="utf-8")
         port = (PORT / "SKILL.md").read_text(encoding="utf-8")

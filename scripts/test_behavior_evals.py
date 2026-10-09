@@ -33,7 +33,8 @@ class BehaviorEvalTest(unittest.TestCase):
             "negative-agent-docs", "negative-known-bug",
             "negative-spectrum-next-not-spectranext", "ambiguous-metrics",
             "ambiguous-size", "ambiguous-crash", "ambiguous-unspecified",
-            "ambiguous-spectranext-backend",
+            "ambiguous-spectranext-backend", "indirect-audit-change",
+            "negative-generic-review",
         }
         existing_evidence_ids = {
             "audit-stale-map", "shrink-stale-map", "optimize-no-baseline",

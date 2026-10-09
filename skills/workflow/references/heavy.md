@@ -9,7 +9,8 @@ Role types and model/effort selection live in [roles.md](roles.md).
 
 1. Identify at least two concrete, bounded, independent workstreams. If none
    exist, do not manufacture delegation; continue directly and state that the
-   Heavy dispatch gate did not hold.
+   Heavy dispatch gate did not hold. Repeated same-shape mechanical edits across
+   files form one workstream for one worker, not one worker per file.
 2. Start independent workers together. Use at most two by default; add a third
    only for a genuinely separate workstream.
 3. Spawn each worker with `fork_turns="none"` and a self-contained capsule of
@@ -25,7 +26,10 @@ Role types and model/effort selection live in [roles.md](roles.md).
    integration work. Do not duplicate delegated discovery, diagnostics,
    implementation, or checks. Integrate upward reports once.
 8. Run deterministic checks before adding one independent verifier. Add it only
-   when risk, uncertainty, or required coverage justifies the extra call.
+   when risk, uncertainty, or required coverage justifies the extra call. Give
+   it the base revision and changed paths so it reads the diff itself. Do not
+   paste large diffs into its capsule, and never pre-judge findings (for
+   example "do not flag X" or "at most minor").
 
 ## Direct repair loop
 
@@ -54,6 +58,23 @@ that proof.
 Update durable documentation in the main thread after verification and only for
 architecture, public behavior, structure, decisions, or usage changes.
 
+## Waiting, resumption, and recovery
+
+While local work remains, keep working; completed reports arrive without
+polling. When idle with workers outstanding, wait in bounded stretches of five
+to ten minutes rather than short polls or one open-ended wait. After each
+stretch, list live workers and chase any that finished without reporting.
+
+Resume an existing worker for answers, `NEEDS_CONTEXT`, retries, and repairs
+through the runtime's follow-up tool (Codex multi-agent V2: `followup_task`);
+the live tool list wins over this name. Spawn a fresh worker only for
+replacement or a model change under `roles.md`.
+
+After context compaction, rebuild state from the live worker list, worker
+reports, diffs, repository status, and `git log` before dispatching again.
+Never re-dispatch work whose worker reported `DONE` with evidence. This
+recovery needs no status files.
+
 ## Failure handling
 
 One evidence-free worker response gets one concise retry. A second consecutive
@@ -66,4 +87,6 @@ Trust child-thread events, runtime metadata, diffs, logs, and command results.
 
 Integrate only verified work and inspect critical hunks and boundaries. Finish
 with call counts by role and runtime-confirmed model/effort when available;
-otherwise label settings as requested, not confirmed.
+otherwise label settings as requested, not confirmed. List any decision made
+on the user's behalf (conflict rulings, capsule corrections, unfixed minor
+findings, scope choices) with its reason and its cost if wrong.
