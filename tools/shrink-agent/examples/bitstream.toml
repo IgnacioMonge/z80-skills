@@ -1,0 +1,59 @@
+# shrink-agent configuration for BitStream (FTP client for ZX Spectrum).
+# Paths are for the maintainer's Windows machine; adjust root/SPXN_DIR elsewhere.
+
+[project]
+name = "BitStream"
+root = "C:/dev/BitStream"
+# Only these files may be edited. UART drivers are excluded: timing-critical.
+editable = ["src/*.c", "include/*.h", "asm/bitstream_asm.asm"]
+exclude_routines = []
+toolchain = """
+z88dk zcc +zx with sccz80 (not SDCC): -O3 -startup=0 -clib=new --opt-code-size,
+custom peephole rules in src/bitstream_copt.rul. Unity build: src/main_build.c #includes
+every .c file, so all C functions share one translation unit. Code origin 24000.
+"""
+rules = """
+- Four builds must stay valid: divMMC/divTiesus UART, AY bit-bang UART (-DAY_UART),
+  Spectrum Next (-DBITSTREAM_NEXT) and Spectranext (-DBITSTREAM_SPECTRANEXT). Code inside
+  #if/#ifdef blocks for one platform still has to compile and behave on that platform.
+- BSS must end below the IM2 vector at $FCFF; the build fails otherwise.
+- Do not change FTP protocol strings, user-visible text, file formats or UART timing loops.
+- tools/bpe_compress.py compresses some string literals at build time; keep literals byte-identical.
+"""
+
+[[targets]]
+name = "divmmc"
+build = "make NO_COLOR=1 PYTHON={python}"
+map = "build/BitStream_divTiesus.map"
+size_symbol = "__data_compiler_tail"
+origin = 24000
+
+[[targets]]
+name = "next"
+build = "make NO_COLOR=1 PYTHON={python} PLATFORM=next"
+map = "build/BitStream_Next.map"
+binary = "build/BitStream_Next_CODE.bin"   # used for disassembly shown to the model
+size_symbol = "__data_compiler_tail"
+origin = 24000
+
+[[targets]]
+name = "ay"
+build = "make NO_COLOR=1 PYTHON={python} AY_UART=1"
+map = "build/BitStream_AY.map"
+size_symbol = "__data_compiler_tail"
+origin = 24000
+
+[[targets]]
+name = "spectranext"
+build = "make NO_COLOR=1 PYTHON={python} PLATFORM=spectranext SPXN_DIR=C:/dev/SpectraNext/driver"
+map = "build/BitStream_Spectranext.map"
+size_symbol = "__data_compiler_tail"
+origin = 24000
+
+[agent]
+proposer_model = "claude-opus-5-5"
+reviewer_model = "claude-opus-5-5"
+max_rounds = 2                 # proposal + one repair after build/size/review feedback
+max_attempts_per_routine = 1
+min_routine_size = 24
+build_timeout = 600

@@ -7,6 +7,9 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- `tools/shrink-agent`: unattended Claude API loop that applies size reductions to a
+  z88dk project in a disposable worktree, one routine per commit, gated by all-target
+  builds, byte measurement, optional tests and an independent model review.
 - Explicit, assignment-scoped Astra Medium option for causal/high-risk delegation.
   Automatic fallback, inheritance, unverified defaults, and effort upgrades cannot
   enable it.
