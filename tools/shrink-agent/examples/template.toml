@@ -1,0 +1,22 @@
+# shrink-agent configuration template. Copy it, then set every value for your
+# project. Relative paths are resolved from project.root. See the README for
+# the optional [agent] and [prices] tables; their defaults are usually fine.
+
+[project]
+name = "myproject"
+root = "/absolute/path/to/project"   # primary checkout; the tool never edits it
+editable = ["src/*.c", "src/*.asm"]  # globs the proposer may edit; keep timing-critical drivers out
+exclude_routines = []
+toolchain = "z88dk zcc +zx with sccz80, -O3 --opt-code-size"  # facts given to both models
+rules = """
+- Constraints every edit must respect: memory ceilings, protocol strings, timing loops.
+"""
+tests = []                           # commands run after a size gain; {python} expands to the interpreter
+
+[[targets]]
+name = "main"
+build = "make"                       # run inside the disposable worktree; {python} expands to the interpreter
+map = "build/main.map"               # linker map written by the build
+size_symbol = "__data_compiler_tail" # map symbol marking the end of linked code and data
+origin = 24000                       # code origin: size = size_symbol - origin
+# binary = "build/main_CODE.bin"     # optional: lets the model see the compiled routine

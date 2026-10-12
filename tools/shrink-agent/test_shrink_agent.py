@@ -298,3 +298,8 @@ def test_claude_call_uses_auto_choice_and_nudges_once():
     assert len(call.history) == 3 and call.history[1]["role"] == "assistant"
     assert call.cost == pytest.approx(2 * (1000 * 4 + 100 * 20) / 1e6) and c.spent == pytest.approx(call.cost)
     assert c.tokens["m"]["input_tokens"] == 2000 and c.tokens["m"]["output_tokens"] == 200
+
+
+def test_template_config_loads():
+    cfg = sa.load_config(HERE / "examples" / "template.toml")
+    assert cfg.editable and [t.name for t in cfg.targets] == ["main"]

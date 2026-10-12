@@ -251,16 +251,21 @@ Grok task so the catalog reloads.
 
 ### Claude Code
 
-Claude Code also reads this checkout in place through directory junctions.
-`~/.claude/skills/<name>` links to `skills/<name>` for the eleven skills, and
-`~/.claude/scripts` links to `scripts/` so the `../../scripts/run_in_worktree.py`
-references inside the skills resolve through the junctions.
+Claude Code also reads this checkout in place through directory junctions
+(Windows) or symlinks (macOS, Linux). `~/.claude/skills/<name>` links to
+`skills/<name>` for the eleven skills, and `~/.claude/scripts` and
+`~/.claude/tools` link to `scripts/` and `tools/` so the `../../scripts/...`
+and `../../tools/...` references inside the skills resolve through the links.
 
 ```powershell
 pwsh -File .\scripts\install-for-claude.ps1
 ```
 
-The script is idempotent: existing canonical junctions are kept, stale ones are
+```sh
+sh scripts/install-for-claude.sh
+```
+
+Both scripts are idempotent: existing canonical links are kept, stale ones are
 relinked, and real directories are reported but never deleted. Only `route-z80`
 and `workflow` are exposed implicitly; the nine specialists set
 `disable-model-invocation: true` and remain available as `/develop-z80`,

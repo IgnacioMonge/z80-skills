@@ -623,8 +623,8 @@ def python_for_shell() -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--config", required=True, type=Path)
-    ap.add_argument("--iterations", type=int, default=10, help="routines to attempt (default 10)")
-    ap.add_argument("--max-usd", type=float, default=5.0, help="stop before spending more than this (default 5)")
+    ap.add_argument("--iterations", type=int, default=5, help="routines to attempt (default 5)")
+    ap.add_argument("--max-usd", type=float, default=2.0, help="stop before spending more than this (default 2)")
     ap.add_argument("--routine", action="append", default=[], help="restrict to these routine names")
     ap.add_argument("--dry-run", action="store_true", help="build baseline and list candidates; no API calls")
     ap.add_argument("--mock-script", type=Path, help="replay proposals/verdicts from JSON (offline testing)")

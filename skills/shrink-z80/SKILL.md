@@ -35,6 +35,18 @@ exact limitation and continue directly without claiming delegated execution.
 - Focused: `deadcode`, `dedup`, `micro`, `data`, `compress`, `refactor`,
   `arch`, `libpull`, `blackbelt`, `reserve`.
 - `diverge`: force a broad candidate search but retain normal proof gates.
+- `agent`: only on an explicit request to apply savings or to run
+  shrink-agent. Run `preflight`, then write
+  `~/.z80-skills/configs/<project>.toml` from its findings when the file is
+  missing (template: `../../tools/shrink-agent/examples/template.toml`;
+  fields in its README). Run in the background
+  `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file>`
+  with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
+  `~/.z80-skills/venv/Scripts/python.exe`); no venv or `~/.z80-skills/.env`
+  means run `tools/shrink-agent/install.py` first. The tool defaults to 5
+  routines and 2 USD; pass `--iterations` or `--max-usd` only when the user
+  states other values. Report from
+  `~/.z80-skills/shrink-runs/<project>-<timestamp>/shrink.log`.
 
 For every real pass, read `references/hard-contract.md` and
 `references/dispatcher.md`.
@@ -93,8 +105,7 @@ incomplete.
 - Byte and report rules: `references/z80-byte-evidence.md`,
   `references/reporting.md`
 - Guardrails: `references/blind-spots.md`
-- Unattended applying loop, only when the user explicitly asks to apply
-  savings automatically or to run shrink-agent: `../../tools/shrink-agent/README.md`.
+- Unattended applying loop (`agent` mode): `../../tools/shrink-agent/README.md`.
   It edits a disposable worktree and commits to its own branch; this skill's
   read-only contract still governs analysis passes.
 

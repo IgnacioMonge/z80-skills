@@ -5,9 +5,9 @@
 
 .DESCRIPTION
   Creates one directory junction per bundled skill under ~/.claude/skills
-  pointing at <repo>/skills/<name>, plus ~/.claude/scripts -> <repo>/scripts so
-  the skills' `../../scripts/run_in_worktree.py` references resolve through the
-  junctions. Nothing is copied; a `git pull` is visible to Claude Code at the
+  pointing at <repo>/skills/<name>, plus ~/.claude/scripts -> <repo>/scripts and
+  ~/.claude/tools -> <repo>/tools so the skills' `../../scripts/...` and
+  `../../tools/...` references resolve through the junctions. Nothing is copied; a `git pull` is visible to Claude Code at the
   next session. Existing junctions that already point at the canonical tree are
   left alone; real directories with the same name are reported, never deleted.
 
@@ -79,5 +79,6 @@ foreach ($name in $SkillNames) {
     Ensure-Junction -Link (Join-Path $SkillsDest $name) -Target $src
 }
 Ensure-Junction -Link (Join-Path $ClaudeHome "scripts") -Target (Join-Path $RepoRoot "scripts")
+Ensure-Junction -Link (Join-Path $ClaudeHome "tools") -Target (Join-Path $RepoRoot "tools")
 
 Write-Host "==> done. Open a new Claude Code session to reload the skill catalog." -ForegroundColor Cyan

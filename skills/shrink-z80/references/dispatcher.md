@@ -51,6 +51,8 @@ queue, not confirmed savings.
 - `reserve`: use the scan order, SAFE candidates first, and stop when every
   declared target reaches the requested reserve (default 128 bytes only when
   the user gives no target).
+- `agent`: `preflight` for the build facts, then hand off to
+  `tools/shrink-agent` as described in `SKILL.md`; no lanes.
 
 ## Attack Order
 

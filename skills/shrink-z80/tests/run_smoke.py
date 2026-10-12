@@ -33,6 +33,8 @@ def main() -> int:
     assert "../workflow/SKILL.md" in skill_text
     assert "## Workflow Boundary" in orchestration_text
     assert "C:/Program Files" not in skill_text + dispatcher_text
+    assert "`agent`" in skill_text and "`agent`" in dispatcher_text
+    assert "tools/shrink-agent/shrink_agent.py" in skill_text
 
     byte_text = (SKILL / "references" / "z80-byte-evidence.md").read_text(encoding="utf-8")
     blackbook_text = (SKILL / "references" / "size-blackbook.md").read_text(encoding="utf-8")
