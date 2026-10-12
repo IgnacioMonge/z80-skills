@@ -303,3 +303,10 @@ def test_claude_call_uses_auto_choice_and_nudges_once():
 def test_template_config_loads():
     cfg = sa.load_config(HERE / "examples" / "template.toml")
     assert cfg.editable and [t.name for t in cfg.targets] == ["main"]
+
+
+def test_path_map_points_generated_copies_at_sources(tmp_path):
+    cfg = _cfg(tmp_path, path_map={"build/generated/": ""})
+    r = mapfile.Routine("alpha", "_alpha", 0x6000, 16, "code_compiler", "build/generated/src/a.c", 12, "c")
+    assert sa.source_path(cfg, r).file == "src/a.c"
+    assert sa.source_path(cfg, mapfile.Routine("beta", "_beta", 0, 8, "code_user", "asm/x.asm", 1, "asm")).file == "asm/x.asm"

@@ -7,6 +7,7 @@ name = "myproject"
 root = "/absolute/path/to/project"   # primary checkout; the tool never edits it
 editable = ["src/*.c", "src/*.asm"]  # globs the proposer may edit; keep timing-critical drivers out
 exclude_routines = []
+# path_map = { "build/generated/" = "" }  # map locations of generated copies -> editable source
 toolchain = "z88dk zcc +zx with sccz80, -O3 --opt-code-size"  # facts given to both models
 rules = """
 - Constraints every edit must respect: memory ceilings, protocol strings, timing loops.

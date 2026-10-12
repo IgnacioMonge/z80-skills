@@ -26,6 +26,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -138,6 +139,7 @@ class Config:
     rules: str = ""
     toolchain: str = ""
     exclude_routines: list[str] = field(default_factory=list)
+    path_map: dict[str, str] = field(default_factory=dict)
     context_files: list[str] = field(default_factory=list)
     tests: list[str] = field(default_factory=list)
     knowledge: list[str] = field(default_factory=lambda: list(DEFAULT_KNOWLEDGE))
@@ -176,6 +178,7 @@ def load_config(path: Path) -> Config:
         rules=proj.get("rules", ""),
         toolchain=proj.get("toolchain", ""),
         exclude_routines=list(proj.get("exclude_routines", [])),
+        path_map=dict(proj.get("path_map", {})),
         context_files=list(proj.get("context_files", [])),
         tests=list(proj.get("tests", [])),
     )
@@ -594,7 +597,15 @@ def promote(cache: Path, new: dict[str, TargetResult]) -> dict[str, TargetResult
 
 def primary_routines(cfg: Config, res: dict[str, TargetResult]) -> list[mapfile.Routine]:
     first = res[cfg.targets[0].name]
-    return mapfile.routines(mapfile.parse_map(first.map_path), cfg.sections)
+    return [source_path(cfg, r) for r in mapfile.routines(mapfile.parse_map(first.map_path), cfg.sections)]
+
+
+def source_path(cfg: Config, r: mapfile.Routine) -> mapfile.Routine:
+    """Point a routine at its editable source when the map names a generated copy (project.path_map)."""
+    for prefix, replacement in cfg.path_map.items():
+        if r.file.startswith(prefix):
+            return dataclasses.replace(r, file=replacement + r.file[len(prefix):])
+    return r
 
 
 def disasm_for(cfg: Config, res: dict[str, TargetResult], r: mapfile.Routine) -> str:
@@ -673,6 +684,9 @@ def main(argv: list[str] | None = None) -> int:
         history: dict[str, list[str]] = {}
         queue = candidate_queue(cfg, rs, attempts, args.routine)
         log.line(f"{len(queue)} candidate routines; largest: " + ", ".join(f"{r.name} {r.size}B" for r in queue[:8]))
+        if not queue and rs:
+            outside = sorted({r.file for r in rs if not editable(cfg, r.file)})[:3]
+            log.line(f"no editable candidates; routine files outside project.editable include {', '.join(outside)}: set project.editable or project.path_map")
         if args.dry_run:
             for r in queue:
                 log.line(f"  {r.size:5d}B  {r.lang:3s} {r.name:32s} {r.file}:{r.line}")

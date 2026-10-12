@@ -113,6 +113,7 @@ def main() -> None:
 
     python = find_python(args.python)
     HOME.mkdir(mode=0o700, exist_ok=True)
+    (HOME / "configs").mkdir(exist_ok=True)  # where the shrink-z80 skill writes per-project configs
     env_path = HOME / ".env"
     write_env(env_path, ask_credentials(load_env(env_path) if env_path.is_file() else {}))
     py = ensure_venv(HOME, python)

@@ -39,7 +39,8 @@ exact limitation and continue directly without claiming delegated execution.
   shrink-agent. Run `preflight`, then write
   `~/.z80-skills/configs/<project>.toml` from its findings when the file is
   missing (template: `../../tools/shrink-agent/examples/template.toml`;
-  fields in its README). Run in the background
+  fields in its README; set `path_map` when the map names generated copies of
+  the sources). Run in the background
   `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file>`
   with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
   `~/.z80-skills/venv/Scripts/python.exe`); no venv or `~/.z80-skills/.env`
