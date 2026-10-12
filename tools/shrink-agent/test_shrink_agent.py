@@ -308,5 +308,64 @@ def test_template_config_loads():
 def test_path_map_points_generated_copies_at_sources(tmp_path):
     cfg = _cfg(tmp_path, path_map={"build/generated/": ""})
     r = mapfile.Routine("alpha", "_alpha", 0x6000, 16, "code_compiler", "build/generated/src/a.c", 12, "c")
-    assert sa.source_path(cfg, r).file == "src/a.c"
-    assert sa.source_path(cfg, mapfile.Routine("beta", "_beta", 0, 8, "code_user", "asm/x.asm", 1, "asm")).file == "asm/x.asm"
+    assert sa.source_path(cfg, cfg.targets[0], r).file == "src/a.c"
+    assert sa.source_path(cfg, cfg.targets[0], mapfile.Routine("beta", "_beta", 0, 8, "code_user", "asm/x.asm", 1, "asm")).file == "asm/x.asm"
+
+
+SDCC_MAP = textwrap.dedent(
+    """\
+    _foo                            = $7000 ; addr, local, , app_c, code_compiler, ../src/app.c:2130
+    l_foo_00102                     = $7008 ; addr, local, , app_c, code_compiler, ../src/app.c:2140
+    foo_asm_label                   = $700C ; addr, local, , app_c, code_compiler, ../src/app.c:2150
+    _bar                            = $7020 ; addr, public, , app_c, code_compiler, ../src/app.c:2200
+    __code_compiler_tail            = $7050 ; const, public, def, , ,
+    """
+)
+
+
+def test_routines_sdcc_map_keeps_static_functions_and_skips_labels():
+    rs = mapfile.routines(mapfile.parse_map_text(SDCC_MAP), ["code_compiler"])
+    assert [(r.name, r.lang, r.size, r.file) for r in rs] == [
+        ("bar", "c", 0x30, "../src/app.c"),
+        ("foo", "c", 0x20, "../src/app.c"),
+    ]
+
+
+def test_source_path_resolves_map_relative_parent_dirs(tmp_path):
+    cfg = _cfg(tmp_path, targets=[sa.Target("t", "", "build/out.map", "__data_compiler_tail", 0)])
+    r = mapfile.Routine("foo", "_foo", 0, 8, "code_compiler", "../src/app.c", 1, "c")
+    assert sa.source_path(cfg, cfg.targets[0], r).file == "src/app.c"
+    escaped = mapfile.Routine("foo", "_foo", 0, 8, "code_compiler", "../../etc/x.c", 1, "c")
+    assert sa.source_path(cfg, cfg.targets[0], escaped).file == "../../etc/x.c"
+
+
+def test_definition_line_found_by_name_when_map_line_is_wrong(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "app.c").write_text(textwrap.dedent(
+        """\
+        static void about_open(void);  /* prototype */
+        /* about_open( in a comment */
+        static void run(void)
+        {
+            about_open();
+        }
+        static void about_open(void)
+        {
+            run();
+        }
+        """
+    ))
+    cfg = _cfg(tmp_path)
+    r = mapfile.Routine("about_open", "_about_open", 0, 8, "code_compiler", "src/app.c", 2130, "c")
+    assert sa.definition_line(cfg, tmp_path, r).line == 7
+    assert "run();" in sa.excerpt(cfg, tmp_path, sa.definition_line(cfg, tmp_path, r), [])
+    (src / "ovl.c").write_text("void apply(void) FASTCALL\n{\n}\n")
+    (src / "gui.c").write_text("void apply(void);\n#include \"ovl.c\"\n")
+    included = mapfile.Routine("apply", "_apply", 0, 8, "code_compiler", "src/gui.c", 99, "c")
+    assert (sa.definition_line(cfg, tmp_path, included).file, sa.definition_line(cfg, tmp_path, included).line) == ("src/ovl.c", 1)
+
+
+def test_project_python_overrides_interpreter(tmp_path):
+    assert sa.python_for_shell(_cfg(tmp_path, python="/opt/py 3/bin/python")) == '"/opt/py 3/bin/python"'
+    assert sa.python_for_shell(_cfg(tmp_path)).strip('"') == sys.executable.replace("\\", "/")

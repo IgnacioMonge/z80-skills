@@ -39,15 +39,19 @@ exact limitation and continue directly without claiming delegated execution.
   shrink-agent. Run `preflight`, then write
   `~/.z80-skills/configs/<project>.toml` from its findings when the file is
   missing (template: `../../tools/shrink-agent/examples/template.toml`;
-  fields in its README; set `path_map` when the map names generated copies of
-  the sources). Run in the background
-  `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file>`
+  fields in its README). Choose `size_symbol` by the pressure target, set
+  `python` when the build needs the host interpreter, put the project's own
+  size or layout checks in `tests`, and list only targets the project's
+  instructions allow to build. Then run
+  `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file> --dry-run`
   with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
   `~/.z80-skills/venv/Scripts/python.exe`); no venv or `~/.z80-skills/.env`
-  means run `tools/shrink-agent/install.py` first. The tool defaults to 5
-  routines and 2 USD; pass `--iterations` or `--max-usd` only when the user
-  states other values. Report from
-  `~/.z80-skills/shrink-runs/<project>-<timestamp>/shrink.log`.
+  means run `tools/shrink-agent/install.py` first. Gate: at least one
+  candidate, `.c` routines listed as `c`, every `excerpt` line `ok`; otherwise
+  fix the config and stop. Then launch the same command without `--dry-run`
+  in the background. The tool defaults to 5 routines and 2 USD; pass
+  `--iterations` or `--max-usd` only when the user states other values.
+  Report from `~/.z80-skills/shrink-runs/<project>-<timestamp>/shrink.log`.
 
 For every real pass, read `references/hard-contract.md` and
 `references/dispatcher.md`.

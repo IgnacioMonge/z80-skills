@@ -22,6 +22,8 @@ import difflib
 import fnmatch
 import json
 import os
+import posixpath
+import re
 import shutil
 import subprocess
 import sys
@@ -46,6 +48,7 @@ DEFAULT_KNOWLEDGE = [
     "skills/optimize-z80/references/traps.md",
 ]
 REVIEW_KNOWLEDGE = DEFAULT_KNOWLEDGE[3:]
+SOURCE_SUFFIXES = {".c", ".h", ".inc", ".i"}
 MAX_EXCERPT_LINES = 400
 
 PROPOSE_TOOL = {
@@ -140,6 +143,7 @@ class Config:
     toolchain: str = ""
     exclude_routines: list[str] = field(default_factory=list)
     path_map: dict[str, str] = field(default_factory=dict)
+    python: str = ""  # interpreter for {python} in build and test commands; default: this one
     context_files: list[str] = field(default_factory=list)
     tests: list[str] = field(default_factory=list)
     knowledge: list[str] = field(default_factory=lambda: list(DEFAULT_KNOWLEDGE))
@@ -179,6 +183,7 @@ def load_config(path: Path) -> Config:
         toolchain=proj.get("toolchain", ""),
         exclude_routines=list(proj.get("exclude_routines", [])),
         path_map=dict(proj.get("path_map", {})),
+        python=str(proj.get("python", "")),
         context_files=list(proj.get("context_files", [])),
         tests=list(proj.get("tests", [])),
     )
@@ -595,17 +600,75 @@ def promote(cache: Path, new: dict[str, TargetResult]) -> dict[str, TargetResult
     }
 
 
-def primary_routines(cfg: Config, res: dict[str, TargetResult]) -> list[mapfile.Routine]:
-    first = res[cfg.targets[0].name]
-    return [source_path(cfg, r) for r in mapfile.routines(mapfile.parse_map(first.map_path), cfg.sections)]
+def primary_routines(cfg: Config, res: dict[str, TargetResult], wt: Path) -> list[mapfile.Routine]:
+    first = cfg.targets[0]
+    out = []
+    for r in mapfile.routines(mapfile.parse_map(res[first.name].map_path), cfg.sections):
+        r = source_path(cfg, first, r)
+        out.append(definition_line(cfg, wt, r) if r.lang == "c" else r)
+    return out
 
 
-def source_path(cfg: Config, r: mapfile.Routine) -> mapfile.Routine:
-    """Point a routine at its editable source when the map names a generated copy (project.path_map)."""
+def source_path(cfg: Config, target: Target, r: mapfile.Routine) -> mapfile.Routine:
+    """Point a routine at its editable source: project.path_map first, then map-relative `../` locations."""
+    file = r.file
     for prefix, replacement in cfg.path_map.items():
-        if r.file.startswith(prefix):
-            return dataclasses.replace(r, file=replacement + r.file[len(prefix):])
+        if file.startswith(prefix):
+            file = replacement + file[len(prefix):]
+            break
+    if ".." in file.split("/"):
+        rel = posixpath.normpath(posixpath.join(posixpath.dirname(target.map.replace("\\", "/")), file))
+        if rel != ".." and not rel.startswith("../") and not posixpath.isabs(rel):
+            file = rel
+    return r if file == r.file else dataclasses.replace(r, file=file)
+
+
+def definition_line(cfg: Config, wt: Path, r: mapfile.Routine) -> mapfile.Routine:
+    """Trust the map line only if it names the function; otherwise find the definition (SDCC maps).
+
+    The map names the translation unit, so a function compiled through an #include of another
+    file is searched in that file's quoted includes next, then in every other source under the tree.
+    The result may be a non-editable file; the candidate filter drops it then.
+    """
+    path = wt / r.file
+    if not path.is_file():
+        return r
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+    if 0 < r.line <= len(lines) and r.name in lines[r.line - 1]:
+        return r
+    line = _find_definition(lines, r.name)
+    if line:
+        return dataclasses.replace(r, line=line)
+    included = [path.parent / inc for inc in re.findall(r'#\s*include\s+"([^"]+)"', text)]
+    others = sorted(p for p in wt.rglob("*") if p.suffix.lower() in SOURCE_SUFFIXES and "build" not in p.parts)
+    for other in included + others:
+        if not other.is_file() or other == path:
+            continue
+        line = _find_definition(other.read_text(encoding="utf-8", errors="replace").splitlines(), r.name)
+        if line:
+            return dataclasses.replace(r, file=other.resolve().relative_to(wt.resolve()).as_posix(), line=line)
     return r
+
+
+def _find_definition(lines: list[str], name: str) -> int:
+    """1-based line of `name(` that reaches `{` before `;` (a definition, not a prototype or call), else 0."""
+    state = {"block": False}
+    code = [_strip_code(line, state) for line in lines]
+    pattern = re.compile(rf"\b{re.escape(name)}\s*\(")
+    for i, line in enumerate(code):
+        m = pattern.search(line)
+        if not m:
+            continue
+        rest = line[m.end():]
+        for j in range(i, min(i + 20, len(code))):
+            text = rest if j == i else code[j]
+            brace, semi = text.find("{"), text.find(";")
+            if brace != -1 and (semi == -1 or brace < semi):
+                return i + 1
+            if semi != -1:
+                break
+    return 0
 
 
 def disasm_for(cfg: Config, res: dict[str, TargetResult], r: mapfile.Routine) -> str:
@@ -618,9 +681,9 @@ def disasm_for(cfg: Config, res: dict[str, TargetResult], r: mapfile.Routine) ->
     return ""
 
 
-def python_for_shell() -> str:
-    """This interpreter as a shell-safe token (8.3 short path on Windows, quoted if it has spaces)."""
-    exe = sys.executable
+def python_for_shell(cfg: Config) -> str:
+    """project.python or this interpreter as a shell-safe token (8.3 short path on Windows, quoted if it has spaces)."""
+    exe = cfg.python or sys.executable
     if os.name == "nt":
         import ctypes
 
@@ -645,7 +708,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     cfg = load_config(args.config)
-    python = python_for_shell()
+    python = python_for_shell(cfg)
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = args.runs_dir / f"{cfg.name.replace(' ', '_')}-{stamp}"
     log = Log(run_dir)
@@ -679,7 +742,7 @@ def main(argv: list[str] | None = None) -> int:
         base_sizes = {k: v.size for k, v in res.items()}
         sizes = dict(base_sizes)
         log.line(f"baseline: {fmt_sizes(sizes)}  (total {sum(sizes.values())})")
-        rs = primary_routines(cfg, res)
+        rs = primary_routines(cfg, res, wt.path)
         attempts: dict[str, int] = {}
         history: dict[str, list[str]] = {}
         queue = candidate_queue(cfg, rs, attempts, args.routine)
@@ -690,6 +753,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             for r in queue:
                 log.line(f"  {r.size:5d}B  {r.lang:3s} {r.name:32s} {r.file}:{r.line}")
+            for r in queue[:10]:  # prove the parser and the source lookup agree before anything is paid for
+                try:
+                    excerpt(cfg, wt.path, r, rs)
+                    status = "ok"
+                except Exception as exc:  # noqa: BLE001
+                    status = f"ERROR {exc}"
+                log.line(f"  excerpt {r.name}: {status}")
             stop_reason = "dry run"
             return 0
 
@@ -764,7 +834,7 @@ def main(argv: list[str] | None = None) -> int:
                                         )
                                         sha = wt.commit(msg)
                                         sizes, res = new_sizes, promote(cache, new)
-                                        rs = primary_routines(cfg, res)
+                                        rs = primary_routines(cfg, res, wt.path)
                                         accepted_total += -deltas[cfg.targets[0].name]
                                         outcome, detail = "ACCEPT", f"{dtxt} commit {sha}"
                                         break

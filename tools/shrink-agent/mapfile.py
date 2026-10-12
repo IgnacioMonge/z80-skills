@@ -6,6 +6,13 @@ A z88dk map line looks like::
     ring_put     = $D512 ; addr, public, , bitstream_asm_asm, code_user, asm/bitstream_asm.asm:812
     __BSS_END_tail = $FC08 ; const, public, def, , ,
 
+sccz80 writes ``file::func::N::N:line`` for C functions. SDCC writes
+``file.c:line`` like an assembly label, where ``line`` belongs to the generated
+``.c.asm`` rather than the source, static functions are ``local``, and the
+same file also lists ``l_*`` jump labels and inline-asm labels. C routines
+from SDCC are therefore recognised by their ``_name`` symbol and the ``.c``
+suffix, and the caller must locate the definition line in the source.
+
 Routine size is the distance from a routine's entry to the next routine entry
 in the same section (or the section tail). That attributes inline literals and
 local labels to the routine that owns them, which is what a size pass needs.
@@ -19,6 +26,7 @@ from pathlib import Path
 LINE_RE = re.compile(r"^(?P<name>\S+)\s*=\s*\$(?P<addr>[0-9A-Fa-f]+)\s*;\s*(?P<rest>.*)$")
 C_LOC_RE = re.compile(r"^(?P<file>.+?)::(?P<func>[^:]+)::\d+::\d+:(?P<line>\d+)$")
 ASM_LOC_RE = re.compile(r"^(?P<file>[^:]+(?::[\\/][^:]*)?):(?P<line>\d+)$")
+C_SYMBOL_RE = re.compile(r"^_[A-Za-z]\w*$")  # SDCC function symbol; l_* and inline-asm labels are not routines
 
 
 @dataclass(frozen=True)
@@ -88,8 +96,14 @@ def routines(symbols: list[Symbol], sections: list[str]) -> list[Routine]:
                     entries.append((s, "c", _norm(c["file"]), int(c["line"]), c["func"]))
                 continue
             a = ASM_LOC_RE.match(s.location)
-            if a and s.scope == "public":
-                entries.append((s, "asm", _norm(a["file"]), int(a["line"]), s.name))
+            if not a:
+                continue
+            file = _norm(a["file"])
+            if file.lower().endswith(".c") or s.module.endswith("_c"):  # SDCC C unit, or a file it #includes
+                if C_SYMBOL_RE.match(s.name):  # C function, static ones included
+                    entries.append((s, "c", file, int(a["line"]), s.name[1:]))
+            elif s.scope == "public":
+                entries.append((s, "asm", file, int(a["line"]), s.name))
         entries.sort(key=lambda e: (e[0].addr, e[3], e[0].name))
         deduped = []
         for e in entries:  # same-address aliases collapse onto the earliest-defined label

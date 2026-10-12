@@ -114,6 +114,7 @@ See `examples/bitstream.toml`. Key fields:
 |---|---|
 | `project.root` | Primary checkout (read-only for the tool). |
 | `project.editable` | Globs of files the proposer may edit. Keep timing-critical drivers out. |
+| `project.python` | Interpreter substituted for `{python}`; default is the one running the tool. Set it when the build needs packages the venv lacks. |
 | `project.rules`, `project.toolchain` | Project facts given to both models. |
 | `project.path_map` | Prefix rewrites for map locations when the build compiles generated copies, e.g. `{ "build/generated/" = "" }`. |
 | `project.tests` | Extra commands run after a size gain, before review. `{python}` expands to this interpreter. |

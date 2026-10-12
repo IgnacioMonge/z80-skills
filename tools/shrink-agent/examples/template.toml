@@ -6,18 +6,19 @@
 name = "myproject"
 root = "/absolute/path/to/project"   # primary checkout; the tool never edits it
 editable = ["src/*.c", "src/*.asm"]  # globs the proposer may edit; keep timing-critical drivers out
+# python = "/usr/bin/python3"        # interpreter for {python}; set it when the build needs packages the venv lacks
 exclude_routines = []
 # path_map = { "build/generated/" = "" }  # map locations of generated copies -> editable source
 toolchain = "z88dk zcc +zx with sccz80, -O3 --opt-code-size"  # facts given to both models
 rules = """
 - Constraints every edit must respect: memory ceilings, protocol strings, timing loops.
 """
-tests = []                           # commands run after a size gain; {python} expands to the interpreter
+tests = []                           # run after a size gain, e.g. the project's overlay or layout size checks
 
 [[targets]]
 name = "main"
 build = "make"                       # run inside the disposable worktree; {python} expands to the interpreter
 map = "build/main.map"               # linker map written by the build
-size_symbol = "__data_compiler_tail" # map symbol marking the end of linked code and data
+size_symbol = "__data_compiler_tail" # end of code+data; __BSS_END_tail when resident memory is the pressure
 origin = 24000                       # code origin: size = size_symbol - origin
 # binary = "build/main_CODE.bin"     # optional: lets the model see the compiled routine
