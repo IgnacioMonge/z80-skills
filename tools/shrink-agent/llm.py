@@ -60,10 +60,15 @@ class ToolCall:
     cost: float
     assistant_content: list = field(default_factory=list)
     tool_use_id: str = ""
+    history: list = field(default_factory=list)  # messages actually sent for this reply
 
 
 class Claude:
-    """Thin wrapper: one forced tool call per request, cached system prompt."""
+    """Thin wrapper: one tool call per request, cached system prompt.
+
+    Models with built-in thinking reject a forced tool_choice, so the tool is
+    offered with tool_choice auto; a reply without the tool call gets one nudge.
+    """
 
     def __init__(self, api_key: str, prices: dict[str, tuple[float, float, float, float]], workspace_id: str = ""):
         import anthropic  # imported lazily so dry runs and tests need no SDK
@@ -77,14 +82,32 @@ class Claude:
     def call(self, model: str, system: list[str], messages: list[dict], tool: dict, max_tokens: int) -> ToolCall:
         system_blocks = [{"type": "text", "text": s} for s in system]
         system_blocks[-1]["cache_control"] = {"type": "ephemeral"}
+        msgs, total = list(messages), 0.0
+        for attempt in range(2):
+            resp = self._create(model, max_tokens, system_blocks, tool, msgs)
+            cost = usage_cost(model, resp.usage, self.prices)
+            self.spent += cost
+            total += cost
+            content = [b.model_dump(exclude_none=True) for b in resp.content]
+            for block in resp.content:
+                if getattr(block, "type", "") == "tool_use" and block.name == tool["name"]:
+                    return ToolCall(dict(block.input), total, content, block.id, msgs)
+            if attempt == 0:
+                msgs = msgs + [
+                    {"role": "assistant", "content": content or [{"type": "text", "text": "(no answer)"}]},
+                    {"role": "user", "content": f"Answer only by calling the {tool['name']} tool."},
+                ]
+        raise RuntimeError(f"model returned no {tool['name']} call (stop_reason={resp.stop_reason})")
+
+    def _create(self, model: str, max_tokens: int, system_blocks: list, tool: dict, messages: list[dict]):
         a = self._anthropic
         try:
-            resp = self.client.messages.create(
+            return self.client.messages.create(
                 model=model,
                 max_tokens=max_tokens,
                 system=system_blocks,
                 tools=[tool],
-                tool_choice={"type": "tool", "name": tool["name"]},
+                tool_choice={"type": "auto"},
                 messages=messages,
             )
         except (a.AuthenticationError, a.PermissionDeniedError, a.NotFoundError) as exc:
@@ -98,10 +121,3 @@ class Claude:
                     " Workspaces), or create a key inside a workspace."
                 )
             raise ApiFatal(msg) from exc
-        cost = usage_cost(model, resp.usage, self.prices)
-        self.spent += cost
-        for block in resp.content:
-            if getattr(block, "type", "") == "tool_use" and block.name == tool["name"]:
-                content = [b.model_dump(exclude_none=True) for b in resp.content]
-                return ToolCall(dict(block.input), cost, content, block.id)
-        raise RuntimeError(f"model returned no {tool['name']} call (stop_reason={resp.stop_reason})")

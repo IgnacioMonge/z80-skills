@@ -260,3 +260,39 @@ def test_fatal_api_error_stops_and_cleans_up(tmp_path, monkeypatch):
     assert subprocess.run(["git", "branch", "--list", "shrink/*"], cwd=proj, capture_output=True, text=True).stdout.strip() == ""
     assert len(subprocess.run(["git", "worktree", "list"], cwd=proj, capture_output=True, text=True).stdout.strip().splitlines()) == 1
     assert "API stopped the run" in next(runs.glob("*/shrink.log")).read_text()
+
+
+class _Block(SimpleNamespace):
+    def model_dump(self, exclude_none=True):
+        return {k: v for k, v in vars(self).items() if v is not None}
+
+
+class _FakeMessages:
+    def __init__(self, replies):
+        self.replies, self.calls = list(replies), []
+
+    def create(self, **kw):
+        self.calls.append(kw)
+        return self.replies.pop(0)
+
+
+def _reply(blocks, stop="end_turn"):
+    usage = SimpleNamespace(input_tokens=1000, output_tokens=100, cache_creation_input_tokens=0, cache_read_input_tokens=0)
+    return SimpleNamespace(content=blocks, usage=usage, stop_reason=stop)
+
+
+def test_claude_call_uses_auto_choice_and_nudges_once():
+    from llm import Claude
+
+    tool = {"name": "submit_candidate", "input_schema": {"type": "object"}}
+    fake = _FakeMessages([
+        _reply([_Block(type="thinking", thinking="t", signature="s"), _Block(type="text", text="hmm")]),
+        _reply([_Block(type="tool_use", name="submit_candidate", id="tu1", input={"decision": "decline"})], "tool_use"),
+    ])
+    c = Claude.__new__(Claude)
+    c._anthropic, c.client, c.prices, c.spent = None, SimpleNamespace(messages=fake), {"m": (4.0, 20.0, 5.0, 0.2)}, 0.0
+    call = c.call("m", ["sys"], [{"role": "user", "content": "go"}], tool, 100)
+    assert call.data == {"decision": "decline"} and call.tool_use_id == "tu1"
+    assert all(kw["tool_choice"] == {"type": "auto"} for kw in fake.calls)
+    assert len(call.history) == 3 and call.history[1]["role"] == "assistant"
+    assert call.cost == pytest.approx(2 * (1000 * 4 + 100 * 20) / 1e6) and c.spent == pytest.approx(call.cost)
