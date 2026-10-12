@@ -92,6 +92,10 @@ incomplete.
 - Byte and report rules: `references/z80-byte-evidence.md`,
   `references/reporting.md`
 - Guardrails: `references/blind-spots.md`
+- Unattended applying loop, only when the user explicitly asks to apply
+  savings automatically or to run shrink-agent: `../../tools/shrink-agent/README.md`.
+  It edits a disposable worktree and commits to its own branch; this skill's
+  read-only contract still governs analysis passes.
 
 ## Core Rules
 
