@@ -1,10 +1,10 @@
-# shrink-agent configuration template. Copy it, then set every value for your
-# project. Relative paths are resolved from project.root. See the README for
-# the optional [agent] and [prices] tables; their defaults are usually fine.
+# shrink-agent configuration template. Copy it to <project>/shrink-agent.toml
+# and set every value. Relative paths are resolved from project.root. See the
+# README for the optional [agent] and [prices] tables; their defaults are fine.
 
 [project]
 name = "myproject"
-root = "/absolute/path/to/project"   # primary checkout; the tool never edits it
+# root = "/path/to/project"         # primary checkout, never edited; default: this file's directory
 editable = ["src/*.c", "src/*.asm"]  # globs the proposer may edit; keep timing-critical drivers out
 # python = "/usr/bin/python3"        # interpreter for {python}; set it when the build needs packages the venv lacks
 exclude_routines = []
@@ -22,3 +22,10 @@ map = "build/main.map"               # linker map written by the build
 size_symbol = "__data_compiler_tail" # end of code+data; __BSS_END_tail when resident memory is the pressure
 origin = 24000                       # code origin: size = size_symbol - origin
 # binary = "build/main_CODE.bin"     # optional: lets the model see the compiled routine
+
+# Overlays or banks linked apart from the main map: measured by file size, each one
+# gated on its own. Empty build = produced by the previous target's build.
+# [[targets]]
+# name = "overlay"
+# build = ""
+# files = "build/*.OVL"

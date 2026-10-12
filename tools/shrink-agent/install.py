@@ -113,7 +113,6 @@ def main() -> None:
 
     python = find_python(args.python)
     HOME.mkdir(mode=0o700, exist_ok=True)
-    (HOME / "configs").mkdir(exist_ok=True)  # where the shrink-z80 skill writes per-project configs
     env_path = HOME / ".env"
     write_env(env_path, ask_credentials(load_env(env_path) if env_path.is_file() else {}))
     py = ensure_venv(HOME, python)
@@ -122,7 +121,7 @@ def main() -> None:
         print("Warning: zcc (z88dk) is not on PATH; builds will fail until it is.")
     print()
     print("Ready." if ok else "Key not verified: fix the problem above and run this again.")
-    print(f"Config:  copy {HERE / 'examples' / 'template.toml'} and set project.root and targets for your project.")
+    print(f"Config:  copy {HERE / 'examples' / 'template.toml'} to <project>/shrink-agent.toml and set its targets.")
     print(f"Dry run: {py} {HERE / 'shrink_agent.py'} --config <your.toml> --dry-run")
     print(f"Tests:   {py} -m pytest -q {HERE}")
 

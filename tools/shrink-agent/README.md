@@ -62,8 +62,8 @@ hardware regression can be bisected and reverted commit by commit.
 ## Use
 
 From Claude Code, inside the project: `/shrink-z80 agent`. The skill writes
-`~/.z80-skills/configs/<project>.toml` from its preflight and launches the run
-with the defaults below. By hand:
+`<project>/shrink-agent.toml` from its preflight, runs the dry run, and
+launches the run with the defaults below. By hand:
 
 ```powershell
 $py = "$HOME/.z80-skills/venv/Scripts/python.exe"   # macOS/Linux: ~/.z80-skills/venv/bin/python
@@ -112,13 +112,13 @@ See `examples/bitstream.toml`. Key fields:
 
 | Field | Meaning |
 |---|---|
-| `project.root` | Primary checkout (read-only for the tool). |
+| `project.root` | Primary checkout, read-only for the tool. Default: the directory holding the config, so `<project>/shrink-agent.toml` needs no path. |
 | `project.editable` | Globs of files the proposer may edit. Keep timing-critical drivers out. |
 | `project.python` | Interpreter substituted for `{python}`; default is the one running the tool. Set it when the build needs packages the venv lacks. |
 | `project.rules`, `project.toolchain` | Project facts given to both models. |
 | `project.path_map` | Prefix rewrites for map locations when the build compiles generated copies, e.g. `{ "build/generated/" = "" }`. |
 | `project.tests` | Extra commands run after a size gain, before review. `{python}` expands to this interpreter. |
-| `[[targets]]` | One per build variant: `build` command, `map`, `size_symbol`, `origin`, optional `binary` for disassembly. The first target's map drives routine ranking. |
+| `[[targets]]` | One per measured unit: `build` command, `map`, `size_symbol`, `origin`, optional `binary` for disassembly. The first target's map drives routine ranking. An empty `build` measures another artifact of the previous build. `files = "build/*.OVL"` measures each matched file by size instead of a map, one gated entry per file, for overlays or banks linked apart from the main map; their routines are not proposed, only guarded. |
 | `agent.*_model` | Model IDs. Prices for cost tracking are in `llm.py`; override with a `[prices]` table: `model = [input, output, cache_write, cache_read]` USD per MTok. |
 | `agent.max_rounds` | Proposal plus repair rounds per routine. |
 | `agent.max_attempts_per_routine` | Times a routine may be revisited in one run. |

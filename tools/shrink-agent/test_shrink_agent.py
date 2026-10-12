@@ -369,3 +369,37 @@ def test_definition_line_found_by_name_when_map_line_is_wrong(tmp_path):
 def test_project_python_overrides_interpreter(tmp_path):
     assert sa.python_for_shell(_cfg(tmp_path, python="/opt/py 3/bin/python")) == '"/opt/py 3/bin/python"'
     assert sa.python_for_shell(_cfg(tmp_path)).strip('"') == sys.executable.replace("\\", "/")
+
+
+def test_root_defaults_to_config_directory(tmp_path):
+    cfg = tmp_path / "shrink-agent.toml"
+    cfg.write_text('[project]\neditable = ["src/*.c"]\n[[targets]]\nname = "t"\nbuild = "make"\nmap = "out.map"\n')
+    loaded = sa.load_config(cfg)
+    assert loaded.root == tmp_path.resolve() and loaded.name == tmp_path.name
+
+
+def test_config_rejects_targets_without_map_or_files(tmp_path):
+    cfg = tmp_path / "c.toml"
+    cfg.write_text('[project]\neditable = ["src/*.c"]\n[[targets]]\nname = "t"\nbuild = "make"\n')
+    with pytest.raises(SystemExit, match="exactly one of map or files"):
+        sa.load_config(cfg)
+    cfg.write_text('[project]\neditable = ["src/*.c"]\n[[targets]]\nname = "t"\nfiles = "*.OVL"\n')
+    with pytest.raises(SystemExit, match="first target"):
+        sa.load_config(cfg)
+
+
+def test_files_target_measures_each_file_from_the_previous_build(tmp_path):
+    wt = tmp_path / "wt"
+    wt.mkdir()
+    (wt / "build.py").write_text(
+        "from pathlib import Path\n"
+        "Path('out.map').write_text('__data_compiler_tail = $0010 ; const, public, def, , ,\\n')\n"
+        "Path('A.OVL').write_bytes(b'x' * 7)\nPath('B.OVL').write_bytes(b'y' * 3)\n"
+    )
+    cfg = _cfg(wt, targets=[sa.Target("main", "{python} build.py", "out.map"), sa.Target("ovl", files="*.OVL")])
+    res = sa.build_all(cfg, wt, tmp_path / "cache", sys.executable)
+    assert {k: v.size for k, v in res.items()} == {"main": 16, "ovl/A.OVL": 7, "ovl/B.OVL": 3}
+    assert sa.missing_targets(cfg, res) == []
+    cfg = _cfg(wt, targets=[sa.Target("main", "{python} build.py", "out.map"), sa.Target("ovl", files="*.BIN")])
+    res = sa.build_all(cfg, wt, tmp_path / "cache", sys.executable)
+    assert not res["ovl"].ok and "no files match" in res["ovl"].error

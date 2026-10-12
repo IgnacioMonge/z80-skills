@@ -36,13 +36,14 @@ exact limitation and continue directly without claiming delegated execution.
   `arch`, `libpull`, `blackbelt`, `reserve`.
 - `diverge`: force a broad candidate search but retain normal proof gates.
 - `agent`: only on an explicit request to apply savings or to run
-  shrink-agent. Run `preflight`, then write
-  `~/.z80-skills/configs/<project>.toml` from its findings when the file is
-  missing (template: `../../tools/shrink-agent/examples/template.toml`;
-  fields in its README). Choose `size_symbol` by the pressure target, set
-  `python` when the build needs the host interpreter, put the project's own
-  size or layout checks in `tests`, and list only targets the project's
-  instructions allow to build. Then run
+  shrink-agent. Run `preflight`, then write `<project>/shrink-agent.toml`
+  from its findings when the file is missing (template:
+  `../../tools/shrink-agent/examples/template.toml`; fields in its README).
+  Choose `size_symbol` by the pressure target, set `python` when the build
+  needs the host interpreter, add a `files` target for overlays or banks
+  linked apart from the main map, put the project's own size or layout
+  checks in `tests`, and list only targets the project's instructions allow
+  to build. Then run
   `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file> --dry-run`
   with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
   `~/.z80-skills/venv/Scripts/python.exe`); no venv or `~/.z80-skills/.env`

@@ -126,11 +126,12 @@ path); UNSURE if equivalence depends on facts you cannot see. Byte savings are i
 @dataclass
 class Target:
     name: str
-    build: str
-    map: str
-    size_symbol: str
-    origin: int
+    build: str = ""  # empty: measure what the previous target's build produced
+    map: str = ""
+    size_symbol: str = "__data_compiler_tail"
+    origin: int = 0
     binary: str = ""
+    files: str = ""  # glob of linked binaries measured by file size, one gated entry per file (overlays, banks)
 
 
 @dataclass
@@ -164,19 +165,26 @@ def load_config(path: Path) -> Config:
     targets = [
         Target(
             name=t["name"],
-            build=t["build"],
-            map=t["map"],
+            build=t.get("build", ""),
+            map=t.get("map", ""),
             size_symbol=t.get("size_symbol", "__data_compiler_tail"),
             origin=int(t.get("origin", 0)),
             binary=t.get("binary", ""),
+            files=t.get("files", ""),
         )
         for t in raw.get("targets", [])
     ]
     if not targets:
         raise SystemExit("config: at least one [[targets]] entry is required")
+    for t in targets:
+        if bool(t.map) == bool(t.files):
+            raise SystemExit(f"config: target {t.name} needs exactly one of map or files")
+    if not targets[0].map or not targets[0].build:
+        raise SystemExit("config: the first target needs a build command and a map; it ranks the routines")
+    root = (path.parent / proj.get("root", ".")).resolve()  # default: the directory holding the config
     cfg = Config(
-        name=proj.get("name") or Path(proj["root"]).name,
-        root=Path(proj["root"]).resolve(),
+        name=proj.get("name") or root.name,
+        root=root,
         editable=list(proj.get("editable", [])),
         targets=targets,
         rules=proj.get("rules", ""),
@@ -269,18 +277,32 @@ class TargetResult:
 
 
 def build_all(cfg: Config, wt: Path, cache: Path, python: str) -> dict[str, TargetResult]:
+    """Build and measure every target in order.
+
+    A target with an empty build measures what the previous build produced. A `files` target yields one
+    entry per matched file, keyed "<target>/<file name>", so each overlay or bank is gated on its own.
+    """
     results: dict[str, TargetResult] = {}
     for t in cfg.targets:
-        cmd = t.build.replace("{python}", python)
-        try:
-            cp = run(cmd, wt, timeout=cfg.build_timeout, shell=True)
-        except subprocess.TimeoutExpired:
-            results[t.name] = TargetResult(False, error=f"build timed out after {cfg.build_timeout}s")
-            break
-        if cp.returncode != 0:
-            tail = (cp.stdout + cp.stderr).strip().splitlines()[-40:]
-            results[t.name] = TargetResult(False, error="\n".join(tail))
-            break
+        if t.build:
+            cmd = t.build.replace("{python}", python)
+            try:
+                cp = run(cmd, wt, timeout=cfg.build_timeout, shell=True)
+            except subprocess.TimeoutExpired:
+                results[t.name] = TargetResult(False, error=f"build timed out after {cfg.build_timeout}s")
+                break
+            if cp.returncode != 0:
+                tail = (cp.stdout + cp.stderr).strip().splitlines()[-40:]
+                results[t.name] = TargetResult(False, error="\n".join(tail))
+                break
+        if t.files:
+            matches = sorted(p for p in wt.glob(t.files) if p.is_file())
+            if not matches:
+                results[t.name] = TargetResult(False, error=f"no files match {t.files}")
+                break
+            for p in matches:
+                results[f"{t.name}/{p.name}"] = TargetResult(True, p.stat().st_size)
+            continue
         tdir = cache / t.name
         tdir.mkdir(parents=True, exist_ok=True)
         map_src = wt / t.map
@@ -300,6 +322,10 @@ def build_all(cfg: Config, wt: Path, cache: Path, python: str) -> dict[str, Targ
             break
         results[t.name] = TargetResult(True, size, map_path=map_copy, binary_path=bin_copy)
     return results
+
+
+def missing_targets(cfg: Config, res: dict[str, TargetResult]) -> list[str]:
+    return [t.name for t in cfg.targets if t.name not in res and not any(k.startswith(t.name + "/") for k in res)]
 
 
 def run_tests(cfg: Config, wt: Path, python: str) -> str:
@@ -734,7 +760,7 @@ def main(argv: list[str] | None = None) -> int:
         cache = run_dir / "cache"
         res = build_all(cfg, wt.path, cache / "base", python)
         bad = [k for k, v in res.items() if not v.ok]
-        if bad or len(res) != len(cfg.targets):
+        if bad or missing_targets(cfg, res):
             name = bad[0] if bad else "?"
             log.line(f"BASELINE BUILD FAILED ({name}):\n{res[name].error if bad else ''}")
             stop_reason, exit_code = "baseline build failed", 2
@@ -800,10 +826,12 @@ def main(argv: list[str] | None = None) -> int:
                     else:
                         new = build_all(cfg, wt.path, cache / "cand", python)
                         failed = [k for k, v in new.items() if not v.ok]
-                        if failed or len(new) != len(cfg.targets):
+                        changed = {k for k, v in new.items() if v.ok} != set(sizes)
+                        if failed or missing_targets(cfg, new) or changed:
                             name = failed[0] if failed else "?"
-                            outcome, detail = "NOBUILD", f"{name}: " + (new[name].error.splitlines()[-1] if failed and new[name].error else "")
-                            feedback = f"Build failed for target {name}:\n{new[name].error if failed else ''}\nFix it or decline."
+                            reason = new[name].error if failed else "the set of measured files changed" if changed else "target not built"
+                            outcome, detail = "NOBUILD", f"{name}: {reason.splitlines()[-1] if reason else ''}"
+                            feedback = f"Build failed for target {name}:\n{reason}\nFix it or decline."
                         else:
                             new_sizes = {k: v.size for k, v in new.items()}
                             deltas = {k: new_sizes[k] - sizes[k] for k in sizes}
