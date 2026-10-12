@@ -889,7 +889,7 @@ def main(argv: list[str] | None = None) -> int:
                                         sha = wt.commit(msg)
                                         sizes, res = new_sizes, promote(cache, new)
                                         rs = primary_routines(cfg, res, wt.path)
-                                        accepted_total += -deltas[cfg.targets[0].name]
+                                        accepted_total += -total
                                         outcome, detail = "ACCEPT", f"{dtxt} commit {sha}"
                                         break
                     wt.revert()
@@ -912,7 +912,7 @@ def main(argv: list[str] | None = None) -> int:
             cost = agent.spent - spent0
             log.line(
                 f"[{it:03d}] {r.name:24s} {r.size:5d}B  {outcome:8s} {detail[:90]}  "
-                f"${cost:.2f}  saved {accepted_total}B on {cfg.targets[0].name}  spent ${agent.spent:.2f}"
+                f"${cost:.2f}  saved {accepted_total}B total  spent ${agent.spent:.2f}"
             )
             log.event(kind="result", routine=r.name, outcome=outcome, detail=detail, cost=cost, sizes=sizes)
     except ApiFatal as exc:
@@ -935,7 +935,7 @@ def main(argv: list[str] | None = None) -> int:
         if git(cfg.root, "status", "--porcelain") != primary_status:
             log.line("WARNING: primary checkout status changed during the run; inspect it.")
         spent = agent.spent if agent else 0.0
-        log.line(f"stop: {stop_reason}. accepted commits {n}, saved {accepted_total} bytes on {cfg.targets[0].name}, spent ${spent:.2f}")
+        log.line(f"stop: {stop_reason}. accepted commits {n}, saved {accepted_total} bytes in total, spent ${spent:.2f}")
         if n:
             log.line(f"review: git -C \"{cfg.root}\" log --stat {wt.base[:7]}..{wt.branch}")
         else:
