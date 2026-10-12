@@ -308,8 +308,8 @@ def test_template_config_loads():
 def test_path_map_points_generated_copies_at_sources(tmp_path):
     cfg = _cfg(tmp_path, path_map={"build/generated/": ""})
     r = mapfile.Routine("alpha", "_alpha", 0x6000, 16, "code_compiler", "build/generated/src/a.c", 12, "c")
-    assert sa.source_path(cfg, cfg.targets[0], r).file == "src/a.c"
-    assert sa.source_path(cfg, cfg.targets[0], mapfile.Routine("beta", "_beta", 0, 8, "code_user", "asm/x.asm", 1, "asm")).file == "asm/x.asm"
+    assert sa.source_path(cfg, "out.map", r).file == "src/a.c"
+    assert sa.source_path(cfg, "out.map", mapfile.Routine("beta", "_beta", 0, 8, "code_user", "asm/x.asm", 1, "asm")).file == "asm/x.asm"
 
 
 SDCC_MAP = textwrap.dedent(
@@ -334,9 +334,9 @@ def test_routines_sdcc_map_keeps_static_functions_and_skips_labels():
 def test_source_path_resolves_map_relative_parent_dirs(tmp_path):
     cfg = _cfg(tmp_path, targets=[sa.Target("t", "", "build/out.map", "__data_compiler_tail", 0)])
     r = mapfile.Routine("foo", "_foo", 0, 8, "code_compiler", "../src/app.c", 1, "c")
-    assert sa.source_path(cfg, cfg.targets[0], r).file == "src/app.c"
+    assert sa.source_path(cfg, "build/out.map", r).file == "src/app.c"
     escaped = mapfile.Routine("foo", "_foo", 0, 8, "code_compiler", "../../etc/x.c", 1, "c")
-    assert sa.source_path(cfg, cfg.targets[0], escaped).file == "../../etc/x.c"
+    assert sa.source_path(cfg, "build/out.map", escaped).file == "../../etc/x.c"
 
 
 def test_definition_line_found_by_name_when_map_line_is_wrong(tmp_path):
@@ -403,3 +403,26 @@ def test_files_target_measures_each_file_from_the_previous_build(tmp_path):
     cfg = _cfg(wt, targets=[sa.Target("main", "{python} build.py", "out.map"), sa.Target("ovl", files="*.BIN")])
     res = sa.build_all(cfg, wt, tmp_path / "cache", sys.executable)
     assert not res["ovl"].ok and "no files match" in res["ovl"].error
+
+
+def test_source_path_strips_parent_dirs_when_the_compiler_ran_elsewhere(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.c").write_text("int f(void)\n{\n}\n")
+    r = mapfile.Routine("f", "_f", 0, 8, "code_compiler", "../src/a.c", 1, "c")
+    assert sa.source_path(_cfg(tmp_path), "build/ovl/X/x.map", r, tmp_path).file == "src/a.c"
+
+
+def test_maps_glob_adds_overlay_routines_keeping_the_largest(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.c").write_text("int foo(void)\n{\n}\nint bar(void)\n{\n}\n")
+    main_map = tmp_path / "out.map"
+    main_map.write_text("_foo = $6000 ; addr, public, , a_c, code_compiler, ../src/a.c:1\n"
+                        "__code_compiler_tail = $6010 ; const, public, def, , ,\n")
+    ovl = tmp_path / "build" / "ovl" / "X"
+    ovl.mkdir(parents=True)
+    (ovl / "x.map").write_text("_bar = $6800 ; addr, public, , a_c, code_compiler, ../src/a.c:4\n"
+                               "_foo = $6820 ; addr, public, , a_c, code_compiler, ../src/a.c:1\n"
+                               "__code_compiler_tail = $6834 ; const, public, def, , ,\n")
+    cfg = _cfg(tmp_path, targets=[sa.Target("main", "x", "out.map"), sa.Target("ovl", files="build/*.OVL", maps="build/ovl/*/*.map")])
+    rs = sa.primary_routines(cfg, {"main": sa.TargetResult(True, 0, map_path=main_map)}, tmp_path)
+    assert [(r.name, r.size, r.file, r.line) for r in rs] == [("bar", 0x20, "src/a.c", 4), ("foo", 0x14, "src/a.c", 1)]

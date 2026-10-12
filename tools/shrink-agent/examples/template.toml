@@ -29,3 +29,4 @@ origin = 24000                       # code origin: size = size_symbol - origin
 # name = "overlay"
 # build = ""
 # files = "build/*.OVL"
+# maps = "build/ovl/*/*.map"        # optional: propose overlay routines too (the overlay link must write maps)

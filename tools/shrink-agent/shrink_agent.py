@@ -132,6 +132,7 @@ class Target:
     origin: int = 0
     binary: str = ""
     files: str = ""  # glob of linked binaries measured by file size, one gated entry per file (overlays, banks)
+    maps: str = ""  # glob of maps whose routines become candidates too (the build must write them, e.g. z80asm -m)
 
 
 @dataclass
@@ -171,6 +172,7 @@ def load_config(path: Path) -> Config:
             origin=int(t.get("origin", 0)),
             binary=t.get("binary", ""),
             files=t.get("files", ""),
+            maps=t.get("maps", ""),
         )
         for t in raw.get("targets", [])
     ]
@@ -627,25 +629,46 @@ def promote(cache: Path, new: dict[str, TargetResult]) -> dict[str, TargetResult
 
 
 def primary_routines(cfg: Config, res: dict[str, TargetResult], wt: Path) -> list[mapfile.Routine]:
+    """Routines from the first target's map plus every `maps` glob, largest first.
+
+    A routine compiled into several maps (a helper shared by overlays) keeps its largest size.
+    """
     first = cfg.targets[0]
-    out = []
-    for r in mapfile.routines(mapfile.parse_map(res[first.name].map_path), cfg.sections):
-        r = source_path(cfg, first, r)
-        out.append(definition_line(cfg, wt, r) if r.lang == "c" else r)
-    return out
+    sources: list[tuple[str, Path]] = [(first.map, res[first.name].map_path)]
+    for t in cfg.targets:
+        if t.maps:
+            sources += [(p.relative_to(wt).as_posix(), p) for p in sorted(wt.glob(t.maps)) if p.is_file()]
+    best: dict[tuple[str, str], mapfile.Routine] = {}
+    for map_rel, map_path in sources:
+        for r in mapfile.routines(mapfile.parse_map(map_path), cfg.sections):
+            r = source_path(cfg, map_rel, r, wt)
+            if r.lang == "c":
+                r = definition_line(cfg, wt, r)
+            key = (r.file, r.name)
+            if key not in best or r.size > best[key].size:
+                best[key] = r
+    return sorted(best.values(), key=lambda r: (-r.size, r.name))
 
 
-def source_path(cfg: Config, target: Target, r: mapfile.Routine) -> mapfile.Routine:
-    """Point a routine at its editable source: project.path_map first, then map-relative `../` locations."""
+def source_path(cfg: Config, map_rel: str, r: mapfile.Routine, wt: Path | None = None) -> mapfile.Routine:
+    """Point a routine at its editable source.
+
+    project.path_map first; then a `../` location is resolved against the map's directory, or, when the
+    tree is available and that file is missing, with its leading `../` stripped (the compiler ran elsewhere).
+    """
     file = r.file
     for prefix, replacement in cfg.path_map.items():
         if file.startswith(prefix):
             file = replacement + file[len(prefix):]
             break
     if ".." in file.split("/"):
-        rel = posixpath.normpath(posixpath.join(posixpath.dirname(target.map.replace("\\", "/")), file))
-        if rel != ".." and not rel.startswith("../") and not posixpath.isabs(rel):
+        rel = posixpath.normpath(posixpath.join(posixpath.dirname(map_rel.replace("\\", "/")), file))
+        inside = rel != ".." and not rel.startswith("../") and not posixpath.isabs(rel)
+        stripped = re.sub(r"^(\.\./)+", "", file)
+        if inside and (wt is None or (wt / rel).is_file()):
             file = rel
+        elif wt is not None and (wt / stripped).is_file():
+            file = stripped
     return r if file == r.file else dataclasses.replace(r, file=file)
 
 
@@ -769,6 +792,9 @@ def main(argv: list[str] | None = None) -> int:
         sizes = dict(base_sizes)
         log.line(f"baseline: {fmt_sizes(sizes)}  (total {sum(sizes.values())})")
         rs = primary_routines(cfg, res, wt.path)
+        for t in cfg.targets:
+            if t.maps and not any(wt.path.glob(t.maps)):
+                log.line(f"warning: no maps match {t.maps}; those routines are guarded, not proposed")
         attempts: dict[str, int] = {}
         history: dict[str, list[str]] = {}
         queue = candidate_queue(cfg, rs, attempts, args.routine)

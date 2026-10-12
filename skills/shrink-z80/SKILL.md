@@ -41,7 +41,8 @@ exact limitation and continue directly without claiming delegated execution.
   `../../tools/shrink-agent/examples/template.toml`; fields in its README).
   Choose `size_symbol` by the pressure target, set `python` when the build
   needs the host interpreter, add a `files` target for overlays or banks
-  linked apart from the main map, put the project's own size or layout
+  linked apart from the main map (`maps` too when their link writes maps,
+  so their routines are proposed), put the project's own size or layout
   checks in `tests`, and list only targets the project's instructions allow
   to build. Then run
   `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file> --dry-run`
