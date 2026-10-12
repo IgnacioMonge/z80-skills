@@ -1,6 +1,7 @@
 ---
 name: debug-z80
 description: Evidence-bounded root-cause debugging for observed Z80, ZX Spectrum, or ZX Spectrum Next failures whose cause is unresolved. Use for reproducible crashes, wrong output, build or link failures, nondeterminism, regressions, hardware or emulator divergence, and failed fixes. Do not use for known-cause fixes, speculative audits, routine reviews, green refactors, or optimization without a failing behavior.
+disable-model-invocation: true
 ---
 
 # Debug Z80

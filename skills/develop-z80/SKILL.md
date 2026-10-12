@@ -1,6 +1,7 @@
 ---
 name: develop-z80
 description: Develop a complete Z80/ZX/Next product or deliberate vertical slice from an explicit initiative, or resume its SDD dossier and milestones. Do not use for routine bug fixes, isolated repository features, or Spectranext cartridge consumer ports.
+disable-model-invocation: true
 ---
 
 # Develop Z80

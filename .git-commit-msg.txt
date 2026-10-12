@@ -1,0 +1,20 @@
+feat: Claude Code install variant
+
+Lets Claude Code use this checkout in place, as Codex does:
+
+- scripts/install-for-claude.ps1 links ~/.claude/skills/<name> to
+  skills/<name> for every bundled skill and ~/.claude/scripts to scripts/,
+  so the skills' ../../scripts/run_in_worktree.py references resolve.
+  Idempotent; real directories with the same name are reported, never
+  deleted.
+- The nine routed specialists declare disable-model-invocation: true, so
+  Claude Code exposes only route-z80 and workflow implicitly, mirroring the
+  Codex implicit-invocation policy. Hosts without that field ignore it.
+- workflow roles policy maps the roles to Claude Code (Agent subagent
+  types, explicit opus/sonnet selection, no reasoning-effort parameter).
+- README (EN/ES) installation section and CHANGELOG entries.
+
+Work dated 2026-10-03, in use through the junctions since then.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Eak8kgKh9JU5ojvTf33ApF

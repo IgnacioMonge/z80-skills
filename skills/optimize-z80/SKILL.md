@@ -1,6 +1,7 @@
 ---
 name: optimize-z80
 description: Read-only strategy engine for optimizing Z80 and ZX Spectrum projects across size, speed, RAM, rendering, latency, banking, overlays, data layout, C-to-ASM, z88dk/SDCC codegen, ABI, toolchain, and model-specific hardware constraints. Uses the shared workflow skill to scale execution, then ranks only project-local, policy-compliant candidates with explicit validation.
+disable-model-invocation: true
 ---
 
 # Optimize Z80

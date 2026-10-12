@@ -1,6 +1,7 @@
 ---
 name: shrink-z80
 description: Evidence-first binary-size optimization for Z80 and ZX Spectrum projects, including mixed ASM/C built with z88dk or SDCC. Use to reduce linked code, data, BSS, stack pressure, resident payloads, banks, overlays, library pulls, generated code, and compressed assets. Uses the shared workflow skill to scale execution while ranking only locally evidenced net savings.
+disable-model-invocation: true
 ---
 
 # Shrink Z80

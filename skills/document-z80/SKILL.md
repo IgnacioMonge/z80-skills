@@ -1,6 +1,7 @@
 ---
 name: document-z80
 description: Create, restructure, synchronize, or review public GitHub documentation for Z80, ZX Spectrum, and ZX Spectrum Next repositories. Use for README authoring, documentation architecture, English/Spanish parity, and accurate installation, usage, build, release, hardware, protocol, or troubleshooting documentation. Do not use for agent-only instructions, source-code comments, generic prose, or Google Docs.
+disable-model-invocation: true
 ---
 
 # Document Z80

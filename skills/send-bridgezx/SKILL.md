@@ -1,6 +1,7 @@
 ---
 name: send-bridgezx
 description: Send local files or directories to a ZX Spectrum Classic or ZX Spectrum Next through BridgeZX, using the explicit or last-known IP and honoring an optional remote destination or transfer sequence. Use when the user asks to send, upload, copy, or push artifacts to a ZX or Next with BridgeZX. Do not use for BridgeZX server updates or development of BridgeZX itself.
+disable-model-invocation: true
 ---
 
 # Send BridgeZX

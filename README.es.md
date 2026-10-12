@@ -256,6 +256,28 @@ y `~/.claude/skills`. Los skills personales ajenos a este repositorio no se
 tocan. Tras un `git pull`, Grok ya ve los árboles actualizados; abre una tarea
 nueva para recargar el catálogo.
 
+### Claude Code
+
+Claude Code también lee este checkout en el sitio mediante *junctions* de
+directorio. `~/.claude/skills/<nombre>` enlaza a `skills/<nombre>` para los once
+skills, y `~/.claude/scripts` enlaza a `scripts/` para que las referencias
+`../../scripts/run_in_worktree.py` de los skills se resuelvan a través de los
+enlaces.
+
+```powershell
+pwsh -File .\scripts\install-for-claude.ps1
+```
+
+El script es idempotente: conserva los enlaces canónicos existentes, reenlaza los
+obsoletos y avisa de directorios reales sin borrarlos. Solo `route-z80` y
+`workflow` se exponen implícitamente; los nueve especialistas declaran
+`disable-model-invocation: true` y siguen disponibles como `/develop-z80`,
+`/optimize-z80`, etc. La delegación Heavy sigue el mapeo para Claude Code en
+[roles.md](skills/workflow/references/roles.md). Tras un `git pull`, abre una
+sesión nueva de Claude Code para recargar el catálogo. Si además ejecutas
+`install-for-grok.ps1`, pásale `-SkipClaudeCleanup`; de lo contrario deshace
+estos enlaces.
+
 ## Uso
 
 Los skills se invocan mediante lenguaje natural. Cuanto más concretos sean el

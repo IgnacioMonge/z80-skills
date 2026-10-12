@@ -10,6 +10,12 @@ repository; these entries track development toward the first published release.
 - `tools/shrink-agent`: unattended Claude API loop that applies size reductions to a
   z88dk project in a disposable worktree, one routine per commit, gated by all-target
   builds, byte measurement, optional tests and an independent model review.
+- Claude Code host mapping in the workflow roles policy: `Agent` subagent types,
+  explicit `opus`/`sonnet` selection, no reasoning-effort parameter, no Astra
+  equivalent. Codex tables and defaults are unchanged.
+- Claude Code installation notes: per-skill junctions from `~/.claude/skills`
+  plus a `~/.claude/scripts` junction so `scripts/run_in_worktree.py` resolves.
+
 - Explicit, assignment-scoped Astra Medium option for causal/high-risk delegation.
   Automatic fallback, inheritance, unverified defaults, and effort upgrades cannot
   enable it.
@@ -36,7 +42,11 @@ repository; these entries track development toward the first published release.
   descriptions, and asserting comments as search seeds, not proof. Audit coverage
   states a reason for every skipped area, and audit and shrink instructions use
   the host-selected Python interpreter instead of a hardcoded `python3`.
-
+- The nine routed specialists declare `disable-model-invocation: true` so Claude
+  Code exposes only `route-z80` and `workflow` implicitly, mirroring the Codex
+  implicit-invocation policy. Hosts without that field ignore it.
+- The Grok installer test runs PowerShell with `-ExecutionPolicy Bypass`, so a
+  Mark-of-the-Web on the checkout no longer fails it under `RemoteSigned`.
 - Workflow delegation uses Sol 6.1 instead of Luna/Sol 5.6, preserving each
   assignment's reasoning effort and the explicit Astra Medium opt-in. Current
   documentation and policy evaluation cases follow the new defaults; historical

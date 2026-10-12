@@ -1,6 +1,7 @@
 ---
 name: organize-z80
 description: Map Z80 ownership and dependencies, design boundaries, or plan and apply an approved reorganization. Use for structural work and persistent project maps in ASM/C, z88dk/SDCC, banked or overlay projects while preserving behavior, ABI, memory, and timing.
+disable-model-invocation: true
 ---
 
 # Organize Z80

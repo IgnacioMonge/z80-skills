@@ -135,6 +135,8 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
                 [
                     shell,
                     "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
                     "-File",
                     str(GROK_INSTALLER),
                     "-Dest",

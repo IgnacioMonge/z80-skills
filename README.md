@@ -249,6 +249,27 @@ and `~/.claude/skills`. Unrelated personal skills in those directories are left
 untouched. After a `git pull`, Grok already sees the updated trees; open a new
 Grok task so the catalog reloads.
 
+### Claude Code
+
+Claude Code also reads this checkout in place through directory junctions.
+`~/.claude/skills/<name>` links to `skills/<name>` for the eleven skills, and
+`~/.claude/scripts` links to `scripts/` so the `../../scripts/run_in_worktree.py`
+references inside the skills resolve through the junctions.
+
+```powershell
+pwsh -File .\scripts\install-for-claude.ps1
+```
+
+The script is idempotent: existing canonical junctions are kept, stale ones are
+relinked, and real directories are reported but never deleted. Only `route-z80`
+and `workflow` are exposed implicitly; the nine specialists set
+`disable-model-invocation: true` and remain available as `/develop-z80`,
+`/optimize-z80`, and so on. Heavy delegation follows the Claude Code host
+mapping in [roles.md](skills/workflow/references/roles.md). After a `git pull`,
+open a new Claude Code session so the catalog reloads. If you also run
+`install-for-grok.ps1`, pass `-SkipClaudeCleanup`; otherwise it unlinks these
+junctions.
+
 ## Usage
 
 The skills are invoked through natural language. The more specific the target,

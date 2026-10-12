@@ -1,6 +1,7 @@
 ---
 name: audit-z80
 description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits, or for the correctness risk of a change set (diff, branch, or PR) without an observed failure, involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
+disable-model-invocation: true
 ---
 
 # Audit Z80

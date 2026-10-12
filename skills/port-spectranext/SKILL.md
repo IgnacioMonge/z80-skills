@@ -1,6 +1,7 @@
 ---
 name: port-spectranext
 description: Orchestrate starting, resuming, implementing, diagnosing, validating, and handing off an existing ZX program port to the Spectranext cartridge through its canonical external consumer pipeline. Use when explicitly invoked or selected by route-z80 for a Spectranext cartridge port. Do not use for ZX Spectrum Next targets, generic ZX ports, or development of the Spectranext backend itself.
+disable-model-invocation: true
 ---
 
 # Port Spectranext

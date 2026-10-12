@@ -1,6 +1,7 @@
 # Portable Agent Roles
 
-Use only Codex's documented built-in agent types. Role behavior comes from the
+On Codex, use only Codex's documented built-in agent types. Other hosts follow
+[Other hosts](#other-hosts-claude-code). Role behavior comes from the
 self-contained task capsule, not from custom profiles installed outside this
 plugin.
 
@@ -77,6 +78,32 @@ was explicitly required. Disclose any fallback and lost effort pinning. If an
 explicit choice cannot be honored, report the limitation before dependent work.
 Record requested settings and runtime-confirmed settings separately; do not
 infer actual identity from a worker's prose.
+
+## Other hosts: Claude Code
+
+The tables above are Codex-specific. On Claude Code the delegation primitive is
+the `Agent` tool; map roles and models as follows and keep every other rule in
+this file unchanged.
+
+| Workflow role | Claude `subagent_type` | Capsule note |
+| --- | --- | --- |
+| Investigator | `Explore` | read-only by construction |
+| Implementer | `general-purpose` | capsule names the disjoint write surface |
+| Verifier | `general-purpose` | fresh context; capsule forbids edits |
+
+- Every Claude subagent starts with fresh context, which already satisfies the
+  `fork_turns="none"` requirement; there is no parameter to set. Task names go
+  in `description`.
+- Pass `model` explicitly: `opus` for difficult causal reasoning, conflicting
+  evidence, high-risk contract analysis, and judgment-bearing coding or review;
+  `sonnet` for narrow lookups, mechanical edits, and predefined checks. Codex
+  model IDs (`gpt-*`) are never valid `model` values here.
+- Reasoning effort is not an `Agent` parameter. Omit it and record
+  `effort: not exposed by host` in the requested/confirmed settings; do not
+  emulate it with longer prompts.
+- The Astra Medium opt-in has no Claude equivalent. Treat an explicit Astra
+  request as an unavailable explicit choice: report the limitation before the
+  dependent delegation and continue within the defaults above.
 
 ## Capsule contracts
 
