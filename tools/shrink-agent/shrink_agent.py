@@ -802,7 +802,13 @@ def main(argv: list[str] | None = None) -> int:
             log.line(f"review: git -C \"{cfg.root}\" log --stat {wt.base[:7]}..{wt.branch}")
         else:
             log.line("no accepted commits; branch deleted" if not args.keep_worktree else "no accepted commits")
-        log.event(kind="end", reason=stop_reason, accepted=n, saved=accepted_total, spent=spent)
+        tokens = getattr(getattr(agent, "claude", None), "tokens", {})
+        for model, t in tokens.items():
+            log.line(
+                f"tokens {model}: input {t.get('input_tokens', 0)}, output {t.get('output_tokens', 0)}, "
+                f"cache write {t.get('cache_creation_input_tokens', 0)}, cache read {t.get('cache_read_input_tokens', 0)}"
+            )
+        log.event(kind="end", reason=stop_reason, accepted=n, saved=accepted_total, spent=spent, tokens=tokens)
     return exit_code
 
 

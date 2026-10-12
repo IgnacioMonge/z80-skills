@@ -291,8 +291,10 @@ def test_claude_call_uses_auto_choice_and_nudges_once():
     ])
     c = Claude.__new__(Claude)
     c._anthropic, c.client, c.prices, c.spent = None, SimpleNamespace(messages=fake), {"m": (4.0, 20.0, 5.0, 0.2)}, 0.0
+    c.tokens = {}
     call = c.call("m", ["sys"], [{"role": "user", "content": "go"}], tool, 100)
     assert call.data == {"decision": "decline"} and call.tool_use_id == "tu1"
     assert all(kw["tool_choice"] == {"type": "auto"} for kw in fake.calls)
     assert len(call.history) == 3 and call.history[1]["role"] == "assistant"
     assert call.cost == pytest.approx(2 * (1000 * 4 + 100 * 20) / 1e6) and c.spent == pytest.approx(call.cost)
+    assert c.tokens["m"]["input_tokens"] == 2000 and c.tokens["m"]["output_tokens"] == 200

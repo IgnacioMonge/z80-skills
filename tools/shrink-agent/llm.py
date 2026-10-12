@@ -78,6 +78,7 @@ class Claude:
         self.client = anthropic.Anthropic(api_key=api_key, max_retries=4, timeout=600, default_headers=headers)
         self.prices = prices
         self.spent = 0.0
+        self.tokens: dict[str, dict[str, int]] = {}  # model -> usage field -> total, to reconcile with the Console
 
     def call(self, model: str, system: list[str], messages: list[dict], tool: dict, max_tokens: int) -> ToolCall:
         system_blocks = [{"type": "text", "text": s} for s in system]
@@ -88,6 +89,9 @@ class Claude:
             cost = usage_cost(model, resp.usage, self.prices)
             self.spent += cost
             total += cost
+            tally = self.tokens.setdefault(model, {})
+            for f in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"):
+                tally[f] = tally.get(f, 0) + int(getattr(resp.usage, f, 0) or 0)
             content = [b.model_dump(exclude_none=True) for b in resp.content]
             for block in resp.content:
                 if getattr(block, "type", "") == "tool_use" and block.name == tool["name"]:
