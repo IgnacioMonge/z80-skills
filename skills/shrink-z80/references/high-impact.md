@@ -8,6 +8,9 @@ threshold (user figure, else 30 B net). Put smaller ones in one tail line.
 
 - Detect: census `[overlay_only]`. A group lists the routine plus its helpers
   that move with it (`with <caller>`).
+- Accept only while resident is the pressure target: a move spends the
+  destination overlay's margin. Once resident has room and overlays near their
+  cap are the constraint, stop moving and work overlay headroom instead.
 - Accept: every target's census agrees. Run it per linked map, because another
   target may call the routine from resident. The overlay keeps its cap, and
   moved helpers stay static in the overlay.

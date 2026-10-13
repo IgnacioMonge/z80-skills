@@ -56,6 +56,13 @@ def load_map(path: Path) -> list[tuple[int, str, str, str]]:
     return sorted(rows.values())
 
 
+def bss_head(path: Path) -> int | None:
+    """__BSS_head: defc aliases into BSS keep their source's code section."""
+    m = re.search(r"^__BSS_head\s+= \$([0-9A-Fa-f]+) ; const",
+                  path.read_text(encoding="utf-8", errors="replace"), re.M)
+    return int(m.group(1), 16) if m else None
+
+
 def routines(symbols, origin: int, end: int) -> list[tuple[int, int, str, str]]:
     """(start, size, name, module) with local labels folded into the owner."""
     starts = [s for s in symbols if origin <= s[0] < end]
@@ -119,6 +126,9 @@ def main() -> int:
 
     code = args.bin.read_bytes()
     end = args.origin + len(code)
+    bss = bss_head(args.map)
+    if bss is not None and args.origin < bss < end:
+        end = bss
     symbols = load_map(args.map)
     rts = routines(symbols, args.origin, end)
     overlays = {}
