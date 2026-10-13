@@ -16,7 +16,9 @@ Verification:
 ```
 
 Order by net impact, safety, and leverage. Never sum speculative, dependent,
-subsumed, or mutually exclusive candidates.
+subsumed, or mutually exclusive candidates. Candidates below the materiality
+threshold get one tail line (`Tail: <count> candidates, <bytes> B total`),
+not cards.
 
 ## Totals
 

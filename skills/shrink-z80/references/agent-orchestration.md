@@ -17,11 +17,12 @@ Choose from preflight evidence rather than launching a fixed roster.
 
 | Lane | Select when |
 |---|---|
-| `arch-resident` | repeated systems, state/protocol collapse, CRT/startup drag, resident/banked split, lifetime reuse |
-| `libpull-codegen` | C, generated ASM/listings, arithmetic/stdio/heap helpers, conventions, copt opportunities |
-| `data-compress` | strings, tables, screens, sprites, levels, packed assets, buffers, decoder or workspace tradeoffs |
-| `asm-layout` | hand ASM, repeated tails, prefix density, branch/layout/page opportunities, micro candidates |
-| `research-scout` | external discovery can resolve a codec/toolchain/technique uncertainty or the SAFE pass stalls |
+| `overlay-move` | census `[overlay_only]` groups at or above the threshold |
+| `gate-dead` | large dispatch/session C with early-return gates (census `[mass]`) |
+| `codegen-abi` | census `[frame_idioms]` or `[abi_cleanup]` at or above the threshold; compiler-flag sweep |
+| `asm-rewrite` | large hand-ASM modules in `[mass]`: twin routines, adapters, loops |
+| `arch-data` | the census or user points at protocol/state tables, strings, assets or compression |
+| `micro-tail` | only when the user names `micro`, `dedup` or `blackbelt` |
 
 The main agent runs deterministic scripts once and keeps the map/freshness
 ledger. An adaptive `Deep` scan normally assigns the two or three lanes with
@@ -47,6 +48,8 @@ or reports the pass incomplete.
 Task: shrink-z80 candidate search
 Lane: <lane>
 Pressure target: <storage|linked|resident|BSS/stack|bank/overlay>
+Threshold: <N B net on the pressure target; smaller findings are not returned>
+Census: <the winner_census.py lines for this lane>
 Scope: <exact paths/artifacts>
 Baseline: <toolchain, flags, selected map, freshness, current sizes; <=12 lines>
 Control: <workflow level and assigned worker role>
@@ -57,7 +60,8 @@ References: <only relevant files/sections>
 ## Compact Return Contract
 
 Return at most three candidates by default; allow five only for an explicit
-exhaustive pass when all are independent and materially sized:
+exhaustive pass when all are independent. Every returned candidate clears the
+materiality threshold given in the brief:
 
 ```text
 - Mechanism:

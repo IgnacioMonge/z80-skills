@@ -7,6 +7,14 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- `shrink-z80` winner pass: `scripts/winner_census.py` ranks resident code used
+  by a single overlay (with the helpers that move with it), unreferenced
+  routines, caller-side stack cleanup per callee and repeated SDCC frame or
+  boolean idioms from a linked map and its overlay binaries. `scan` now works
+  six winner families (overlay moves, gate-dominated re-checks, allocation
+  budget sweep, peephole helpers, callee/fastcall ABI, twin routines) above a
+  30 B materiality threshold; micro lanes run only when named, and `agent`
+  runs the census and asks before launching shrink-agent.
 - `tools/shrink-agent`: unattended Claude API loop that applies size reductions to a
   z88dk project in a disposable worktree, one routine per commit, gated by all-target
   builds, byte measurement, optional tests and an independent model review.

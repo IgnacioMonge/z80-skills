@@ -1,85 +1,84 @@
-# High-Impact Pass
+# Winner Pass
 
-Start here for `scan`. Small wins are fine, but do not let them crowd out the categories that usually save real bytes.
+Start here for `scan`. Work these families in the order the census ranks
+them for the pressure target. Each kept candidate must clear the materiality
+threshold (user figure, else 30 B net). Put smaller ones in one tail line.
 
-## Attack order
+## 1. Overlay-only resident code -> move into that overlay
 
-1. `crt` / resident pressure (map + freshness)
-2. `arch`
-3. `libpull`
-4. `deadcode` or `refactor`
-5. `data`
-6. `micro`
-7. `dedup`
+- Detect: census `[overlay_only]`. A group lists the routine plus its helpers
+  that move with it (`with <caller>`).
+- Accept: every target's census agrees. Run it per linked map, because another
+  target may call the routine from resident. The overlay keeps its cap, and
+  moved helpers stay static in the overlay.
+- Verify: callers in C and ASM (`rg` the symbol, `EXTERN`, `call`/`jp`,
+  function tables). `[weak refs]` means a bare 16-bit match: check data tables.
+  Host tests that stub the symbol, layering guards, overlay-state allowlists
+  and ABI baselines usually need an intentional update.
 
-## Arch checks
+## 2. Code dominated by an earlier gate -> delete the re-check
 
-Look for:
+- Detect: for each early-return gate on a dispatch path (peer ready, transfer
+  pending, busy, game state), `rg` the same predicate below it on every path
+  from that gate.
+- Accept: every caller path, in every `#if` target branch, passes the gate
+  first. A stricter predicate the gate implies counts too
+  (`!game_active || peer` after a `peer` gate).
+- Verify: transition and parity tests. Test harnesses that call the inner
+  function directly may depend on the re-check.
 
-- sequential blocks that should collapse into a loop and table
-- repeated protocol send or parse skeletons
-- shared suffixes or prefixes that can move into a helper
-- state machines that can become data-driven
-- buffers or scratch regions whose lifetimes do not overlap
-- object/render/update pipelines where a single table can replace parallel switch/case code
-- repeated command/protocol/screen emitters that can become token streams or bytecode
-- layout changes that create fall-throughs, shared suffixes, shorter branches, or bank/locality wins
+## 3. Compiler allocation budget -> one flag, every module
 
-Architecture changes can subsume later dedup or micro wins. Account for that dependency in the report.
+- Detect: SDCC builds without `--max-allocs-per-node`, or with a low value.
+- Measure: in a disposable worktree, build at 20000, 50000 and 200000. Record
+  the resident delta, each overlay's delta and the full-build time against
+  the current flag.
+- Accept: the resident saving clears the threshold and every overlay stays
+  within its cap. Report overlays that grow. If the slowest value wins but
+  builds are slow, offer a default value plus a release-only value.
 
-## Libpull checks
+## 4. Generated-code idioms -> shared helper plus one peephole rule
 
-Prioritize:
+- Detect: census `[frame_idioms]`. SDCC IX epilogues (`ld sp,ix; pop ix;
+  ret`) become `jp` to a shared helper. Inline IX prologues in fastcall
+  functions become `call` to an HL-preserving helper
+  (`ex (sp),ix; push ix; ld ix,2; add ix,sp; ret`).
+- Use the project's custom COPT rule file (`-custom-copt-rules`), matching the
+  exact text zsdcc emits (`ld	sp, ix` has a space). Export the helper to
+  overlays when their rule file uses it.
+- Booleanization sequences need flag liveness. Treat them as estimates until a
+  rule proves the flags are dead.
 
-- `*`, `/`, `%` on non-constant operands
-- `printf`, `sprintf`, `snprintf`, `scanf`
-- `malloc`, `free`
-- string and memory helpers that are linked for a single call site
+## 5. Caller-side stack cleanup -> callee/fastcall ABI
 
-Use the `.map` to prove the routine is actually present before claiming the saving.
+- Detect: census `[abi_cleanup]`, per callee. Convert the largest ones:
+  `__z88dk_callee` keeps the C signature; `__z88dk_fastcall` takes one
+  argument in registers.
+- ASM callees must pop their own arguments, on every exit path. Update ASM
+  callers, test drivers and stubs. Guards that pin a dispatcher's decode
+  sequence change with it.
+- Below the threshold per callee, list only.
 
-## Deadcode and refactor
+## 6. Twin routines -> one implementation plus an adapter
 
-- verify truly dead functions with textual references, map presence, and indirect-use sanity
-- look for repeated epilogues, wrappers, and one-use helpers
-- measure whether a helper saves bytes after `call` and `ret` overhead
+- Detect: census `[mass]` for large ASM. Look for two routines doing the same
+  job in different coordinates or ABIs (cell row vs absolute Y, region clear
+  vs per-cell clear, unrolled vs loop).
+- Accept: output is byte-identical. Prove it with a vector that compares the
+  framebuffer or the buffer before and after on the old code first.
+- Measure the speed cost with `z88dk-ticks` and report it. A slower hot path
+  is a tradeoff for the user, not a free win.
 
-## Data
+## Then, only when the census or user points there
 
-- large tables
-- duplicate strings
-- read-only data sitting in `DATA` instead of `CODE`
-- boolean flags spread across multiple bytes
-- buffers larger than the real worst case
-- pointer tables where byte offsets, packed deltas, or token streams beat 16-bit addresses
-- sprite/text/screen tables that can be generated, mirrored, delta-coded, RLE-packed, or ZX0/LZSA-compressed
-- byte tables with long runs; count packed+decoder+call glue for storage and workspace separately for RAM
-- assets stored in update order instead of draw/decode order, forcing extra address math
+- `arch`: protocol skeletons, data-driven state machines, buffer lifetimes.
+- `libpull`: run `libpull_scan.py` only when `[mass]` shows runtime-library
+  modules at or above the threshold.
+- `data`/`compress`: strings, tables and assets, counted net of decoder,
+  glue and workspace (`net_compression_check.py`).
+- Micro lanes, black-belt and external research run only when the user names
+  them: `asm-micro.md`, `size-blackbook.md`, `size-playbook-extended.md`,
+  `external-research.md`.
 
-## Black-belt pass
-
-Only after the safe pass. Load `size-blackbook.md` for the seven dark-art
-families (ROM-as-data, instruction-skip, demo flag idioms, self-destructing
-init, undocumented registers, custom SDCC peepholes, string packing) and its
-ordering rule; then test these ideas and either accept or reject them with
-evidence:
-
-- repeated ASM tails and n-grams: factor only when `call`/`jp` overhead is net-positive
-- RST/call vectors: count vector handler bytes, call-site count, register contract, and reserved vectors
-- stack blitters: count bytes and prove SP restore, interrupt state, and clipping exits
-- stack-as-reader copy paths: consider only when repeated `LDI`/manual copies or sprite draws dominate and the SP save/restore plus DI cost is net-positive
-- screen-specific algorithms: exploit Spectrum row/attribute layout only when target is fixed
-- compression: count packed+decoder+call glue, separate RAM workspace, and load-time cost
-- self-modifying/layout tricks: mark `EXPERIMENTAL` unless already an established project pattern
-
-## Extended size playbook
-
-After the safe attack order, load `size-playbook-extended.md` for resident/banked
-accounting, CRT/startup, IM2, display geometry, Z80N, compression nets,
-generative tables, buffer lifetimes, sound drivers, and 256B/4K transfers.
-Still obey `hard-contract.md` — playbook items are seeds, not proof.
-
-## External / demoscene pass
-
-After SAFE categories, use `external-research.md` only for evidence-selected
-questions. Keep notable rejected ideas; do not emit a fixed folklore checklist.
+Winners can subsume each other: moving a routine removes its idiom and ABI
+counts. Re-run the census after each accepted family.

@@ -352,6 +352,41 @@ def main() -> int:
             expect=2,
         )
         assert "sizes must be non-negative" in out
+
+        # Census: an overlay-only routine and its static helper move together;
+        # a resident-called routine with caller cleanup and an IX epilogue does not.
+        def routine(body: bytes, size: int) -> bytes:
+            return body + bytes(size - len(body) - 1) + b"\xc9"
+
+        def call(addr: int) -> bytes:
+            return bytes((0xCD, addr & 0xFF, addr >> 8))
+
+        layout = (("_main", 0x8000, 16), ("_move_me", 0x8010, 40), ("_helper", 0x8038, 32),
+                  ("_shared", 0x8058, 32), ("_dead", 0x8078, 32))
+        at = {name: addr for name, addr, _ in layout}
+        bodies = {
+            "_main": b"\x21\x34\x12\xe5" + call(at["_shared"]) + b"\xf1\xe5" + call(at["_shared"]) + b"\xf1",
+            "_move_me": call(at["_helper"]),
+            "_helper": b"",
+            "_shared": bytes.fromhex("ddf9dde1c9"),
+            "_dead": b"",
+        }
+        census = root / "census"
+        census.mkdir()
+        (census / "code.bin").write_bytes(b"".join(routine(bodies[n], s) for n, _, s in layout))
+        (census / "ovl.bin").write_bytes(b"\x00" + call(at["_move_me"]) + b"\xc9")
+        (census / "game.map").write_text("".join(
+            f"{name:31} = ${addr:04X} ; addr, public, , m_c, code_compiler, m.c:1\n"
+            for name, addr, _ in layout), encoding="ascii")
+        out = run(str(SKILL / "scripts" / "winner_census.py"), "--map", str(census / "game.map"),
+                  "--bin", str(census / "code.bin"), "--origin", "0x8000",
+                  "--overlay", f"OVL1={census / 'ovl.bin'}", "--min-bytes", "3")
+        moves = out.split("[overlay_only]", 1)[1].split("[unreferenced]", 1)[0]
+        assert "-> OVL1: 72 B" in moves and "_helper (m_c) with _move_me" in moves, out
+        assert "_shared" not in moves, out
+        assert "_dead" in out.split("[unreferenced]", 1)[1].split("[abi_cleanup]", 1)[0], out
+        assert "2 B over   2 sites  _shared" in out, out
+        assert "1 x ld sp,ix; pop ix; ret" in out, out
         print("smoke ok")
         return 0
     finally:

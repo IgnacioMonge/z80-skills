@@ -4,6 +4,10 @@ Use this file as a pre-submit guard against shallow shrink passes.
 
 ## Do not finalize if you have done any of these
 
+- skipped `winner_census.py`, or ran generic scanners before it
+- ranked or investigated candidates below the materiality threshold
+- dismissed a resident-to-overlay move as "moving overlay code"
+
 - stopped after strings or duplicate literals and called it a full scan
 - claimed a libpull saving without proving the helper is present in the `.map`
 - proposed a byte win that silently changes flags, registers, or stack cleanup
