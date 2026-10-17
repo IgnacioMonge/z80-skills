@@ -7,6 +7,9 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- Compact ordered FSM rows, archive-member extraction granularity,
+  A-preserving predicates with Z results, and page-local screen history, with
+  applicability conditions, fallbacks and executable examples.
 - `shrink-z80` winner pass: `scripts/winner_census.py` ranks resident code used
   by a single overlay (with the helpers that move with it), unreferenced
   routines, caller-side stack cleanup per callee and repeated SDCC frame or
@@ -90,6 +93,9 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- Repository-owned skill validation accepts boolean `disable-model-invocation`
+  without changing invocation policy and survives skill-creator updates.
+  Regression tests and documented dependency setup cover the durable validator.
 - Plugin manifests use the same version across Codex, the root package, and
   Gemini, so package consistency checks pass after restoring the 0.8.3 tree.
 - Workflow distinguishes explicit user overrides from still-applicable project,
