@@ -453,6 +453,30 @@ Consulta el [mapa del repositorio](agent_docs/project_structure.md) para la prop
 
 ## Validación
 
+Desde la raíz del repositorio, prepara la dependencia PyYAML del validador en un
+entorno virtual:
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r scripts/requirements-validation.txt
+```
+
+El comando de activación anterior es para shells POSIX; en Windows PowerShell
+usa `.venv\Scripts\Activate.ps1` y `python` en lugar de `python3`.
+
+```sh
+python3 scripts/validate_skills.py
+python3 scripts/validate_skills.py skills/route-z80
+python3 scripts/test_validate_skills.py
+```
+
+El primer comando valida los once skills; una carpeta de skill opcional limita
+la comprobación a uno. El repositorio mantiene el validador, por lo que las
+actualizaciones de skill-creator no lo sustituyen. Valida sin reescribir
+`SKILL.md` ni `agents/openai.yaml`; no demuestra el comportamiento en runtime ni
+la activación de los skills.
+
 Pruebas incluidas:
 
 ```sh

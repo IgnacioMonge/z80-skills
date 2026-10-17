@@ -75,13 +75,18 @@ threshold (user figure, else 30 B net). Put smaller ones in one tail line.
 ## Then, only when the census or user points there
 
 - `arch`: protocol skeletons, data-driven state machines, buffer lifetimes.
+  If repeated state branches dominate, consult only the compact ordered
+  state-machine subsection of [playbook H](size-playbook-extended.md#h-control-flow-and-dispatch-density)
+  for that `arch` candidate.
 - `libpull`: run `libpull_scan.py` only when `[mass]` shows runtime-library
-  modules at or above the threshold.
+  modules at or above the threshold. If a referenced member pulls unrelated
+  routines, check [archive granularity](c-patterns.md#archive-member-extraction-granularity-requiere-build).
 - `data`/`compress`: strings, tables and assets, counted net of decoder,
   glue and workspace (`net_compression_check.py`).
 - Micro lanes, black-belt and external research run only when the user names
   them: `asm-micro.md`, `size-blackbook.md`, `size-playbook-extended.md`,
-  `external-research.md`.
+  `external-research.md`. Only the targeted `arch` subsection above is exempt;
+  it does not open the rest of the extended playbook.
 
 Winners can subsume each other: moving a routine removes its idiom and ABI
 counts. Re-run the census after each accepted family.

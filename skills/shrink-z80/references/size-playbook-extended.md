@@ -101,6 +101,36 @@ When the target matrix includes Next and policy allows Z80N:
   **generated** ASM of the current build, not source aesthetics.
 - RST amortization only when vector ownership is free on **all** targets.
 
+### Compact ordered state-machine rows (`arch`, `REQUIERE BUILD`)
+
+Candidate when repeated state/condition/action branches dominate. One row is
+`state, condition, action, next`; if **every** ID fits 0..15, encode it as
+`(state << 4) | condition, (action << 4) | next` (two bytes). Validate IDs and
+handler existence before packing; never truncate an out-of-range ID to fit.
+
+- Preserve ordered first-match semantics: test rows in order for the current
+  state, execute only the first true condition, and put that state's unconditional
+  default last. Preserve action/transition order and any handler-visible state.
+- Bound the scan by row count or end pointer, not an assumed matching default.
+  Define missing-transition and invalid-state/handler behavior explicitly (for
+  example, unchanged state/no action or the existing error path); malformed
+  tables must not scan or dispatch outside their bounds.
+- Count engine + handlers + condition/action vectors + tables + alignment in
+  final maps; report peak stack/RAM separately. Compare against the existing
+  direct branches and a dense dispatch table. A sparse packed table may save
+  storage while adding a worst-case linear scan; measure the last-match/no-match
+  path against the frame/interrupt budget.
+- Reject if IDs overflow, side effects change order, the engine is not amortized,
+  or worst-case timing fails. Validate all state/event pairs against the original,
+  overlapping conditions/default priority, missing transitions and invalid IDs;
+  then build and run the actual target implementation before claiming a win.
+
+Pattern attribution: [The Automata](https://www.oddbit-retro.org/z80-masterclass-the-automata/).
+Use the row/engine idea only; it implies no calling convention or stack-scratch
+permission. The [executable example](../tests/test_technique_examples.py) checks
+host FSM equivalence, priority and error boundaries; it proves neither target
+runtime behavior nor Z80 size/timing.
+
 ## I. Memory lifetime and overlay of buffers
 
 - Union lifetimes: screen during load, unpack window, music buffer, level

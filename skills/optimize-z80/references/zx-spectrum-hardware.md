@@ -187,3 +187,60 @@ Check:
 - interrupt code visibility across banks
 
 Do not propose bank tricks for 48K-only projects.
+
+### Page-local history and screen flipping
+
+MEDIUM for 128K rendering when screen banks 5 and 7 are available. The page
+selected for CPU drawing and the page selected for ULA display are distinct
+state: changing the RAM bank at $C000 does not itself choose the displayed
+screen. Keep history for the actual back page, whose last rendered scene may
+be two frames old. A single previous-frame position leaves stale objects when
+that page returns. Initialize both pages and their histories; reset both on
+scene/background invalidation.
+
+Restore or redraw old bounds using that page's history, render the new scene,
+then update that page's history. Use the existing
+[background and overlap rules](#incremental-redraw-and-scrolling); clearing
+old pixels to black is valid only for a proven black background. Flip only a
+fully completed page in a verified
+[model-safe window](zx-spectrum-models.md#frame-window-planning). Preserve the
+paging latch's other bits and its software shadow, respect paging lock, and
+keep code, stack and ISR data visible through every mapping change. Coordinate
+ISR paging with the renderer; a display flip does not require mapping out the
+code executing it.
+
+The saving is incremental reuse of each bank's scene; count duplicate history,
+restoration work and paging costs. Reject when banks are unavailable, the
+mapping/interrupt contract is unproved, or dirty work exceeds full redraw.
+Full redraw of each back page is the fallback. Vanilla 48K has no hardware
+screen-page flip. Inspiration: [Oddbit's page-switching discussion](https://www.oddbit-retro.org/retro-game-programming-tips-part-2-page-switching/).
+
+This deterministic host model restores a single-cell sprite over a patterned
+background. Each sequence starts with both pages reset; it tests repeated
+flips, page revisits and disappearance against a full-render oracle:
+
+```python
+# example: page-history
+background = list(range(16))
+for positions in ((2, 9, 2, None, 4, None, 2, 9, None), (None, 4, 2, None)):
+    pages = {bank: background.copy() for bank in (5, 7)}
+    history = {5: None, 7: None}
+    displayed, back = 5, 7
+    for position in positions:
+        old = history[back]
+        if old is not None:
+            pages[back][old] = background[old]
+        if position is not None:
+            pages[back][position] = 255
+        history[back] = position
+        expected = background.copy()
+        if position is not None:
+            expected[position] = 255
+        assert pages[back] == expected
+        displayed, back = back, displayed
+        assert pages[displayed] == expected
+```
+
+`scripts/test_technique_examples.py` executes this model. It verifies history
+ownership and scene output, not ULA behavior, paging-latch writes, vblank
+timing, or ISR safety; those require the deployed model's emulator/hardware.

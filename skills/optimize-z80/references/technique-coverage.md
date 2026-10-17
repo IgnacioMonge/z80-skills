@@ -17,6 +17,7 @@ coverage never means a technique is proven faster in the current project.
 | Split 16-bit loop counters | Developed | [Loops](loops-and-data.md#split-16-bit-loop-counters); zero/65536 and register ownership |
 | Partial LDI unroll and remainder entry | Developed | [Copies](loops-and-data.md#partial-unrolling-and-remainder-entry); entry cost and overlap |
 | JR/JP choice and flag reuse | Developed | [Branches](loops-and-data.md#branch-choice-and-flag-lifetime); probability versus deadline |
+| A-preserving classifiers with Z results | Developed | [Predicate contracts](z80-techniques.md#a-preserving-predicates-with-z-results); ASM callers, clobbers and exhaustive input checks |
 | Hoisting, loop unswitching and fusion | Developed | [Loop transforms](loops-and-data.md#hoisting-specialization-and-fusion); aliasing/ISR boundaries |
 | Pointer induction, page walks, sentinels | Developed | [Traversal](loops-and-data.md#pointer-induction-and-termination); bounds and final pointer |
 | Split word tables and field arrays | Developed | [Layout](loops-and-data.md#split-tables-and-field-arrays); padding and other consumers |
@@ -38,12 +39,13 @@ coverage never means a technique is proven faster in the current project.
 | Preshifted sprites and shared shift tables | Developed | [Sprite phases](zx-spectrum-hardware.md#preshifted-sprites-or-shared-shift-tables); spill/mask/storage costs |
 | Transparent/opaque spans and compiled sprites | Developed | [Specialization](zx-spectrum-hardware.md#transparent-opaque-and-mixed-spans); generator and clipping costs |
 | Dirty redraw, restoration and incremental scrolling | Developed | [Redraw](zx-spectrum-hardware.md#incremental-redraw-and-scrolling); overlap and dense-change fallback |
+| Screen-page history and safe flipping | Developed | [Page-local history](zx-spectrum-hardware.md#page-local-history-and-screen-flipping); complete frames, paging ownership and target timing |
 | Floating-bus acquisition | Developed | [Floating bus](zx-spectrum-hardware.md#floating-bus); model-specific marker/cadence still needs implementation |
 | Compression selection and decoder/workspace accounting | Developed | [Measurement](measurement.md#compression-tradeoff-evidence-card) and [load path](optimization-paths.md#load-time); individual codec kernels not catalogued |
 | UART/filesystem batching and state reuse | Mentioned | [I/O](modern-spectrum-io.md); no device-specific FIFO budgets or driver recipes |
 | Frame slicing and perceived latency | Developed | [Temporal amortization](z80-techniques.md#temporal-amortization-work-spread-across-frames) and [UX](optimization-paths.md#perceived-latency-ux) |
 | ABI/codegen and linked runtime/initialization | Developed | [ABI](z88dk-sdcc-abi.md), [CRT/sections](toolchain.md#linked-runtime-and-initialization); installed compiler decides |
-| Banking/overlays and screen flipping | Mentioned | [Banking path](optimization-paths.md#overlay--banking); no per-engine layout or flip routine |
+| Banking and overlays | Mentioned | [Banking path](optimization-paths.md#overlay--banking); no per-engine layout |
 | AY/beeper kernel optimization | Mentioned | [Audio signals](zx-spectrum-models.md#audio-and-input); player-specific kernels absent |
 | Full line/polygon rasterizers and collision algorithms | Absent | Incremental arithmetic is covered; clipping, tie rules and engine-specific algorithms are not |
 | Next DMA/Z80N/hardware-sprite recipes | Absent | Separate core/peripheral evidence required; no transfer from classic Spectrum |

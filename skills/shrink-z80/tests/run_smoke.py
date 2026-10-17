@@ -26,6 +26,7 @@ def section(out: str, name: str) -> list[str]:
 
 
 def main() -> int:
+    print(run(str(SKILL / "tests" / "test_technique_examples.py")), end="")
     skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     dispatcher_text = (SKILL / "references" / "dispatcher.md").read_text(encoding="utf-8")
     agent_text = (SKILL / "agents" / "openai.yaml").read_text(encoding="utf-8")

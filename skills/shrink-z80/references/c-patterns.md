@@ -24,6 +24,31 @@ Use this file for C-heavy shrink work and any `libpull` pass.
 - hoist invariant `strlen` or table lookups out of loops in input/render/update paths
 - split rare paths from hot paths so common code avoids wide arithmetic and helper calls
 
+## Archive-member extraction granularity (`REQUIERE BUILD`)
+
+When a map shows one referenced library routine bringing unrelated routines
+with it, check the linker's extraction unit. If it extracts whole object
+members, build independent routines/helpers as separate archive members; splitting
+functions inside one object does not change that unit. Do not assume section
+garbage collection, or that a smaller `.lib` means a smaller program.
+
+- Preserve public symbols, shared data ownership, ABI, initialization and
+  registration roots, and library/link order. A routine with no ordinary caller
+  may still be required by startup, callbacks or a registration table.
+- Compare unchanged minimal-consumer and all-feature-consumer builds before and
+  after, using production flags. Inspect final maps for extracted members,
+  retained roots and duplicate data; compare final binaries and run both consumers.
+- Accept only a net saving in the pressured memory region without breaking the
+  full consumer. Reject when existing section elimination already removes the
+  excess, shared dependencies pull it back, or glue/alignment cancels the saving.
+
+Pattern attribution: [libgpx optimization research](https://github.com/retro-vault/libgpx/blob/main/docs/research/OPTIMIZATION-2026-09.md).
+Its measurements are not transferable to another build.
+
+The [executable example](../tests/test_technique_examples.py) compares linked
+maps/binaries for minimal and all-feature consumers with z88dk-z80asm when
+available. It checks extraction and emitted bytes, not consumer runtime behavior.
+
 ## Codegen traps proven in the field
 
 - `sizeof("literal")` materializes the string literal in the target binary

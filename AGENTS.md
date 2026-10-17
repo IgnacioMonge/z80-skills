@@ -19,6 +19,8 @@ Read the smallest relevant context. When needed, use
 - Define proportionate acceptance criteria before non-trivial work. Keep tests
   cohesive; never weaken coverage, assertions, or failure visibility.
 - Preserve unrelated user work. Verify claims against current evidence.
+- Validate this repository with `scripts/validate_skills.py`, not the bundled
+  skill-creator `quick_validate.py`; keep skill invocation metadata unchanged.
 
 ## Execution
 

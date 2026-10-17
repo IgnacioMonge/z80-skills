@@ -83,6 +83,51 @@ Peepholes are cleanup, not strategy:
 - Validation: before/after listing diff; focused functional test of each merged path.
 - Fallback: keep duplicate code.
 
+### A-preserving predicates with Z results
+
+SAFE for internal ASM parsers/dispatch when several tests consume the same
+byte. Define Z=1 for a match and Z=0 otherwise; `CP` leaves A available to
+the next predicate. This is an explicit ASM contract, not a C ABI Boolean
+return convention. The original example below recognizes space, tab or colon:
+
+```asm
+; example: delimiter-predicates
+is_delimiter:
+    call is_horizontal_space
+    ret z
+    jp is_colon
+
+is_horizontal_space:
+    cp ' '
+    ret z
+    cp 9
+    ret
+
+is_colon:
+    cp ':'
+    ret
+```
+
+Every entry preserves A, BC, DE, HL, IX and IY; F is clobbered with only Z
+defined as the result. Consume Z before another flag-changing instruction.
+On every exit `RET` consumes exactly the caller's return address: SP is entry
+SP+2, restoring the caller's pre-CALL SP. `is_delimiter` needs four stack
+bytes including its caller's return address; the leaf entries need two.
+The final `JP` lets `is_colon` return directly to that caller. Reuse the
+[tail/fallthrough rules](#shared-tails-and-fallthrough-factoring) and
+[flag lifetime and jump-range rules](loops-and-data.md#branch-choice-and-flag-lifetime).
+
+Potential gain is shared predicate code and avoiding reloads of A. Compare
+the whole caller, setup, CALL/RET and branch costs with direct comparisons;
+there is no automatic speed win. Reject when preserving A is unnecessary,
+call overhead outweighs reuse, live flags conflict, or a C caller lacks an
+explicit ABI adapter; keep direct branches as the fallback. A nearby `JR`
+alternative still needs a legal signed displacement from its following PC.
+`scripts/test_technique_examples.py` assembles this block and checks all 256
+inputs at every entry, preserved registers/A/SP, Z and the short-circuit/tail
+paths via nominal cycle totals. This does not measure a target application's
+speed. Inspiration: [Stih's ASM case predicates](https://tomaz-stih.co.uk/article/2023-02-11-advanced-z80-programming_c-case-statement).
+
 ### SMC immediates and JR offsets
 
 - Lane: MEDIUM; DANGEROUS for opcode/control-flow SMC.
