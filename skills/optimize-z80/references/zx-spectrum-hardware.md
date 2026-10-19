@@ -2,6 +2,10 @@
 
 Use this reference for Spectrum targets. For non-Spectrum Z80, load only the general Z80 technique files. For model-specific timing or paging claims, also load `zx-spectrum-models.md`.
 
+For repeated sampling/geometry kernels and bank visibility transactions, load
+[generated rendering](generated-rendering.md). For movement, entity lifecycle
+or collision boundaries, use [simulation and collision](simulation-and-collision.md).
+
 ## Contention
 
 48K contended RAM is 0x4000-0x7fff. The ULA steals cycles while drawing the display. Timing-critical code/data should prefer uncontended RAM when possible.

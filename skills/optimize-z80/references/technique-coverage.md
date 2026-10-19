@@ -41,13 +41,18 @@ coverage never means a technique is proven faster in the current project.
 | Dirty redraw, restoration and incremental scrolling | Developed | [Redraw](zx-spectrum-hardware.md#incremental-redraw-and-scrolling); overlap and dense-change fallback |
 | Screen-page history and safe flipping | Developed | [Page-local history](zx-spectrum-hardware.md#page-local-history-and-screen-flipping); complete frames, paging ownership and target timing |
 | Floating-bus acquisition | Developed | [Floating bus](zx-spectrum-hardware.md#floating-bus); model-specific marker/cadence still needs implementation |
-| Compression selection and decoder/workspace accounting | Developed | [Measurement](measurement.md#compression-tradeoff-evidence-card) and [load path](optimization-paths.md#load-time); individual codec kernels not catalogued |
+| Compression selection and decoder/workspace accounting | Developed | [Measurement](measurement.md#compression-tradeoff-evidence-card), [representation/inverse/stream state](asset-representation.md) and [load path](optimization-paths.md#load-time); individual codec kernels not catalogued |
 | UART/filesystem batching and state reuse | Mentioned | [I/O](modern-spectrum-io.md); no device-specific FIFO budgets or driver recipes |
 | Frame slicing and perceived latency | Developed | [Temporal amortization](z80-techniques.md#temporal-amortization-work-spread-across-frames) and [UX](optimization-paths.md#perceived-latency-ux) |
 | ABI/codegen and linked runtime/initialization | Developed | [ABI](z88dk-sdcc-abi.md), [CRT/sections](toolchain.md#linked-runtime-and-initialization); installed compiler decides |
 | Banking and overlays | Mentioned | [Banking path](optimization-paths.md#overlay--banking); no per-engine layout |
 | AY/beeper kernel optimization | Mentioned | [Audio signals](zx-spectrum-models.md#audio-and-input); player-specific kernels absent |
-| Full line/polygon rasterizers and collision algorithms | Absent | Incremental arithmetic is covered; clipping, tie rules and engine-specific algorithms are not |
+| Exact quarter-square, signed correction, difference tables and BCD | Developed | [Demoscene math](demoscene-math.md); host identities do not validate emitted kernels or speed |
+| Generated sampling kernels, affine derivation and executable work lists | Developed | [Generated rendering](generated-rendering.md); generation/residency/dispatch costs and target proof still required |
+| Fixed-tick simulation, pool lifecycle and collision contracts | Developed | [Simulation/collision](simulation-and-collision.md); no complete engine or swept solver supplied |
+| AY resource arbitration, write events and ready-frame queues | Developed | [Audio/queues](audio-and-frame-queues.md); chip backend and real presentation service remain project-specific |
+| Generated event timelines and parameter tracks | Developed | [Timeline assets](timeline-assets.md); source format, timebase and exporter correctness must be verified |
+| Full line/polygon rasterizers and swept-collision implementations | Absent | Bounds/contact contracts are covered; complete clipping/fill/continuous collision engines are not |
 | Next DMA/Z80N/hardware-sprite recipes | Absent | Separate core/peripheral evidence required; no transfer from classic Spectrum |
 | MSX/CPC/other peripheral acceleration recipes | Absent | Core Z80 techniques apply; VDP/CRTC/device recipes are outside current references |
 
@@ -68,3 +73,10 @@ do not copy a manual or add an instruction merely because it exists. A broad
 project review should also consider deleting work or changing the algorithm
 before selecting assembly mechanisms. Follow [external research](external-research.md)
 when the next material gap can affect the decision.
+
+The [Antique Toy review](../../audit-z80/references/antique-toy-review.md)
+(2026-10-19, pinned revision) covers 23 English chapters, 16 appendices and
+companion tools. Its six optional references develop the additional families
+above while excluding incorrect snippets and unsupported timing/optimality
+claims. They do not add optimized audio kernels, Next DMA recipes or a complete
+game/raster engine.

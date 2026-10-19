@@ -112,6 +112,12 @@ enough.
   badges, compatibility claims, download links, or legal text only when their
   targets and wording are verified.
 
+For repeated large translation updates, a block-level source diff can identify
+changed prose and retain its previous translation as context. Keep executable
+examples canonical and verify their displayed ranges separately. Reuse requires
+a known source/translation baseline; positional matches or equal text hashes
+cannot establish semantic parity.
+
 ## Verify and Report
 
 Before finishing:

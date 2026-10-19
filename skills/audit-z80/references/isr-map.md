@@ -10,6 +10,12 @@ Use this reference for `isr`, `map`, `memory`, and any `full` audit where concur
 - Check atomicity for multi-byte shared state
 - Verify `di` and `ei` balance on every path, including early returns and error exits
 
+Check shared read/modify/write operations even on one-byte variables: a byte
+load and store do not make the intervening update atomic. For audio or prepared
+frame consumers, use the [resource/event and queue contracts](../../optimize-z80/references/audio-and-frame-queues.md).
+Prove the consumer still runs during producer blackouts and the producer can
+refill its reserve; capacity alone cannot establish either property.
+
 ## ZX Spectrum assumptions
 
 - ROM IM1 is only a safe assumption when the project still uses the stock path

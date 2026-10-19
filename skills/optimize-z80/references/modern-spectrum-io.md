@@ -39,6 +39,11 @@ Prefer:
 - batching
 - predictable loading screens
 
+For compressed streams, [asset representation](asset-representation.md) covers
+decoder continuation state, output budgets, short reads and cleanup. Arbitrary
+input chunks do not make a one-shot depacker resumable, and a small filesystem
+request does not establish a bounded in-frame service time.
+
 ## Perceived Latency
 
 The user measures response, not throughput. Before optimizing any I/O path,

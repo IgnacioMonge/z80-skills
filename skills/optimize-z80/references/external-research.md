@@ -16,3 +16,13 @@ Search by affected zone:
 - I/O/latency: protocols, retry/state bugs, loaders, buffering, feedback;
 - C/codegen: compiler issues, ABI, peepholes, emitted examples;
 - hardware: model matrices, emulator tests, captures, paging/ROM effects.
+
+For demoscene material from *Coding the Impossible* / `oisee/antique-toy`, start
+with the [source assessment](../../audit-z80/references/antique-toy-review.md)
+and load only the matching extracted technique family:
+[math](demoscene-math.md), [generated rendering](generated-rendering.md),
+[simulation/collision](simulation-and-collision.md),
+[asset representation](asset-representation.md),
+[audio/queues](audio-and-frame-queues.md), or [timelines](timeline-assets.md).
+Upstream benchmark tables and build success do not establish local performance
+or correctness.

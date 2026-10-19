@@ -19,3 +19,14 @@ counts are not local measurements. Reject candidates disproved by local counts;
 stop when further research cannot change the ranking or requested reserve.
 External leads remain `ESTIMADO` or `REQUIERE BUILD`; only current local
 counts/builds establish `EXACTO`.
+
+For *Coding the Impossible* / `oisee/antique-toy`, use the
+[source assessment](../../audit-z80/references/antique-toy-review.md) before
+transferring generators, lookup tables or compression recipes. Count seeds,
+alignment, inverse transforms and generated runtime storage; tiny source or
+packed data alone does not prove a smaller resident program.
+Use [demoscene math](../../optimize-z80/references/demoscene-math.md) for
+quantified table representations and
+[asset representation](../../optimize-z80/references/asset-representation.md)
+for reversible transforms, decoder identity and chunked streams; compare them
+with existing decoder/generator shares before choosing a new representation.

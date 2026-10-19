@@ -46,6 +46,12 @@ the existing tooling supports them, alongside the human summary. Keep
 decompression cycles and transition/stall frames separate from static byte
 claims.
 
+For transformed/streamed assets, attach transform and inverse identity/cost,
+codec format/version and exact decoder variant, overlap margin, and chunk/reset
+state when relevant. Define every rate's unit (input or output byte) and include
+inverse/scatter/consumer work. Use [asset representation](asset-representation.md)
+for the experiment; retain this card as the single result format.
+
 ## One-Candidate Experiment
 
 Requires explicit user approval.

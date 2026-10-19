@@ -9,3 +9,7 @@ Read the [shared research method](research-method.md) when this gate holds.
 Record the suspected contract or failure mode and its local verification.
 External leads are hypotheses; current source or fresh artifacts must satisfy
 [the hard contract](hard-contract.md) before promotion.
+
+For *Coding the Impossible* / `oisee/antique-toy`, consult the
+[pinned source review](antique-toy-review.md): successful assembly, synchronized
+listings and nominal timing annotations each prove different, limited claims.

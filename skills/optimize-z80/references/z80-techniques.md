@@ -7,6 +7,10 @@ For detailed [loop/data transforms](loops-and-data.md) or
 catalogue questions, use the [coverage map](technique-coverage.md), which also
 records mentioned and absent subfamilies.
 
+For a repeated sampling map, dependent geometry or a prebuilt executable work
+list, use [generated rendering](generated-rendering.md). Keep its generation,
+residency and execution costs separate from an instruction-level speed claim.
+
 ## Technique Template
 
 Each recommended technique must state:

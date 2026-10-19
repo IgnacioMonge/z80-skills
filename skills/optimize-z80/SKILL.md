@@ -92,6 +92,10 @@ only for catalogue audits or gaps in the normal route, then load the matching
 entry. These references expand candidate discovery, not execution permissions
 or the evidence required for promotion.
 
+For observed asset/decode, audio/buffering or sync-data costs, load only the
+matching `references/asset-representation.md`,
+`references/audio-and-frame-queues.md` or `references/timeline-assets.md`.
+
 Bundled helpers are evidence-selective: start with
 `"$SKILL_DIR/scripts/preflight.py"`; use the corresponding resolved paths for
 `pattern_scan.py`, `asm_callgraph.py`, `map_hotspots.py`,

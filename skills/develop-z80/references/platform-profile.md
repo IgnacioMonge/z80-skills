@@ -55,3 +55,9 @@ Increase demand or route a specialist handoff when the slice includes:
 
 Do not finalize architecture while a platform uncertainty can veto it. Use a
 bounded `SPIKE` task to close that uncertainty first.
+
+For an active engine slice, [simulation/collision contracts](../../optimize-z80/references/simulation-and-collision.md)
+help define tick, coordinate, pool and contact criteria. For audio or generated
+sync data, load only [audio/queue contracts](../../optimize-z80/references/audio-and-frame-queues.md)
+or [timeline assets](../../optimize-z80/references/timeline-assets.md) as needed.
+They supply implementation questions; the dossier remains the product contract.

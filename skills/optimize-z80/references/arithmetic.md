@@ -5,6 +5,11 @@ These MEDIUM core-Z80 candidates require explicit operand range, signedness,
 overflow, rounding and live flags. Fallback is the existing tested routine.
 Do not assume Z80N multiplication exists on a base Z80.
 
+For exact quarter-square/signed-product contracts, second-difference tables,
+bounded arithmetic or display-oriented BCD, load
+[demoscene math](demoscene-math.md). Its host proofs do not establish target
+routine timing or ABI correctness.
+
 ## Constant multiplication and division
 
 For constant k, compare addition/subtraction chains with a generic multiply:

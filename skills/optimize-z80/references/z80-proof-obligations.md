@@ -15,6 +15,18 @@ Escalate from generic advice to proof obligations when the candidate depends on 
 
 If the proof cannot be shown from listing, map, trace, or hardware/emulator evidence, demote the claim.
 
+## Bounded Search Results
+
+An exhaustive search proves only its declared instruction pool, sequence/cost
+bound, initial registers/flags, output width and permitted clobbers/side effects.
+Record those conditions before reusing a superoptimized sequence or calling it
+optimal. Independent implementations of the same incorrect CPU model can agree;
+check flag semantics and execute the assembled result against a separate oracle.
+A restricted pool cannot prove impossibility for the complete ISA. A host
+identity or copied golden table does not validate target lowering or a decoder.
+Keep custom floating formats and claimed global GPU optima as unadopted leads
+until their full contracts, implementation and target evidence are available.
+
 ## Flags And Control Flow
 
 Before proposing branch factoring, shared tails, or arithmetic rewrites, prove:
