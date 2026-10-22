@@ -182,6 +182,54 @@ ranking. Test repeatability, range, histograms/correlations and target mapping
 for the actual use; retain an existing generator when evidence is insufficient.
 Discovery: [procedural state and shaping, ch04](https://github.com/oisee/antique-toy/blob/7313ecfaab710d1a105b7bff3be19aaf04dc5935/chapters/ch04-maths/draft.md#L608).
 
+## Galois LFSR Steps
+
+A left-shift Galois step moves the outgoing bit into carry and turns it into
+a tap mask. With taps t below bit 8, only L needs the XOR:
+
+```asm
+; example: lfsr16-step
+    add hl,hl
+    sbc a,a
+    and $39
+    xor l
+    ld l,a
+```
+
+The step costs 6 bytes / 30 nominal T with HL as state; A/F are destroyed.
+Loading and storing the state cost extra. A maximal-period tap set visits
+every nonzero state once in 2^W-1 steps; zero never leaves zero. Exclude it
+from seeds, resets and corrupted state. Of the 255 nonzero tap bytes, an
+exhaustive review search found six maximal 16-bit values: $2D, $39, $3F,
+$53, $BD and $D7. Only $2D is also maximal for the 8-bit `ADD A,A` form.
+
+Each state is the previous one shifted, with only tap bits changed, so
+adjacent outputs are strongly correlated. Use an LFSR for deterministic noise, dither or sequencing
+where its period is the stated requirement, not as a statistical-quality
+claim. Take one bit or a sparse sample per step if correlation matters.
+
+```python
+# example: lfsr-taps
+def period(width, taps):
+    mask, state, steps = (1 << width) - 1, 1, 0
+    while True:
+        state = ((state << 1) & mask) ^ (taps if state >> (width - 1) else 0)
+        steps += 1
+        if state == 1 or steps > mask:
+            return steps
+listed = [0x2D, 0x39, 0x3F, 0x53, 0xBD, 0xD7]
+assert all(period(16, t) == 65535 for t in listed)
+assert [t for t in listed if period(8, t) == 255] == [0x2D]
+print("LFSR taps: six 16-bit maximal values; $2D also 8-bit maximal")
+```
+
+The model checks the listed values; the exclusion of the other 249 bytes is
+review evidence, not repeated here. External generators checked or reported
+in the [corpora review](../../audit-z80/references/z80-routine-corpora-review.md#prng-candidates)
+include a 16-bit xorshift and 32-bit-state xorshift and CMWC generators.
+Their periods, costs and license terms differ; the review records which
+figures were reproduced.
+
 ## Verification Boundary
 
 The Python blocks prove their declared mathematical/value models only.

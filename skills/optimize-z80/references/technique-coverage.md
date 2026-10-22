@@ -15,6 +15,7 @@ coverage never means a technique is proven faster in the current project.
 | Family / subfamily | Coverage | Canonical entry / remaining limit |
 | --- | --- | --- |
 | Split 16-bit loop counters | Developed | [Loops](loops-and-data.md#split-16-bit-loop-counters); zero/65536 and register ownership |
+| Biased single-pair counter and CPI loop control | Developed | [Biased counter](loops-and-data.md#biased-single-pair-counter), [CPI](loops-and-data.md#cpi-as-pointer-advance-and-bc-test); 1..65281 guard, CPI flags and contention |
 | Partial LDI unroll and remainder entry | Developed | [Copies](loops-and-data.md#partial-unrolling-and-remainder-entry); entry cost and overlap |
 | JR/JP choice and flag reuse | Developed | [Branches](loops-and-data.md#branch-choice-and-flag-lifetime); probability versus deadline |
 | A-preserving classifiers with Z results | Developed | [Predicate contracts](z80-techniques.md#a-preserving-predicates-with-z-results); ASM callers, clobbers and exhaustive input checks |
@@ -23,6 +24,10 @@ coverage never means a technique is proven faster in the current project.
 | Split word tables and field arrays | Developed | [Layout](loops-and-data.md#split-tables-and-field-arrays); padding and other consumers |
 | Packed flags, narrow IDs, power-of-two indexing | Developed | [Representation](loops-and-data.md#packed-flags-and-narrow-indices); extra accesses and ownership |
 | Constant and distribution-specific arithmetic | Developed | [Arithmetic](arithmetic.md); range, intermediate width and worst case |
+| Iterative division by 2^N-1 and 2^N+1 | Developed | [Iterative division](arithmetic.md#iterative-division-near-powers-of-two); exact preload/pass count per width, no remainder, 16-bit speed crossover |
+| Signed saturating narrowing | Developed | [Narrowing](arithmetic.md#signed-narrowing-with-saturation); clamp semantics and Z exactness contract only |
+| Galois LFSR steps | Developed | [LFSR](demoscene-math.md#galois-lfsr-steps); period only, adjacent correlation, zero state |
+| External square-root, modulo-3, /3 and decimal kernels | Mentioned | [Corpora review](../../audit-z80/references/z80-routine-corpora-review.md#verified-kernels); checked at pinned revisions, per-file terms and local proof still required |
 | Incremental stepping and fixed point | Developed | [Incremental math](arithmetic.md#incremental-coordinates-and-error-accumulators); rounding and drift |
 | Small-domain, nibble and symmetry tables | Developed | [Lookup tradeoffs](arithmetic.md#small-domain-and-decomposed-lookup-tables); decomposition proof |
 | SMC, shadow registers, stack fill, indirect dispatch | Developed | [Core techniques](z80-techniques.md); existing policy/ABI gates |
@@ -80,3 +85,10 @@ companion tools. Its six optional references develop the additional families
 above while excluding incorrect snippets and unsupported timing/optimality
 claims. They do not add optimized audio kernels, Next DMA recipes or a complete
 game/raster engine.
+
+The [routine-corpora review](../../audit-z80/references/z80-routine-corpora-review.md)
+(2026-10-22, pinned revisions) covers Zeda's and baze's collections and their
+linked pages. It adds the loop, division, narrowing and LFSR entries above
+with original examples and bundled tests, records two contract errors in the
+source articles, and lists externally written kernels checked over their
+full domain. It adds no CRC, floating-point or TI-specific recipe.

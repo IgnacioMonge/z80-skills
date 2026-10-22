@@ -13,3 +13,7 @@ External leads are hypotheses; current source or fresh artifacts must satisfy
 For *Coding the Impossible* / `oisee/antique-toy`, consult the
 [pinned source review](antique-toy-review.md): successful assembly, synchronized
 listings and nominal timing annotations each prove different, limited claims.
+
+For Zeda's *Z80 Optimized Routines*, baze's *Z80 Bits* and their linked trick
+pages, consult the [corpora review](z80-routine-corpora-review.md). Correct
+code can still carry a wrong printed contract; check each claim against execution.

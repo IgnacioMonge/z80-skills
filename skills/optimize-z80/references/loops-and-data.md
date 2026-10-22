@@ -34,6 +34,54 @@ counter if B/D are live or extra spills erase savings.
 Mechanism: [Grauw's fast loops](https://map.grauw.nl/articles/fast_loops.php);
 its MSX M1-wait totals are not the nominal totals derived here.
 
+## Biased single-pair counter
+
+MEDIUM; a long loop that can dedicate BC but must keep A or cannot spare the
+split counter's second register. Load BC=(N+255) modulo 65536 for N=1..65281,
+or bias a loaded N at run time with `INC B; DEC BC`. The body must preserve BC.
+
+```asm
+; example: biased-counter
+biased_loop:
+    inc hl
+    dec bc
+    inc b
+    djnz biased_loop
+```
+
+The loop exits on the first pass whose `DEC BC` leaves BC below 256. Control
+is `23*N-5` T in 4 bytes, versus `24*N` T in 6 bytes for `DEC BC; LD A,B;
+OR C; JP NZ` and `13*N+9*K` for the split counter. A and carry survive; INC B
+changes the other flags. N=65281 encodes as BC=0. Larger N is not detected:
+N=65282 encodes as BC=1 and runs once. Guard N=0 and N>65281, or keep the
+split counter. Check 1, 255, 256, 257, 65280 and 65281.
+Mechanism: [biased DJNZ counter](https://github.com/mbaze/Z80-Bits/blob/60467d73ce814fec26c4c829816f299fb8a162b7/clever-16-bit-loops.md),
+reviewed in the [routine-corpora assessment](../../audit-z80/references/z80-routine-corpora-review.md).
+
+## CPI as pointer advance and BC test
+
+MEDIUM; a forward byte walk whose A holds live data. `CPI` increments HL,
+decrements BC and sets P/V when BC is nonzero, in 2 bytes / 16 nominal T,
+and preserves carry. It also compares A with (HL): Z, S, H and N change.
+Only P/V and C remain usable afterwards. BC=0 on entry means 65536 bytes.
+
+```asm
+; example: cpi-checksum
+cpi_loop:
+    xor (hl)
+    cpi
+    jp pe,cpi_loop
+```
+
+This XOR checksum of BC bytes from HL accumulates in A: 5 bytes and `33*N`
+nominal T, with HL and BC advanced to the end. `INC HL; DEC BC; LD A,B; OR C`
+costs 20 T in 4 bytes and destroys A. With B and D free, the split counter
+with `INC HL` is faster per byte. On a Spectrum the 48K pattern
+`pc:4,pc+1:4,hl:3,hl:1 x 5` holds HL on the bus for six contended T-states;
+it pays contention when HL is in contended RAM. Record the [block-operation obligations](z80-proof-obligations.md#block-operations)
+and measure on the target model. Sources: [48K contention table](https://worldofspectrum.org/faq/reference/48kreference.htm),
+[WikiTI size/speed tricks](https://wikiti.brandonw.net/index.php?title=Z80_Optimization).
+
 ## Partial unrolling and remainder entry
 
 MEDIUM; fixed blocks or frequent medium/large copies. For U=16 and a positive

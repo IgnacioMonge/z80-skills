@@ -30,3 +30,8 @@ quantified table representations and
 [asset representation](../../optimize-z80/references/asset-representation.md)
 for reversible transforms, decoder identity and chunked streams; compare them
 with existing decoder/generator shares before choosing a new representation.
+
+For Zeda's *Z80 Optimized Routines* or baze's *Z80 Bits*, use the
+[corpora review](../../audit-z80/references/z80-routine-corpora-review.md):
+it gives measured byte sizes for checked kernels and the size side of each
+speed tradeoff, such as the 16-byte looped /3. Check per-file reuse terms.

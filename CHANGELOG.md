@@ -7,6 +7,13 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- Reviewed Zeda and baze routine corpora add biased single-pair and CPI loop
+  control, iterative division near powers of two, signed saturating narrowing
+  and Galois LFSR steps, with original examples, emulator tests and a source
+  assessment of checked kernels, contract errors and reuse terms.
+- Reviewed Antique Toy references cover math tables, generated rendering,
+  simulation, asset representation, audio queues and timeline data, with a
+  source assessment and explicit limits on executable and hardware evidence.
 - Compact ordered FSM rows, archive-member extraction granularity,
   A-preserving predicates with Z results, and page-local screen history, with
   applicability conditions, fallbacks and executable examples.
@@ -93,6 +100,10 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- Plugin version 0.8.7 refreshes installed copies after the routine-corpora
+  references were added; a cached 0.8.6 copy does not contain those additions.
+- Plugin version 0.8.6 refreshes installed copies after the Antique Toy
+  references were added; a cached 0.8.5 copy does not contain those additions.
 - Repository-owned skill validation accepts boolean `disable-model-invocation`
   without changing invocation policy and survives skill-creator updates.
   Regression tests and documented dependency setup cover the durable validator.

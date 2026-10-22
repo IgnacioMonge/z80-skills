@@ -26,3 +26,9 @@ and load only the matching extracted technique family:
 [audio/queues](audio-and-frame-queues.md), or [timelines](timeline-assets.md).
 Upstream benchmark tables and build success do not establish local performance
 or correctness.
+
+For Zeda's *Z80 Optimized Routines*, baze's *Z80 Bits* or the WikiTI and
+Z80 Heaven trick pages, start with the
+[corpora review](../../audit-z80/references/z80-routine-corpora-review.md).
+It records which kernels ran over their full domain, which printed contracts
+failed, and each file's reuse terms. Source cycle comments are not measurements.

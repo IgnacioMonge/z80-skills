@@ -26,6 +26,79 @@ multiplier/shift for the actual range and prove quotient and remainder; do
 not transplant host-CPU magic constants or float approximations blindly.
 See [existing table/reciprocal techniques](z80-techniques.md#square-table--reciprocal-math).
 
+## Iterative division near powers of two
+
+MEDIUM; unsigned quotient by one constant divisor near a power of two.
+For d=2^N-1, `d*y=x` is equivalent to `y=(x+y)>>N`, so the quotient is a
+fixed point of that recurrence. Truncation biases the estimate low; a preload
+of floor(2^W/d) for a W-bit dividend compensates. For d=2^N+1 use
+`y=(x-y)>>N` from y=0; its first pass is a plain shift and needs no preload.
+
+The preload and pass count are exact facts of the declared width, not tunable
+approximations. Exhaustive checks give: 8-bit /3, /7, /15, /31 in 4, 3, 2, 2
+passes; 8-bit /5, /9, /17 in 4, 4, 2; 16-bit /3, /7, /15 in 8, 6, 4. Only 85
+works for 8-bit /3 and only 17 for /15 at those counts; /7 accepts 36..73.
+The sum x+y needs W+1 bits: keep its carry through RRA or RR.
+
+```asm
+; example: div15-iterative
+    ld a,17
+    add a,b
+    rra
+    rrca
+    rrca
+    rrca
+    and $1f
+    add a,b
+    rra
+    rrca
+    rrca
+    rrca
+    and $1f
+```
+
+A = B/15 in 16 bytes / 61 nominal T; B survives, F is destroyed. RRA keeps
+the ninth sum bit; RRCA plus a mask completes the shift faster than SRL.
+No remainder is produced: x-q*d costs extra. Composite divisors can shift
+afterwards because floor(floor(x/a)/b)=floor(x/(a*b)): /6 is /3 then SRL.
+
+Speed depends on width. At 16 bits the review measured a looped /3 at
+460 T in 16 bytes, against 217 T in 36 bytes, both including RET, for a
+reciprocal-style kernel. Treat the 16-bit form as a size candidate and the 8-bit form as a
+speed candidate against generic division. A 256-byte quotient table is faster
+when residency permits. Check the complete dividend domain and the carry chain.
+
+Original host model of the pass counts and preload limits above:
+
+```python
+# example: iterative-division-model
+def exact(divisor, width, steps, preload, plus):
+    shift = (divisor + 1 if plus else divisor - 1).bit_length() - 1
+    for x in range(1 << width):
+        y = preload
+        for _ in range(steps):
+            assert plus or x >= y
+            y = (x + y if plus else x - y) >> shift
+        if y != x // divisor:
+            return False
+    return True
+for width, divisor, steps in ((8, 3, 4), (8, 7, 3), (8, 15, 2), (8, 31, 2),
+                              (16, 3, 8), (16, 7, 6), (16, 15, 4)):
+    assert exact(divisor, width, steps, (1 << width) // divisor, True)
+    assert not exact(divisor, width, steps - 1, (1 << width) // divisor, True)
+for divisor, steps in ((5, 4), (9, 4), (17, 2)):
+    assert exact(divisor, 8, steps, 0, False)
+    assert not exact(divisor, 8, steps - 1, 0, False)
+preloads = lambda d, s: [p for p in range(256) if exact(d, 8, s, p, True)]
+assert preloads(3, 4) == [85] and preloads(15, 2) == [17]
+assert preloads(7, 3) == list(range(36, 74))
+print("iterative division: pass counts and preloads exact")
+```
+
+Mechanism: [iterative fixed-point division](https://github.com/mbaze/Z80-Bits/blob/60467d73ce814fec26c4c829816f299fb8a162b7/iterative-fixed-point-division.md);
+see the [corpora review](../../audit-z80/references/z80-routine-corpora-review.md)
+for its checked listings and the reciprocal comparison.
+
 ## Multiplication by operand distribution
 
 A shift/add multiply that stops when the multiplier becomes zero can favor
@@ -64,6 +137,37 @@ For signed code, specify saturation versus wrap and avoid C signed-overflow
 assumptions. Measure accumulated error over a complete animation/audio interval,
 plus min/max and negative inputs. Retain existing precision if visible or
 functional error exceeds the project's accepted bound.
+
+## Signed narrowing with saturation
+
+MEDIUM; only where the caller specifies clamping rather than wrap. A signed
+16-bit value fits a signed byte exactly when H equals the sign extension of
+L's bit 7; `ADD A,A; SBC A,A` builds that byte from L.
+
+```asm
+; example: narrow-s16-sat
+    ld a,l
+    add a,a
+    sbc a,a
+    xor h
+    ld a,l
+    jr z,narrow_done
+    ld a,h
+    add a,a
+    sbc a,a
+    xor $7f
+narrow_done:
+```
+
+A = HL clamped to -128..127 in 12 bytes; 32 nominal T when it fits and
+46 T when it clamps. HL survives; Z is set exactly when no clamping occurred.
+The clamped results $7F/$80 are nonzero, so Z stays a valid exactness result
+on both paths. Other flags are destroyed. Check all 65,536 inputs, both
+paths' cost and every consumer of Z. Wrap semantics need plain `LD A,L`.
+The same identity appears, without the Z result, in a
+[reviewed external routine](../../audit-z80/references/z80-routine-corpora-review.md#verified-kernels);
+that review also lists checked square-root, modulo-3, constant-division and
+decimal-conversion kernels. Licenses and local proof gate their reuse.
 
 ## Small-domain and decomposed lookup tables
 
