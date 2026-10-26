@@ -85,6 +85,24 @@ def word_hits(blob: bytes, value: int) -> list[int]:
     return hits
 
 
+def is_strong_word_hit(blob: bytes, offset: int) -> bool:
+    """True when the 16-bit word at offset is the immediate operand of call/jp/ld rr,nn."""
+    if offset >= 1 and blob[offset - 1] in (CALLS | JUMPS | LOAD16):
+        return True
+    if offset >= 2 and blob[offset - 2] in (0xDD, 0xFD) and blob[offset - 1] == 0x21:
+        return True
+    return False
+
+
+def weak_word_count(blob: bytes, value: int, own: range | None = None) -> int:
+    """Count 16-bit occurrences of value outside own that are not strong-ref operands."""
+    return sum(
+        1
+        for h in word_hits(blob, value)
+        if (own is None or h not in own) and not is_strong_word_hit(blob, h)
+    )
+
+
 def strong_refs(blob: bytes, origin: int | None) -> dict[int, list[int]]:
     """target -> offsets of call/jp/ld rr,nn (and jr/djnz when origin is known)."""
     refs: dict[int, list[int]] = collections.defaultdict(list)
@@ -167,9 +185,15 @@ def main() -> int:
     for addr, size, name, module in rts:
         own = range(addr - args.origin, addr - args.origin + size)
         callers = {owner(o) for o in res_refs.get(addr, []) if o not in own}
-        users = {k: len(r.get(addr, [])) for k, r in ovl_refs.items() if r.get(addr)}
-        weak = len([h for h in word_hits(code, addr) if h not in own]) - len(
-            [o for o in res_refs.get(addr, []) if o not in own])
+        strong_users = {k: len(r.get(addr, [])) for k, r in ovl_refs.items() if r.get(addr)}
+        weak_users = {
+            k: cnt for k, v in overlays.items() if (cnt := weak_word_count(v, addr)) > 0
+        }
+        users = {
+            k: strong_users.get(k, 0) + weak_users.get(k, 0)
+            for k in set(strong_users) | set(weak_users)
+        }
+        weak = weak_word_count(code, addr, own) + sum(weak_users.values())
         info[addr] = (size, name, module, callers, users, weak)
 
     moves: dict[int, tuple[str, str]] = {}
@@ -223,9 +247,18 @@ def main() -> int:
             if target not in starts:
                 continue
             j, cost = i + 3, 0
-            while j < len(blob) and blob[j] in CLEANUP and cost < 12:
-                cost += 1
-                j += 1
+            if (
+                j + 5 <= len(blob)
+                and blob[j] == 0x21
+                and blob[j + 3] == 0x39
+                and blob[j + 4] == 0xF9
+                and 0 < (blob[j + 1] | (blob[j + 2] << 8)) <= 32
+            ):
+                cost = 5
+            else:
+                while j < len(blob) and blob[j] in CLEANUP and cost < 12:
+                    cost += 1
+                    j += 1
             if cost:
                 cleanup[target][0] += 1
                 cleanup[target][1] += cost
@@ -235,7 +268,8 @@ def main() -> int:
     for target, (sites, cost) in ranked[: args.top]:
         if cost < args.min_bytes // 3:
             break
-        print(f"  {cost:4d} B over {sites:3d} sites  {starts[target]}")
+        hint = " [1-site: fastcall only]" if sites == 1 else ""
+        print(f"  {cost:4d} B over {sites:3d} sites  {starts[target]}{hint}")
 
     print("\n[frame_idioms]  one helper + one peephole rule; resident and overlays")
     for label, pattern, call_len, helper in IDIOMS:
@@ -245,8 +279,10 @@ def main() -> int:
         if not n:
             continue
         gain = n * (len(pattern) - call_len) - helper
+        res_gain = counts["resident"] * (len(pattern) - call_len) - helper
+        res_note = f" (resident net ~{res_gain:+d} B)" if overlays and helper else ""
         note = "" if helper else " (needs flag liveness; estimate only)"
-        print(f"  {n:4d} x {label:34s} resident {counts['resident']:3d}  net ~{gain} B{note}")
+        print(f"  {n:4d} x {label:34s} resident {counts['resident']:3d}  net ~{gain} B{res_note}{note}")
     print("\nnote: candidates only; confirm with sources, a build, and every target's limits")
     return 0
 

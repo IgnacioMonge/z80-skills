@@ -33,8 +33,28 @@ SIMPLE = {
     "ei": 4,
     "halt": 4,
     "rst": 11,
+    "cpl": 4,
+    "scf": 4,
+    "ccf": 4,
+    "daa": 4,
+    "neg": 8,
+    "reti": 14,
+    "retn": 14,
+    "rld": 18,
+    "rrd": 18,
+    "swapnib": 8,
+    "mirror": 8,
+    "pixelad": 8,
+    "pixeldn": 8,
+    "setae": 8,
+    "ldix": 16,
+    "lddx": 16,
+    "ldws": 14,
 }
-REPEAT = {"ldir", "lddr", "cpir", "cpdr", "otir", "otdr", "inir", "indr"}
+REPEAT = {
+    "ldir", "lddr", "cpir", "cpdr", "otir", "otdr", "inir", "indr",
+    "ldirx", "lddrx", "ldpirx",
+}
 R8 = {"a", "b", "c", "d", "e", "h", "l"}
 R16 = {"bc", "de", "hl", "sp"}
 IDX = {"ix", "iy"}
@@ -184,6 +204,13 @@ def estimate(op, args):
             return 23
         return 4
     if op in {"add", "adc", "sbc"}:
+        if op == "add" and dst in {"hl", "de", "bc"} and src:
+            if src == "a":
+                return 8
+            if dst == "hl" and src in R16:
+                return 11
+            if not is_mem(src) and src not in R8 | R16 | IDX | IDX8:
+                return 16
         if dst == "hl":
             return 11 if op == "add" else 15
         if dst in IDX:
@@ -211,12 +238,20 @@ def estimate(op, args):
         args.strip().lower(),
     ):
         return None
-    if op in {"set", "res", "rl", "rr", "sla", "sra", "srl", "sll"}:
+    if op in {"set", "res", "rl", "rr", "rlc", "rrc", "sla", "sra", "srl", "sll"}:
         if is_hl_mem(args):
             return 15
         if is_idx_mem(args):
             return 23
         return 8
+    if op == "im":
+        return 8 if dst in {"0", "1", "2"} and not src else None
+    if op == "mul":
+        return 8 if (dst == "d" and src == "e") or (dst == "de" and not src) else None
+    if op == "nextreg":
+        if not dst or not src:
+            return None
+        return 12 if src == "a" else 16
     if op == "ex":
         if args.strip().lower() in {"de,hl", "af,af'"}:
             return 4

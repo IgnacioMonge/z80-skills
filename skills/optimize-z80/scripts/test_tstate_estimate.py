@@ -147,5 +147,36 @@ class TstateEstimateTest(unittest.TestCase):
             self.assertIn("estimated_static_tstates_single_pass: 87", out)
             self.assertIn("warning: total excludes unknown opcodes", out)
 
+    def test_standard_z80_and_z80n_instructions_are_timed(self):
+        cases = {
+            "cpl": 4,
+            "scf": 4,
+            "ccf": 4,
+            "daa": 4,
+            "neg": 8,
+            "reti": 14,
+            "retn": 14,
+            "rld": 18,
+            "rrd": 18,
+            "im 2": 8,
+            "rlc b": 8,
+            "rrc (hl)": 15,
+            "rlc (ix+2)": 23,
+            "mul d,e": 8,
+            "swapnib": 8,
+            "mirror a": 8,
+            "pixelad": 8,
+            "pixeldn": 8,
+            "setae": 8,
+            "add hl,a": 8,
+            "add de,$1234": 16,
+            "nextreg $50,a": 12,
+            "nextreg $50,$01": 16,
+            "ldirx": 16,
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                self.assertEqual(estimate(*clean(source)), expected)
+
 if __name__ == "__main__":
     unittest.main()

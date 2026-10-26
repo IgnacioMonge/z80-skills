@@ -44,9 +44,8 @@ command = ""              # optional; preflight reports it, never runs it
 
 ## Per-Target Gates Extension
 
-Multi-target projects may add `[targets.<name>]` tables. The scorer does not
-read them yet; they are prose-enforced via the multi-target acceptance rule in
-`SKILL.md` and give it authoritative numbers:
+Multi-target projects may add `[targets.<name>]` tables. `score_candidates.py`
+parses them and enforces their limits against candidate `target_metrics`:
 
 ```toml
 [targets.zx]
@@ -57,14 +56,18 @@ stack_gap_floor = 1935     # SP gap lower bound
 
 A candidate passes only when EVERY declared target meets both figures in its
 own fresh artifact from the same frozen source revision and configuration
-baseline. The main agent enforces this gate; the scorer only ranks survivors.
+baseline (`target_metrics = {"zx": {"resident_used": 34100, "stack_gap": 1950}}`).
+Any target exceeding `resident_ceiling`, falling below `stack_gap_floor`, or
+omitted from `target_metrics` is vetoed (`-999`); omitting `target_metrics`
+altogether under a multi-target policy demotes `PROVEN` to `LIKELY`.
 
 ## Candidate Schema Vocabulary (avoid the three collisions)
 
 - Policy `profile` (project shape: `mixed-c-asm-overlays`, `48k-game`, ...) is
   NOT the scorer `--profile` (weight set: `size`, `speed`, `network-app`,
-  `graphics-render`, `balanced`). Map project profile to the dominant weight
-  set when invoking the scorer.
+  `graphics-render`, `balanced`, or `auto` to map from policy `priority`). Map
+  project profile to the dominant weight set or pass `--profile auto` when
+  invoking the scorer.
 - Candidate `confidence` for the scorer is `PROVEN` / `LIKELY` / `SPECULATIVE`
   (uppercase). The evidence-model words (`none/weak/good/strong`) describe
   static/dynamic evidence in prose, not this field.

@@ -9,16 +9,20 @@ Role types and model/effort selection live in [roles.md](roles.md).
 
 1. Identify at least two concrete, bounded, independent workstreams. If none
    exist, do not manufacture delegation; continue directly and state that the
-   Heavy dispatch gate did not hold. Repeated same-shape mechanical edits across
-   files form one workstream for one worker, not one worker per file.
+   Heavy dispatch gate did not hold. If preflight or an initial worker resolves
+   the governing uncertainty so fewer than two independent workstreams remain,
+   de-escalate and finish directly without spawning remaining lanes. Repeated
+   same-shape mechanical edits across files form one workstream for one worker,
+   not one worker per file.
 2. Start independent workers together. Use at most two by default; add a third
    only for a genuinely separate workstream.
 3. Spawn each worker with `fork_turns="none"` and a self-contained capsule of
    at most 400 words.
 4. Give each worker a task ID, outcome, ownership, acceptance criteria, source
    paths, validation, protected areas, return format, and stop condition.
-   Include relevant verified evidence with revision/configuration and remaining
-   questions so fresh-context workers do not repeat completed discovery.
+   Include relevant verified evidence with revision/configuration, the main
+   thread's preflight/baseline digest, and remaining questions so fresh-context
+   workers do not repeat completed discovery or spawn competing worktrees.
 5. Assign one owner to each mutable file set. Parallel implementers may write
    only to disjoint surfaces.
 6. Keep workers away from Git state and main-owned status or handoff files.

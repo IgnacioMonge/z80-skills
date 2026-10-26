@@ -106,10 +106,13 @@ When ASM comments claim exact cycle costs, run `tstate_estimate.py
 --audit-annotations`; a mismatch or unknown blocks promotion, while a match
 still remains static candidate evidence until the relevant runtime gate passes.
 Python 3.11+ is required whenever a TOML policy must be parsed or enforced;
-`score_candidates.py --policy` rejects older runtimes. On Python 3.9–3.10,
-run only policy-free paths or pass explicitly verified `--target` and
-`--forbidden` overrides, enforce any remaining constraints before scoring, and
-report that the TOML policy was not parsed.
+`score_candidates.py --policy` rejects older runtimes, enforces
+`constraints.maintainability = "release"` vetoes and `[targets.<name>]`
+ceiling/stack-floor gates, and supports `--profile auto` to derive scoring
+weights from `priority`. On Python 3.9–3.10, run only policy-free paths or pass
+explicitly verified `--target` and `--forbidden` overrides, enforce any
+remaining constraints before scoring, and report that the TOML policy was not
+parsed.
 
 ## Workflow
 

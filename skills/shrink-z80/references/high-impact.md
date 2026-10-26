@@ -46,6 +46,9 @@ threshold (user figure, else 30 B net). Put smaller ones in one tail line.
   ret`) become `jp` to a shared helper. Inline IX prologues in fastcall
   functions become `call` to an HL-preserving helper
   (`ex (sp),ix; push ix; ld ix,2; add ix,sp; ret`).
+- Check the census `resident net` figure before proposing a resident helper:
+  if occurrences sit mainly in overlays, a resident helper can cost net resident
+  bytes even when total storage shrinks.
 - Use the project's custom COPT rule file (`-custom-copt-rules`), matching the
   exact text zsdcc emits (`ld	sp, ix` has a space). Export the helper to
   overlays when their rule file uses it.
@@ -54,9 +57,13 @@ threshold (user figure, else 30 B net). Put smaller ones in one tail line.
 
 ## 5. Caller-side stack cleanup -> callee/fastcall ABI
 
-- Detect: census `[abi_cleanup]`, per callee. Convert the largest ones:
-  `__z88dk_callee` keeps the C signature; `__z88dk_fastcall` takes one
+- Detect: census `[abi_cleanup]`, per callee (including `pop`, `inc sp`, and
+  SDCC's 5-byte `ld hl,nn; add hl,sp; ld sp,hl` sequence). Convert the largest
+  ones: `__z88dk_callee` keeps the C signature; `__z88dk_fastcall` takes one
   argument in registers.
+- Single-callsite items (`[1-site: fastcall only]`) cannot win with
+  `__z88dk_callee` because moving stack cleanup into the callee cancels the sole
+  caller's saving; use `fastcall` or inline instead.
 - ASM callees must pop their own arguments, on every exit path. Update ASM
   callers, test drivers and stubs. Guards that pin a dispatcher's decode
   sequence change with it.

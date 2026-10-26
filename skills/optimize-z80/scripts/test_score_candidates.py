@@ -130,6 +130,101 @@ class ScoreCandidatesTest(unittest.TestCase):
         self.assertIn("structured evidence", prose["evidence_gate"])
         self.assertEqual(current["confidence"], "PROVEN")
 
+    def test_release_maintainability_forbids_dangerous_tags_unless_explicitly_allowed(self):
+        policy_data = {
+            "constraints": {"maintainability": "release"},
+            "forbidden": {"smc": False},
+        }
+        forbidden = score_candidates.load_forbidden(policy_data, None)
+        self.assertIn("undocumented", forbidden)
+        self.assertIn("sp_abuse", forbidden)
+        self.assertIn("interrupt_windows", forbidden)
+        self.assertNotIn("smc", forbidden)
+
+        rejected = candidate(tags=["undocumented"])
+        allowed = candidate(tags=["smc"])
+        self.assertEqual(
+            score_candidates.score(rejected, "balanced", forbidden, ""), -999
+        )
+        self.assertGreater(
+            score_candidates.score(allowed, "balanced", forbidden, ""), -999
+        )
+
+    def test_multi_target_gates_veto_ceiling_floor_and_missing_targets(self):
+        policy_data = {
+            "targets": {
+                "zx": {"resident_ceiling": 34000, "stack_gap_floor": 1900},
+                "next": {"resident_ceiling": 40000, "stack_gap_floor": 1024},
+            }
+        }
+        gates = score_candidates.load_target_gates(policy_data)
+        passing = candidate(
+            confidence="PROVEN",
+            evidence=[{"kind": "measurement", "ref": "build/run.json", "current": True}],
+            target_metrics={
+                "zx": {"resident_used": 33900, "stack_gap": 1950},
+                "next": {"resident_used": 38000, "stack_gap": 2048},
+            },
+        )
+        self.assertGreater(
+            score_candidates.score(passing, "balanced", set(), "", {}, gates), -999
+        )
+        self.assertEqual(passing["confidence"], "PROVEN")
+
+        over_ceiling = candidate(
+            target_metrics={
+                "zx": {"resident_used": 34001, "stack_gap": 1950},
+                "next": {"resident_used": 38000, "stack_gap": 2048},
+            }
+        )
+        self.assertEqual(
+            score_candidates.score(over_ceiling, "balanced", set(), "", {}, gates), -999
+        )
+        self.assertIn("exceeds resident_ceiling", over_ceiling["policy_veto"])
+
+        under_floor = candidate(
+            target_metrics={
+                "zx": {"resident_used": 33900, "stack_gap": 1899},
+                "next": {"resident_used": 38000, "stack_gap": 2048},
+            }
+        )
+        self.assertEqual(
+            score_candidates.score(under_floor, "balanced", set(), "", {}, gates), -999
+        )
+        self.assertIn("below stack_gap_floor", under_floor["policy_veto"])
+
+        missing_target = candidate(
+            target_metrics={"zx": {"resident_used": 33900, "stack_gap": 1950}}
+        )
+        self.assertEqual(
+            score_candidates.score(missing_target, "balanced", set(), "", {}, gates), -999
+        )
+        self.assertIn("missing target_metrics", missing_target["policy_veto"])
+
+        no_metrics_proven = candidate(
+            confidence="PROVEN",
+            evidence=[{"kind": "measurement", "ref": "build/run.json", "current": True}],
+        )
+        self.assertGreater(
+            score_candidates.score(no_metrics_proven, "balanced", set(), "", {}, gates),
+            -999,
+        )
+        self.assertEqual(no_metrics_proven["confidence"], "LIKELY")
+
+    def test_auto_profile_resolves_from_policy_priority(self):
+        self.assertEqual(
+            score_candidates.resolve_profile({"priority": ["resident-size", "speed"]}, "auto"),
+            "size",
+        )
+        self.assertEqual(
+            score_candidates.resolve_profile({"priority": ["latency"]}, "auto"),
+            "network-app",
+        )
+        self.assertEqual(
+            score_candidates.resolve_profile({"priority": ["speed"]}, "size"),
+            "size",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

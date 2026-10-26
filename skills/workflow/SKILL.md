@@ -14,22 +14,21 @@ Accept `$workflow light|medium|heavy|auto`, `effort=light|medium|heavy`, and equ
 When no level is explicit, choose the smallest sufficient level:
 
 - **Light:** explanation, diagnosis, review, lookup, or small localized change with straightforward verification.
-- **Medium:** cohesive multi-step or multi-file work that one agent can complete in an ordered stream with proportionate verification.
-- **Heavy:** broad or cross-cutting work with at least two concrete, bounded, independent workstreams where parallelism or independent comparison materially improves speed or required coverage.
+- **Medium:** cohesive multi-step or multi-file work one agent can complete in an ordered stream with proportionate verification.
+- **Heavy:** broad or cross-cutting work with at least two concrete, bounded, independent workstreams where parallelism or comparison materially improves speed or coverage.
 
 Prefer the lower level when borderline. Change level only when evidence materially changes scope; announce the change and reason. These are workflow levels, not model reasoning-effort settings.
 
 ## Common rules
 
-1. Read applicable project instructions and only necessary context. Reuse
-   already-read instructions within the task unless they change; recheck source
-   evidence when its revision, configuration, or relevant files change.
-2. Explicit user instructions override skill defaults within their scope.
-   Preserve higher-priority instructions, evidence truth, runtime limits, and
-   unmodified project constraints. For conflicts, overrides, or skill-induced
-   stops, apply [authorization](references/authorization.md). If project
-   instructions define route names or spawning limits, retain them unless
-   explicitly changed.
+1. Read applicable project instructions and necessary context. Reuse already-read
+   instructions unless they change; recheck source evidence when revision,
+   configuration, or relevant files change.
+2. Explicit user instructions override skill defaults within scope. Preserve
+   higher-priority instructions, evidence truth, runtime limits, and unmodified
+   project constraints. For conflicts, overrides, or skill-induced stops, apply
+   [authorization](references/authorization.md). If project instructions define
+   route names or spawning limits, retain them unless explicitly changed.
 3. State the selected level briefly.
 4. Establish acceptance criteria before non-trivial edits.
 5. Trace the real code path and preserve contracts and unrelated work.
@@ -40,9 +39,8 @@ Prefer the lower level when borderline. Change level only when evidence material
 8. Inspect final diff and repository status after edits when Git is present.
 
 Do not create project workflow scaffolding or documentation unless requested or
-already required by the repository. Light loads verification rules only when
-building or checking; do not load
-Medium, Heavy, or model-selection references for direct work.
+already required. Light loads verification rules only when building or checking;
+do not load Medium, Heavy, or model-selection references for direct work.
 
 ## Compose with domain skills
 
@@ -56,15 +54,17 @@ When another skill names `$workflow` as its execution core:
   level alone never authorizes effects forbidden by the effective domain
   contract or project.
 - In `auto`, treat domain `Focused`, `Standard`, and `Deep` classifications as
-  inputs to light, medium, and heavy selection, not as a second control plane.
+  inputs to light, medium, and heavy selection, not a second control plane.
 - In `auto`, run the required domain preflight directly at Light, then announce
-  the selected level after classification. Do not report that normal selection
-  as an escalation.
+  the selected level after classification; do not report that selection as an
+  escalation.
+- The main thread runs preflight/census once, owns disposable-worktree
+  lifecycle, and passes a single immutable baseline digest into worker capsules.
 
 ## Mutation boundary
 
-After resolving authorization, intersect its scope with applicable project and
-domain rules and runtime permissions. Classify before executing or delegating:
+After resolving authorization, intersect its scope with applicable project,
+domain, and runtime permissions. Classify before executing or delegating:
 
 - **primary-tree read-only:** inspect and verify; never edit production files
   or assign an implementer to this surface.
@@ -73,8 +73,8 @@ domain rules and runtime permissions. Classify before executing or delegating:
 - **authorized primary-tree mutation:** edit and check only the authorized
   surface; delegated writers own disjoint file sets.
 
-Investigation and verification roles remain read-only. A role never widens
-network, approval, or mutation permissions.
+Investigation and verification roles remain read-only and never widen network,
+approval, or mutation permissions.
 
 ## Run the route
 
@@ -83,9 +83,9 @@ network, approval, or mutation permissions.
   directly; do not spawn agents.
 - **Heavy:** read [references/roles.md](references/roles.md), then
   [references/heavy.md](references/heavy.md). Keep the main thread as the controller;
-  spawn only when the dispatch gate holds. These references alone own role/model
+  spawn only when the dispatch gate holds. These references own role/model
   selection, capsules, parallel ownership, repair, and upward reporting.
 
 If subagents are unavailable, continue directly unless the user explicitly
 required multi-agent execution; then report the exact limitation. Never claim
-delegation or a model identity without runtime evidence.
+delegation or model identity without runtime evidence.

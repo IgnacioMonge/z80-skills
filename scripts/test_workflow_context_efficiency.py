@@ -82,8 +82,15 @@ class WorkflowContextEfficiencyTest(unittest.TestCase):
 
     def test_heavy_batches_resumes_and_recovers_without_status_files(self) -> None:
         heavy = (WORKFLOW / "references" / "heavy.md").read_text(encoding="utf-8")
+        skill = (WORKFLOW / "SKILL.md").read_text(encoding="utf-8")
+        roles = (WORKFLOW / "references" / "roles.md").read_text(encoding="utf-8")
         normalized = " ".join(heavy.split())
         self.assertIn("same-shape mechanical edits", normalized)
+        self.assertIn("de-escalate and finish directly", normalized)
+        self.assertIn("preflight/baseline digest", normalized)
+        self.assertIn("single immutable baseline digest", " ".join(skill.split()))
+        self.assertIn("Other hosts: Gemini / Antigravity", roles)
+        self.assertIn("invoke_subagent", roles)
         self.assertIn("## Waiting, resumption, and recovery", heavy)
         self.assertIn("bounded stretches", normalized)
         self.assertIn("Resume an existing worker", normalized)

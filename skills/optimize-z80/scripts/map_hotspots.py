@@ -9,6 +9,8 @@ from pathlib import Path
 
 Z88DK_RE = re.compile(r"^\s*([A-Za-z_.$@?][\w.$@?]*)\s*=\s*\$([0-9A-Fa-f]+)\s*;\s*([^\n]*)")
 GENERIC_RE = re.compile(r"^\s*(?:0x|\$)?([0-9A-Fa-f]{4,6})\s+([A-Za-z_.$@?][\w.$@?]*)\b")
+LOCAL_PREFIXES = ("l_", "i_", "__str_", "___str_")
+TAIL_RE = re.compile(r"^__(.+?)(?:_END)?_tail$", re.IGNORECASE)
 
 
 def parse_z88dk(line):
@@ -19,6 +21,14 @@ def parse_z88dk(line):
     parts = [p.strip() for p in meta.split(",")]
     kind = parts[0] if len(parts) > 0 else ""
     if kind == "const":
+        tail_match = TAIL_RE.match(name)
+        if tail_match:
+            return {
+                "name": name,
+                "addr": int(addr_hex, 16),
+                "kind": "const_tail",
+                "section_tail": tail_match.group(1),
+            }
         return None
     return {
         "name": name,
@@ -42,10 +52,16 @@ def parse_generic(line):
 
 def parse_map(path: Path):
     syms = []
+    tails = {}
     fmt_counts = {"z88dk": 0, "generic": 0}
     for line in path.read_text(errors="replace").splitlines():
         s = parse_z88dk(line)
         if s:
+            if s.get("kind") == "const_tail":
+                sec = s["section_tail"]
+                tails[sec] = max(tails.get(sec, 0), s["addr"])
+                tails[sec.lower()] = max(tails.get(sec.lower(), 0), s["addr"])
+                continue
             fmt_counts["z88dk"] += 1
             syms.append(s)
             continue
@@ -54,19 +70,35 @@ def parse_map(path: Path):
             fmt_counts["generic"] += 1
             syms.append(s)
     fmt = max(fmt_counts, key=fmt_counts.get) if syms else "unknown"
-    return syms, fmt, fmt_counts
+    return syms, fmt, fmt_counts, tails
 
 
-def estimate_sizes(syms):
+def estimate_sizes(syms, tails=None):
+    tails = tails or {}
     groups = {}
     for s in syms:
         key = s.get("section") or s.get("module") or "unknown"
         groups.setdefault(key, []).append(s)
     rows = []
     for key, vals in groups.items():
-        vals = sorted(vals, key=lambda x: x["addr"])
-        for i, s in enumerate(vals[:-1]):
-            size = vals[i + 1]["addr"] - s["addr"]
+        vals = sorted(vals, key=lambda x: (x["addr"], x["name"].startswith(LOCAL_PREFIXES)))
+        folded = []
+        for s in vals:
+            if (
+                s["name"].startswith(LOCAL_PREFIXES)
+                and folded
+                and folded[-1].get("module") == s.get("module")
+            ):
+                continue
+            if folded and folded[-1]["addr"] == s["addr"]:
+                continue
+            folded.append(s)
+        sec_tail = tails.get(key) or tails.get(key.lower())
+        for i, s in enumerate(folded):
+            nxt = folded[i + 1]["addr"] if i + 1 < len(folded) else sec_tail
+            if nxt is None:
+                continue
+            size = nxt - s["addr"]
             if 0 < size < 8192:
                 r = dict(s)
                 r["size_est"] = size
@@ -81,8 +113,8 @@ def main():
     ap.add_argument("--top", type=int, default=40)
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
-    syms, fmt, counts = parse_map(Path(args.map))
-    rows = estimate_sizes(syms)
+    syms, fmt, counts, tails = parse_map(Path(args.map))
+    rows = estimate_sizes(syms, tails)
     payload = {"map": args.map, "format": fmt, "format_counts": counts, "symbols": len(syms), "top": rows[: args.top], "warnings": []}
     if not syms:
         payload["warnings"].append("no symbols parsed; unsupported map format or stripped map")

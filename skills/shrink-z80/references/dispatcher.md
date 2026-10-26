@@ -55,8 +55,24 @@ queue, not confirmed savings.
   declared target reaches the requested reserve (default 128 bytes only when
   the user gives no target).
 - `agent`: `winner_census.py` first; with winners above the threshold, report
-  them and ask before handing off. Then `preflight` for the build facts and
-  `tools/shrink-agent` as described in `SKILL.md`; no lanes.
+  them and ask before handing off. Once the user selects the agent (or the
+  census is empty), run `preflight` and write `<project>/shrink-agent.toml` when
+  missing (template: `../../tools/shrink-agent/examples/template.toml`; fields
+  in `../../tools/shrink-agent/README.md`). Choose `size_symbol` by the pressure
+  target, set `python` when the build needs the host interpreter, add a `files`
+  target for overlays or banks linked apart from the main map (`maps` too when
+  their link writes maps, so their routines are proposed), put the project's
+  size/layout checks in `tests`, and list only targets the project's
+  instructions allow to build. Run
+  `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file> --dry-run`
+  with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
+  `~/.z80-skills/venv/Scripts/python.exe`; if missing or `~/.z80-skills/.env` is
+  absent, run `tools/shrink-agent/install.py` first). Gate: at least one
+  candidate, `.c` routines listed as `c`, and every `excerpt` line `ok`;
+  otherwise fix the config and stop. Then launch the same command without
+  `--dry-run` in the background (defaults: 5 routines, 2 USD; pass
+  `--iterations` or `--max-usd` only when requested) and report from
+  `~/.z80-skills/shrink-runs/<project>-<timestamp>/shrink.log`. No lanes.
 
 ## Attack Order
 

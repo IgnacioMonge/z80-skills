@@ -362,32 +362,55 @@ def main() -> int:
         def call(addr: int) -> bytes:
             return bytes((0xCD, addr & 0xFF, addr >> 8))
 
-        layout = (("_main", 0x8000, 16), ("_move_me", 0x8010, 40), ("_helper", 0x8038, 32),
-                  ("_shared", 0x8058, 32), ("_dead", 0x8078, 32))
+        layout = (("_main", 0x8000, 32), ("_move_me", 0x8020, 40), ("_helper", 0x8048, 32),
+                  ("_shared", 0x8068, 32), ("_dead", 0x8088, 32),
+                  ("_ovl_table_fn", 0x80A8, 32), ("_cross_ovl", 0x80C8, 32))
         at = {name: addr for name, addr, _ in layout}
         bodies = {
-            "_main": b"\x21\x34\x12\xe5" + call(at["_shared"]) + b"\xf1\xe5" + call(at["_shared"]) + b"\xf1",
+            "_main": (
+                b"\x21\x34\x12\xe5" + call(at["_shared"]) + b"\xf1\xe5" + call(at["_shared"]) + b"\xf1"
+                + call(at["_dead"])[:0]  # no call to _dead
+                + call(at["_ovl_table_fn"])[:0]
+            ),
             "_move_me": call(at["_helper"]),
             "_helper": b"",
             "_shared": bytes.fromhex("ddf9dde1c9"),
             "_dead": b"",
+            "_ovl_table_fn": b"",
+            "_cross_ovl": b"",
         }
         census = root / "census"
         census.mkdir()
         (census / "code.bin").write_bytes(b"".join(routine(bodies[n], s) for n, _, s in layout))
-        (census / "ovl.bin").write_bytes(b"\x00" + call(at["_move_me"]) + b"\xc9")
+        # OVL1 calls _move_me, calls _cross_ovl with 5-byte SDCC stack cleanup (ld hl,6; add hl,sp; ld sp,hl),
+        # and references _ovl_table_fn via a 16-bit table word (after 0x00 so it is not a strong ref).
+        ovl1_bytes = (
+            b"\x00" + call(at["_move_me"])
+            + call(at["_cross_ovl"]) + bytes.fromhex("21060039f9")
+            + b"\xc9\x00" + at["_ovl_table_fn"].to_bytes(2, "little")
+        )
+        # OVL2 references _cross_ovl only weakly via a 16-bit table entry.
+        ovl2_bytes = b"\xc9\x00" + at["_cross_ovl"].to_bytes(2, "little")
+        (census / "ovl.bin").write_bytes(ovl1_bytes)
+        (census / "ovl2.bin").write_bytes(ovl2_bytes)
         (census / "game.map").write_text("".join(
             f"{name:31} = ${addr:04X} ; addr, public, , m_c, code_compiler, m.c:1\n"
             for name, addr, _ in layout), encoding="ascii")
         out = run(str(SKILL / "scripts" / "winner_census.py"), "--map", str(census / "game.map"),
                   "--bin", str(census / "code.bin"), "--origin", "0x8000",
-                  "--overlay", f"OVL1={census / 'ovl.bin'}", "--min-bytes", "3")
+                  "--overlay", f"OVL1={census / 'ovl.bin'}",
+                  "--overlay", f"OVL2={census / 'ovl2.bin'}", "--min-bytes", "3")
         moves = out.split("[overlay_only]", 1)[1].split("[unreferenced]", 1)[0]
-        assert "-> OVL1: 72 B" in moves and "_helper (m_c) with _move_me" in moves, out
+        unref = out.split("[unreferenced]", 1)[1].split("[abi_cleanup]", 1)[0]
+        abi = out.split("[abi_cleanup]", 1)[1].split("[frame_idioms]", 1)[0]
+        assert "-> OVL1: 104 B" in moves and "_helper (m_c) with _move_me" in moves, out
+        assert "_ovl_table_fn (m_c) [weak refs 1: check tables]" in moves, out
+        assert "_cross_ovl" not in moves, out
         assert "_shared" not in moves, out
-        assert "_dead" in out.split("[unreferenced]", 1)[1].split("[abi_cleanup]", 1)[0], out
-        assert "2 B over   2 sites  _shared" in out, out
-        assert "1 x ld sp,ix; pop ix; ret" in out, out
+        assert "_dead" in unref and "_ovl_table_fn" not in unref and "_cross_ovl" not in unref, out
+        assert "2 B over   2 sites  _shared" in abi, out
+        assert "5 B over   1 sites  _cross_ovl [1-site: fastcall only]" in abi, out
+        assert "1 x ld sp,ix; pop ix; ret" in out and "(resident net ~-3 B)" in out, out
         print("smoke ok")
         return 0
     finally:

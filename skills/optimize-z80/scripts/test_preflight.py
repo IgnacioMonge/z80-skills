@@ -23,5 +23,26 @@ class PreflightTest(unittest.TestCase):
             self.assertIn("naked", data["abi_hints"])
             self.assertIn("z88dk", data["toolchain_hints"])
 
+    def test_map_hotspots_folds_local_labels_and_uses_section_tails(self):
+        hotspots = Path(__file__).with_name("map_hotspots.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            map_path = Path(tmp) / "game.map"
+            map_path.write_text(
+                "_first = $8000 ; addr, public, , m_c, code_compiler, m.c:1\n"
+                "l_first_00101 = $8020 ; addr, local, , m_c, code_compiler, m.c:10\n"
+                "_last_big = $8040 ; addr, public, , m_c, code_compiler, m.c:30\n"
+                "l_last_big_00102 = $8080 ; addr, local, , m_c, code_compiler, m.c:50\n"
+                "__code_compiler_tail = $8140 ; const, public, def, , ,\n",
+                encoding="utf-8",
+            )
+            payload = json.loads(
+                subprocess.check_output(
+                    [sys.executable, str(hotspots), str(map_path), "--json"],
+                    text=True,
+                )
+            )
+            by_name = {row["name"]: row["size_est"] for row in payload["top"]}
+            self.assertEqual(by_name, {"_last_big": 0x100, "_first": 0x40})
+
 if __name__ == "__main__":
     unittest.main()

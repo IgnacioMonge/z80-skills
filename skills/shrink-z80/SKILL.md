@@ -20,11 +20,13 @@ exact limitation and continue directly without claiming delegated execution.
 
 ## Runtime Portability
 
-- Resolve `SKILL_DIR` as the directory containing this file.
+- Canonicalize the discovered `SKILL.md` path by following symlinks and Windows
+  junctions, then resolve `SKILL_DIR` from its physical parent.
 - Use the Python 3 interpreter exposed by the host or explicitly provided by
   the user; never assume a Windows, macOS, or Linux path.
-- Invoke bundled scripts by absolute path so project-local same-named scripts
-  cannot masquerade as skill evidence.
+- Invoke bundled scripts and `../../scripts/run_in_worktree.py` by verified
+  canonical absolute path so project-local same-named scripts cannot masquerade
+  as skill evidence.
 
 ## Modes
 
@@ -39,29 +41,14 @@ exact limitation and continue directly without claiming delegated execution.
   `literal_dup_scan.py`) run only when the user names that mode.
 - `diverge`: force a broad candidate search but retain normal proof gates.
 - `agent`: only on an explicit request to apply savings or to run
-  shrink-agent. shrink-agent makes one local edit per routine, so it yields
-  micro savings. First run `winner_census.py` (see First Actions). If any
-  family reaches the threshold, report those winners and their bytes, say the
-  agent would find tens of bytes, and ask whether to apply the winners or run
-  the agent; launch only after the user chooses the agent or when the census
-  is empty. Then run `preflight`, then write `<project>/shrink-agent.toml`
-  from its findings when the file is missing (template:
-  `../../tools/shrink-agent/examples/template.toml`; fields in its README).
-  Choose `size_symbol` by the pressure target, set `python` when the build
-  needs the host interpreter, add a `files` target for overlays or banks
-  linked apart from the main map (`maps` too when their link writes maps,
-  so their routines are proposed), put the project's own size or layout
-  checks in `tests`, and list only targets the project's instructions allow
-  to build. Then run
-  `<venv-python> "$SKILL_DIR/../../tools/shrink-agent/shrink_agent.py" --config <that file> --dry-run`
-  with `<venv-python>` = `~/.z80-skills/venv/bin/python` (Windows:
-  `~/.z80-skills/venv/Scripts/python.exe`); no venv or `~/.z80-skills/.env`
-  means run `tools/shrink-agent/install.py` first. Gate: at least one
-  candidate, `.c` routines listed as `c`, every `excerpt` line `ok`; otherwise
-  fix the config and stop. Then launch the same command without `--dry-run`
-  in the background. The tool defaults to 5 routines and 2 USD; pass
-  `--iterations` or `--max-usd` only when the user states other values.
-  Report from `~/.z80-skills/shrink-runs/<project>-<timestamp>/shrink.log`.
+  shrink-agent (`tools/shrink-agent/shrink_agent.py`). Because shrink-agent
+  makes one local edit per routine (micro savings), run `winner_census.py`
+  first. If any winner family reaches the threshold, report those winners and
+  their bytes, note that the agent yields tens of bytes per routine, and ask
+  whether to apply the structural winners or launch the agent; launch only
+  after the user chooses the agent or when the census is empty. Follow the
+  `agent` setup, `--dry-run` gate, and execution runbook in
+  `references/dispatcher.md`.
 
 For every real pass, read `references/hard-contract.md` and
 `references/dispatcher.md`.
@@ -115,8 +102,11 @@ incomplete.
 
 - Evidence, worktrees, multi-target gate: `references/hard-contract.md`
 - Mode and script routing: `references/dispatcher.md`
+- Preflight profile and baseline block: `references/preflight.md`
 - Domain lanes for delegated analysis: `references/agent-orchestration.md`
 - Winner families and materiality: `references/high-impact.md`
+- C codegen/libpull and ASM micro patterns: `references/c-patterns.md`,
+  `references/asm-micro.md`
 - Rare/high-risk static techniques: `references/size-blackbook.md`,
   `references/size-playbook-extended.md`
 - Dynamic forum/blog/repository discovery:

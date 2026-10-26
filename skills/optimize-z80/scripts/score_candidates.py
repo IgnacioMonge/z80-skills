@@ -52,6 +52,21 @@ DANGER_TAGS = {
     "hardware_timing",
     "banking_changes",
 }
+RELEASE_FORBIDDEN_TAGS = {
+    "undocumented",
+    "smc",
+    "sp_abuse",
+    "interrupt_windows",
+}
+PRIORITY_TO_PROFILE = {
+    "size": "size",
+    "resident-size": "size",
+    "load-time": "size",
+    "speed": "speed",
+    "latency": "network-app",
+    "ux": "network-app",
+    "ram": "size",
+}
 PROFILES = {
     "size": {"bytes": 3, "speed": 1, "ram": 2, "ux": 1},
     "speed": {"bytes": 1, "speed": 3, "ram": 1, "ux": 2},
@@ -106,11 +121,17 @@ def load_policy_data(policy_path):
 
 
 def load_forbidden(policy_data, extra):
-    """Forbidden tag set from a z80opt.toml [forbidden] table plus --forbidden."""
+    """Forbidden tag set from a z80opt.toml [forbidden] table, maintainability, plus --forbidden."""
     table = policy_data.get("forbidden", {})
     if not isinstance(table, dict):
         raise SystemExit("invalid policy TOML: [forbidden] must be a table")
     forbidden = {str(k).strip().lower() for k, v in table.items() if v is True}
+    explicit_allowed = {str(k).strip().lower() for k, v in table.items() if v is False}
+    constraints = policy_data.get("constraints", {})
+    if isinstance(constraints, dict):
+        maint = str(constraints.get("maintainability", "") or "").strip().lower()
+        if maint == "release":
+            forbidden |= (RELEASE_FORBIDDEN_TAGS - explicit_allowed)
     forbidden |= {t.strip().lower() for t in (extra or "").split(",") if t.strip()}
     return forbidden
 
@@ -126,6 +147,44 @@ def load_constraints(policy_data):
     if not isinstance(constraints, dict):
         raise SystemExit("invalid policy TOML: [constraints] must be a table")
     return constraints
+
+
+def load_target_gates(policy_data):
+    """Per-target resident_ceiling and stack_gap_floor gates from [targets.<name>]."""
+    raw = policy_data.get("targets", {})
+    if not raw:
+        return {}
+    if not isinstance(raw, dict):
+        raise SystemExit("invalid policy TOML: [targets] must be a table")
+    gates = {}
+    for name, cfg in raw.items():
+        if not isinstance(cfg, dict):
+            raise SystemExit(f"invalid policy TOML: [targets.{name}] must be a table")
+        entry = {}
+        for key in ("resident_ceiling", "stack_gap_floor"):
+            if key in cfg and cfg[key] is not None:
+                val = cfg[key]
+                if isinstance(val, bool) or not isinstance(val, int) or val < 0:
+                    raise SystemExit(
+                        f"invalid policy TOML: targets.{name}.{key} must be a non-negative integer"
+                    )
+                if val > 0:
+                    entry[key] = val
+        if entry:
+            gates[str(name).strip().lower()] = entry
+    return gates
+
+
+def resolve_profile(policy_data, cli_profile):
+    if cli_profile and cli_profile != "auto":
+        return cli_profile
+    priorities = policy_data.get("priority", [])
+    if isinstance(priorities, list):
+        for item in priorities:
+            mapped = PRIORITY_TO_PROFILE.get(str(item).strip().lower())
+            if mapped:
+                return mapped
+    return "balanced"
 
 
 def string_list(c, field):
@@ -230,12 +289,61 @@ def overlay_reject_reason(c, constraints):
     return None
 
 
-def policy_reject_reason(c, forbidden, target, constraints):
+def target_gates_reject_reason(c, target_gates):
+    if not target_gates:
+        return None
+    metrics = c.get("target_metrics")
+    if metrics is None:
+        if str(c.get("confidence", "SPECULATIVE")).upper() == "PROVEN":
+            c["confidence"] = "LIKELY"
+            c["evidence_gate"] = (
+                "demoted: multi-target policy requires target_metrics for PROVEN"
+            )
+        return None
+    if not isinstance(metrics, dict):
+        return "target_metrics must be a table of per-target measurements"
+    norm_metrics = {str(k).strip().lower(): v for k, v in metrics.items()}
+    missing = sorted(set(target_gates) - set(norm_metrics))
+    if missing:
+        return "missing target_metrics for declared target(s): " + ", ".join(missing)
+    for tname, gate in sorted(target_gates.items()):
+        trow = norm_metrics.get(tname)
+        if not isinstance(trow, dict):
+            return f"target_metrics.{tname} must be an object"
+        ceiling = gate.get("resident_ceiling")
+        if ceiling is not None:
+            used = trow.get("resident_used", trow.get("resident_after"))
+            if used is None:
+                c["confidence"] = "SPECULATIVE"
+                c["evidence_gate"] = (
+                    f"demoted: missing resident_used for target {tname}"
+                )
+            elif isinstance(used, bool) or not isinstance(used, int):
+                return f"target_metrics.{tname}.resident_used must be an integer"
+            elif used > ceiling:
+                return f"target {tname} resident_used {used} exceeds resident_ceiling {ceiling}"
+        floor = gate.get("stack_gap_floor")
+        if floor is not None:
+            gap = trow.get("stack_gap", trow.get("stack_gap_after"))
+            if gap is None:
+                c["confidence"] = "SPECULATIVE"
+                c["evidence_gate"] = f"demoted: missing stack_gap for target {tname}"
+            elif isinstance(gap, bool) or not isinstance(gap, int):
+                return f"target_metrics.{tname}.stack_gap must be an integer"
+            elif gap < floor:
+                return f"target {tname} stack_gap {gap} below stack_gap_floor {floor}"
+    return None
+
+
+def policy_reject_reason(c, forbidden, target, constraints, target_gates=None):
     """Return a reject reason string if policy vetoes this candidate, else None."""
     tags = set(string_list(c, "tags"))
     overlay_reason = overlay_reject_reason(c, constraints)
     if overlay_reason:
         return overlay_reason
+    gate_reason = target_gates_reject_reason(c, target_gates or {})
+    if gate_reason:
+        return gate_reason
     hit = tags & forbidden
     if hit:
         return "forbidden tags: " + ", ".join(sorted(hit))
@@ -252,7 +360,7 @@ def policy_reject_reason(c, forbidden, target, constraints):
     return None
 
 
-def score(c, profile, forbidden, target, constraints=None):
+def score(c, profile, forbidden, target, constraints=None, target_gates=None):
     constraints = constraints or {}
     schema_reason = schema_reject_reason(c)
     if schema_reason:
@@ -261,7 +369,7 @@ def score(c, profile, forbidden, target, constraints=None):
         c["schema_error"] = schema_reason
         return -999
     clamp_numeric(c)
-    reason = policy_reject_reason(c, forbidden, target, constraints)
+    reason = policy_reject_reason(c, forbidden, target, constraints, target_gates)
     if reason:
         c["lane"] = "REJECT"
         c["confidence"] = "REJECT"
@@ -298,7 +406,7 @@ def score(c, profile, forbidden, target, constraints=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("file", nargs="?", help="JSON list of candidates; stdin if omitted")
-    ap.add_argument("--profile", default="balanced", choices=sorted(PROFILES))
+    ap.add_argument("--profile", default="balanced", choices=sorted([*PROFILES, "auto"]))
     ap.add_argument("--policy", help="path to z80opt.toml for forbidden/target veto")
     ap.add_argument("--forbidden", help="comma list of forbidden tags (adds to policy)")
     ap.add_argument("--target", help="active target override (beats policy file)")
@@ -307,13 +415,17 @@ def main():
     forbidden = load_forbidden(policy_data, args.forbidden)
     target = load_target(policy_data, args.target)
     constraints = load_constraints(policy_data)
+    target_gates = load_target_gates(policy_data)
+    profile = resolve_profile(policy_data, args.profile)
     data = json.loads(
         open(args.file, encoding="utf-8").read() if args.file else sys.stdin.read()
     )
     if not isinstance(data, list) or any(not isinstance(c, dict) for c in data):
         raise SystemExit("candidate JSON must be a list of objects")
     for c in data:
-        c["score"] = score(c, args.profile, forbidden, target, constraints)
+        c["score"] = score(
+            c, profile, forbidden, target, constraints, target_gates
+        )
     data.sort(key=lambda x: x["score"], reverse=True)
     print(json.dumps(data, indent=2))
 

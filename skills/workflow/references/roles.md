@@ -105,6 +105,25 @@ this file unchanged.
   request as an unavailable explicit choice: report the limitation before the
   dependent delegation and continue within the defaults above.
 
+## Other hosts: Gemini / Antigravity
+
+On Gemini / Antigravity runtimes exposing `invoke_subagent`, map roles and
+models as follows while keeping every other rule in this file unchanged:
+
+| Workflow role | `TypeName` | Capsule note |
+| --- | --- | --- |
+| Investigator | `research` | read-only tools by construction |
+| Implementer | `self` | capsule names the disjoint write surface |
+| Verifier | `self` | fresh context; capsule forbids edits |
+
+- Every `invoke_subagent` call starts with a fresh conversation context
+  (satisfying `fork_turns="none"`). Put the role and task name in `Role`.
+- Default `Model` to `"inherit"` unless the user explicitly requests a
+  different advertised tier (`"flash_lite"`, `"flash"`, or `"pro"`). Never pass
+  Codex (`gpt-*`) or Claude (`opus`/`sonnet`) model IDs.
+- Resume an existing worker with `send_message` using its `conversationId`
+  rather than spawning a duplicate subagent.
+
 ## Capsule contracts
 
 Workers must not spawn children; the main thread owns dispatch and model changes.

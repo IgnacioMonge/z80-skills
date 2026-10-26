@@ -18,9 +18,10 @@ Record these items before a `scan`:
 
 ## Use scripts
 
-- Run bundled `$SKILL_DIR/scripts/preflight_scan.py <scope>` when the build configuration is spread across multiple files.
-- Run bundled `$SKILL_DIR/scripts/map_summary.py <mapfile>` whenever a `.map` is selected; if several maps exist, choose explicitly or use `--all` for comparison.
-- Run bundled `$SKILL_DIR/scripts/libpull_scan.py <scope> [map]` early in any real `scan`.
+- Run `<python> "$SKILL_DIR/scripts/preflight_scan.py" <scope>` when the build configuration is spread across multiple files.
+- Run `<python> "$SKILL_DIR/scripts/map_summary.py" <mapfile>` whenever a `.map` is selected; if several maps exist, choose explicitly or use `--all` for comparison.
+- Run `<python> "$SKILL_DIR/scripts/winner_census.py" --map <map> --bin <CODE.bin> --origin <origin> --overlay <NAME>=<bin> ...` once per linked target before category-specific scanners.
+- Run `<python> "$SKILL_DIR/scripts/libpull_scan.py" <scope> [map]` when the census or user points at library/helper drag.
 
 ## Baseline note
 
