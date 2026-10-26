@@ -61,6 +61,10 @@ repository; these entries track development toward the first published release.
 
 ### Changed
 
+- English and Spanish READMEs cover every supported host: Codex, Claude Code
+  and Grok Build installation and invocation, partial Gemini / Antigravity
+  support, per-host delegation models, the optional `shrink-agent` tool, and
+  root `pytest` validation, with behavior evals marked Codex-only.
 - Agent context is compacted around canonical sources, current Grok/Claude
   installation, actual tooling dependencies and distinct worktree boundaries;
   validation commands, historical evidence and decision rationale are preserved.

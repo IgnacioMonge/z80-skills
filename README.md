@@ -1,261 +1,123 @@
-# Z80 Skills — Adaptive Research
+# Z80 Skills
 
 **Languages:** English · [Español](README.es.md)
 
-Codex plugin with one standalone adaptive workflow, one thin domain selector,
-eight complementary engineering skills, and guarded BridgeZX file delivery for
-Z80 projects, especially ZX Spectrum software written in assembly, C, or a
-mixture of both using z88dk or SDCC.
+Agent skills for Z80 projects, especially ZX Spectrum and ZX Spectrum Next
+software written in assembly, C, or both with z88dk or SDCC. They work with
+Codex, Claude Code, and Grok Build from one checkout; Gemini / Antigravity
+support is partial.
 
-The goal is not to produce generic lists of tricks. The skills inspect the
-current code and artifacts, adapt depth and parallelism to the actual risk, and
-clearly distinguish proven evidence, estimates, and hypotheses.
+The bundle has eleven skills: a portable adaptive `workflow`, a thin Z80
+router, eight engineering specialists, and guarded BridgeZX file delivery. It
+also includes an optional unattended size-reduction tool,
+[`shrink-agent`](tools/shrink-agent/README.md).
 
-> Adaptive execution plus specification-driven development, root-cause
-> debugging, evidence-first auditing, repository documentation, organization,
-> size reduction, and multi-objective optimization for
-> Z80 and ZX Spectrum projects.
+The skills do not produce generic lists of tricks. They inspect the current
+code and build artifacts, scale depth and parallelism to the actual risk, and
+keep proven evidence, estimates, and hypotheses apart.
 
 ## Contents
 
-- [What is included](#what-is-included)
-- [What it adds beyond generic analysis](#what-it-adds-beyond-generic-analysis)
-- [Adaptive and multi-agent execution](#adaptive-and-multi-agent-execution)
-- [Targeted external research](#targeted-external-research)
+- [Supported hosts](#supported-hosts)
+- [Quick start](#quick-start)
 - [Installation](#installation)
+- [Which skill do I need?](#which-skill-do-i-need)
 - [Usage](#usage)
+- [How it works](#how-it-works)
+- [Optional: shrink-agent](#optional-shrink-agent)
 - [Recommended artifacts](#recommended-artifacts)
 - [Safety and limitations](#safety-and-limitations)
 - [Repository structure](#repository-structure)
-- [Validation](#validation)
+- [Development and validation](#development-and-validation)
 - [License](#license)
 
-## What is included
+## Supported hosts
 
-| Skill | Primary question | Result |
-|---|---|---|
-| [workflow](skills/workflow/SKILL.md) | What is the smallest sufficient execution level for this engineering task? | Direct Light or Medium execution in the main thread, or flat Heavy coordination with bounded built-in workers. |
-| [route-z80](skills/route-z80/SKILL.md) | Which single Z80 specialist, if any, owns the requested result? | One domain route, or plain `workflow` for ordinary engineering work. |
-| [send-bridgezx](skills/send-bridgezx/SKILL.md) | Which named files or directories should be delivered to a ZX or Next? | A guarded BridgeZX transfer using the explicit or last-known IP, optional destination, and requested sequence. |
-| [develop-z80](skills/develop-z80/SKILL.md) | How does this ZX or Next idea become a buildable, verifiable project? | Concept brief, specification, technical plan, task backlog, implementation, and criterion-by-criterion evidence. |
-| [document-z80](skills/document-z80/SKILL.md) | How should this repository's public documentation be structured and kept accurate across languages? | An evidence-grounded README and documentation hierarchy with verified commands, hardware requirements, and EN/ES parity. |
-| [port-spectranext](skills/port-spectranext/SKILL.md) | How does an existing ZX program move through the Spectranext cartridge's consumer pipeline? | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and final handoff. |
-| [debug-z80](skills/debug-z80/SKILL.md) | What causes this observed failure, and which component owns the repair? | One falsifiable causal explanation and, when requested, one verified root-cause fix. |
-| [audit-z80](skills/audit-z80/SKILL.md) | Are there latent defects or broad correctness risks? | Read-only findings prioritized by severity and confidence, with evidence, verification, and residual risk. |
-| [organize-z80](skills/organize-z80/SKILL.md) | Which ownership, dependency, source, and runtime-placement boundaries need a change? | Proportional map, design, reversible migration slice, or explicit no-change decision. |
-| [shrink-z80](skills/shrink-z80/SKILL.md) | How can storage, linked size, resident memory, BSS/stack, banks, or overlays be reduced? | Net reductions classified by safety and quality of evidence. |
-| [optimize-z80](skills/optimize-z80/SKILL.md) | What is the real bottleneck, and which changes offer the best balance among size, speed, RAM, rendering, and latency? | Up to three prioritized experiments with impact, risk, rollback, and validation plans. |
+Every host reads the same canonical `skills/` trees. Nothing is copied, so a
+`git pull` updates all of them.
 
-`workflow` is independent of Z80 and routes execution effort. `route-z80` is
-the sole implicit entry point for natural-language Z80 domain selection,
-including unambiguous specialist matches. The routed skills overlap only where
-useful:
+| Host | Installation | Explicit invocation | Implicit entry points | Status |
+|---|---|---|---|---|
+| Codex | Personal marketplace plugin | `$route-z80`, `$debug-z80`, … | `route-z80`, `workflow` | Full; behavior evals run here |
+| Claude Code | Junctions (Windows) or symlinks (macOS, Linux) | `/route-z80`, `/debug-z80`, … | `route-z80`, `workflow` | Full |
+| Grok Build | `[skills].paths` in `~/.grok/config.toml` | Through Grok's skill catalog | Follows Grok's catalog; the Codex and Claude Code restriction fields may not apply | Full skill loading |
+| Gemini / Antigravity | No installer in this repository | — | — | Partial: manifest and delegation mapping only |
 
-- Use `workflow` directly for adaptive planning, implementation, and verification.
-- Use `route-z80` to choose one specialist, without loading all candidates.
-- Use `send-bridgezx` to deliver named files or directories through the official
-  BridgeZX client without maintaining another IP or protocol implementation.
-- Use `develop-z80` only for an explicit product initiative or an existing SDD
-  dossier, not for routine fixes or isolated repository features.
-- Use `document-z80` to create, restructure, review, or synchronize public
-  repository documentation without flattening the project's identity.
-- Use `port-spectranext` for an existing ZX program's consumer port to the
-  Spectranext cartridge, not for ZX Spectrum Next targets or backend work.
-- Use `debug-z80` for an observed failure whose causal owner remains unknown.
-- Use `audit-z80` for preventive or broad read-only correctness review, or in
-  `diff` mode for the correctness risk of a change set.
-- Use `organize-z80` to map or safely improve ownership, dependencies, source layout, and runtime placement.
-- Use `shrink-z80` for an exhaustive search focused exclusively on size.
-- Use `optimize-z80` to decide among competing objectives and prioritize the
-  next experiments.
+In every host you can also describe the task in natural language; `route-z80`
+picks the specialist. Heavy multi-agent delegation adapts to each host's
+subagent primitive and model names (see [Adaptive and multi-agent
+execution](#adaptive-and-multi-agent-execution)).
 
-## What it adds beyond generic analysis
+## Quick start
 
-### Local evidence before folklore
+1. Clone the repository once, anywhere under your home directory:
 
-- Only the current code and demonstrably fresh artifacts can confirm a finding
-  or improvement.
-- Maps, symbols, listings, generated ASM, and linked binaries count as evidence
-  only when they correspond to the same revision, configuration, and target.
-- Scanners, agents, prior knowledge, forums, and repositories generate
-  candidates; they do not replace local verification.
-- A stale artifact explicitly lowers confidence to states such as
-  `NEEDS BUILD`, `REQUIERE BUILD`, or `SPECULATIVE`.
-- In multi-target projects, a proposal passes the promotion gate only when
-  every target satisfies its own limits.
+   ```sh
+   git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
+   cd ~/plugins/z80-skills
+   ```
 
-### Progressive loading
+2. Register it with your host (details in [Installation](#installation)):
 
-Each `SKILL.md` acts as a compact dispatcher. Codex first loads the shared
-contract and then only the references and scripts relevant to the observed
-problem. This avoids adding manuals, techniques, or logs to the context when
-they cannot change the result.
+   | Host | Command |
+   |---|---|
+   | Codex | `python3 scripts/install_personal_marketplace.py` then `codex plugin add z80-skills@personal` |
+   | Claude Code, Windows | `pwsh -File .\scripts\install-for-claude.ps1` |
+   | Claude Code, macOS or Linux | `sh scripts/install-for-claude.sh` |
+   | Grok Build | `pwsh -File .\scripts\install-for-grok.ps1` |
 
-### Deterministic tools
+3. Open a **new** task or session. Skill catalogs load at start and do not
+   refresh inside a task that is already open.
 
-The plugin includes dependency-free Python analyzers for profiling the project,
-summarizing maps, detecting patterns, inventorying ABI boundaries, assessing
-artifact freshness, locating library pulls, and estimating candidates. Their
-results are reproducible signals, not automatic verdicts.
+4. Try a request inside a Z80 project:
 
-## Adaptive and multi-agent execution
-
-The standalone `workflow` skill is the shared execution core:
-
-| Level | Strategy |
-|---|---|
-| **Light** | The main thread handles a bounded task directly. |
-| **Medium** | The main thread handles one ordered multi-step stream directly. |
-| **Heavy** | The main thread coordinates bounded independent workers in a flat topology. |
-
-In `auto`, each Z80 skill contributes `Focused`, `Standard`, or `Deep` domain
-signals after preflight. Workflow owns the route, dispatch, repair, verification,
-and integration; the domain skill keeps its evidence gates, lane definitions,
-output contract, and write restrictions. An explicit workflow level wins, but
-never grants an operation forbidden by the project or domain skill.
-Before dispatch, workflow classifies each surface as primary-tree read-only,
-disposable-worktree-only, or authorized primary-tree mutation and selects only
-roles that fit that boundary.
-
-Explicit user instructions override skill defaults within their authorized
-scope; unchanged project constraints, evidence requirements, and runtime limits
-remain in force. Skill-induced stops identify the exact rule using the shared
-[authorization policy](skills/workflow/references/authorization.md).
-
-Delegation defaults to Sol 6.1 with the existing per-assignment reasoning efforts.
-For a named difficult causal or high-risk analysis only, an explicit user request
-may select **Astra Medium**
-(`gpt-6-astra`, reasoning effort `medium`). It is never an automatic escalation,
-fallback, inherited default, or permission for other workers. See the canonical
-[model policy](skills/workflow/references/roles.md#explicit-astra-medium-opt-in).
-The host must support and enforce the requested settings; a skill is not a
-runtime spending control. The main thread's model and workflow dispatch gates
-remain unchanged.
-
-## Targeted external research
-
-External research is activated to resolve a specific uncertainty, not to
-decorate the report or repeat a list of well-known sites.
-
-### When it is activated
-
-- The user requests deep research across forums, blogs, repositories, or the
-  demoscene.
-- A compiler version, ABI, firmware, emulator, hardware model, or timing detail
-  can change a primary finding.
-- The code, generated artifacts, and documentation contradict one another.
-- A deep analysis retains a material blind spot.
-- An instruction sequence, helper, codec, renderer, loader, or banking scheme
-  requires code archaeology.
-
-### How it searches
-
-1. Formulate a question from a minimal local signature: opcode, symbol, emitted
-   fragment, version, address, symptom, or constraint.
-2. Search for exact fragments and concepts using alternative terminology.
-3. Expand terms across English, Spanish, Polish, Russian, Czech, and other
-   relevant regional communities.
-4. Diversify sources: code, tests, commits, issues, forks, emulators, hardware
-   measurements, mailing lists, archived forums, personal blogs, small
-   repositories, disassemblies, generators, and demoscene material.
-5. Follow authors, citations, forks, related issues, and archived links.
-6. Try to refute each finalist by looking for bugs, regressions, closed or
-   rejected issues, and model-specific failures.
-7. Verify the CPU, Spectrum model, ABI, interrupts, paging, memory, toolchain,
-   and timing before transferring a technique.
-
-Research has a budget and stopping rules: it retains only the few sources that
-can change a decision. A popular technique without a project-local anchor
-remains a hypothesis.
-
-To protect private projects, searches use only minimal normalized signatures;
-they must never upload private code or project identifiers.
+   ```text
+   Use route-z80 to choose the right specialist for this request: the 128K
+   build crashes after returning from the ISR.
+   ```
 
 ## Installation
 
 ### Requirements
 
-- Codex with plugin and skill support.
-- `workflow` Light and Medium run directly; Heavy uses subagents when available.
-  Roles and model selection follow the canonical
-  [workflow policy](skills/workflow/references/roles.md), which checks runtime
-  capabilities and discloses model or effort fallbacks.
-- Git to clone and update the repository.
-- Python 3.9 or later for general helpers; Python 3.11 or later is required
-  whenever `optimize-z80` must parse or enforce a TOML policy.
-- z88dk or SDCC only when required by the project or a reproducible measurement.
+- One supported host: Codex with plugin support, Claude Code, or Grok Build.
+- Git, to clone and update the repository.
+- Python 3.9 or later for the bundled helpers. `optimize-z80` needs Python 3.11
+  or later to parse a TOML project policy; BridgeZX delivery needs 3.10 or later;
+  `shrink-agent` needs 3.11 or later. On Windows, use `python` or `py` where the
+  examples say `python3`.
+- PowerShell (`pwsh`) for the Windows Claude Code installer and the Grok Build
+  installer.
+- z88dk or SDCC only when the project or a reproducible measurement needs them.
+  This repository includes no compilers, emulators, or profilers.
 
-### Initial installation
-
-Clone the repository anywhere under your home directory. The checkout is the
-canonical source for all eleven skills.
+### Codex
 
 ```sh
-git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
 cd ~/plugins/z80-skills
 python3 scripts/install_personal_marketplace.py
 codex plugin add z80-skills@personal
 ```
 
 `install_personal_marketplace.py` creates or updates
-`~/.agents/plugins/marketplace.json`, points `z80-skills` at the actual checkout,
-preserves all other entries, and replaces only the entry named `z80-skills`.
-Do not maintain authored copies, symlinks, or junctions for any bundled skill
-under `~/.agents/skills/<skill-name>` or the legacy
-`~/.codex/skills/<skill-name>`.
-Those copies can shadow the namespaced plugin and omit package-level files such
-as `scripts/run_in_worktree.py`; copying individual directories from `skills/`
-is not a complete installation. The plugin already bundles all eleven skills,
-including `route-z80` and `workflow`. The installer warns when
-it finds one of these duplicate locations; move or disable it before opening a
-new Codex task.
+`~/.agents/plugins/marketplace.json`, points the `z80-skills` entry at this
+checkout, and keeps all other entries. Codex then installs the plugin with all
+eleven skills.
 
-Only `route-z80` participates in implicit Z80-domain selection. The nine
-routed skills remain available through explicit `$send-bridgezx`, `$develop-z80`,
-`$document-z80`, `$port-spectranext`, `$debug-z80`, `$audit-z80`,
-`$organize-z80`, `$shrink-z80`, and `$optimize-z80` invocations; after routing,
-`route-z80` loads only the selected sibling. Natural-language requests do not
-need to be ambiguous to enter the router. This keeps routine repository work on
-plain `workflow` and avoids injecting every specialist description.
+Only `route-z80` and `workflow` are invoked implicitly. The nine specialists
+stay available as `$send-bridgezx`, `$develop-z80`, `$document-z80`,
+`$port-spectranext`, `$debug-z80`, `$audit-z80`, `$organize-z80`,
+`$shrink-z80`, and `$optimize-z80`. After routing, `route-z80` loads only the
+selected specialist, so routine work stays on plain `workflow` and the context
+is not filled with every specialist description.
 
-Open a new Codex task after installing: the skill catalog is loaded when the
-task starts and does not update dynamically within an already open task.
-
-### Updating
-
-```sh
-cd /path/to/z80-skills
-git pull --ff-only
-python3 scripts/install_personal_marketplace.py
-codex plugin add z80-skills@personal
-```
-
-Plugin changes update the committed manifest version so Codex creates a fresh
-installed copy. Never edit `~/.codex/plugins/cache` directly. After updating,
-open a new task again.
-
-### Grok Build
-
-Grok Build reads this checkout in place. Do not copy the eleven skills into
-`~/.grok/skills` or `~/.claude/skills`; those copies go stale.
-
-```powershell
-pwsh -File .\scripts\install-for-grok.ps1
-```
-
-The installer adds `<repo>/skills` to `~/.grok/config.toml` `[skills].paths`
-and deletes obsolete copies of the eleven bundled skills from `~/.grok/skills`
-and `~/.claude/skills`. Unrelated personal skills in those directories are left
-untouched. After a `git pull`, Grok already sees the updated trees; open a new
-Grok task so the catalog reloads.
+Do not keep copies, symlinks, or junctions of bundled skills under
+`~/.agents/skills/<name>` or the legacy `~/.codex/skills/<name>`. They shadow
+the plugin and miss package-level files such as `scripts/run_in_worktree.py`.
+The installer warns when it finds one; move or disable it before opening a new
+task. Never edit `~/.codex/plugins/cache` directly.
 
 ### Claude Code
-
-Claude Code also reads this checkout in place through directory junctions
-(Windows) or symlinks (macOS, Linux). `~/.claude/skills/<name>` links to
-`skills/<name>` for the eleven skills, and `~/.claude/scripts` and
-`~/.claude/tools` link to `scripts/` and `tools/` so the `../../scripts/...`
-and `../../tools/...` references inside the skills resolve through the links.
 
 ```powershell
 pwsh -File .\scripts\install-for-claude.ps1
@@ -265,21 +127,73 @@ pwsh -File .\scripts\install-for-claude.ps1
 sh scripts/install-for-claude.sh
 ```
 
-Both scripts are idempotent: existing canonical links are kept, stale ones are
-relinked, and real directories are reported but never deleted. Only `route-z80`
-and `workflow` are exposed implicitly; the nine specialists set
-`disable-model-invocation: true` and remain available as `/develop-z80`,
-`/optimize-z80`, and so on. Heavy delegation follows the Claude Code host
-mapping in [roles.md](skills/workflow/references/roles.md). After a `git pull`,
-open a new Claude Code session so the catalog reloads. If you also run
-`install-for-grok.ps1`, pass `-SkipClaudeCleanup`; otherwise it unlinks these
-junctions.
+The installer links `~/.claude/skills/<name>` to `skills/<name>` for the eleven
+skills. It also links `~/.claude/scripts` and `~/.claude/tools` to this
+repository's `scripts/` and `tools/`, so the skills' `../../scripts/...` and
+`../../tools/...` references resolve. Both installers are idempotent. They
+replace stale links, and they report but never delete real directories in the
+way.
+
+Only `route-z80` and `workflow` are invoked implicitly. The nine specialists set
+`disable-model-invocation: true` and stay available as `/develop-z80`,
+`/optimize-z80`, and so on.
+
+### Grok Build
+
+```powershell
+pwsh -File .\scripts\install-for-grok.ps1
+```
+
+The installer adds `<repo>/skills` to `[skills].paths` in
+`~/.grok/config.toml`, so Grok Build reads the trees in place. It also deletes
+obsolete copies of the eleven bundled skills from `~/.grok/skills` and
+`~/.claude/skills`, and leaves unrelated personal skills untouched.
+
+If you also use Claude Code, run the Grok installer with `-SkipClaudeCleanup`.
+Otherwise it removes the Claude Code links as obsolete copies.
+
+### Gemini / Antigravity
+
+The repository includes `gemini-extension.json`, and `workflow` maps its
+delegation roles to `invoke_subagent` on runtimes that expose it (see
+[roles](skills/workflow/references/roles.md#other-hosts-gemini--antigravity)).
+There is no installer or tested setup for these hosts yet.
+
+### Updating
+
+```sh
+cd ~/plugins/z80-skills
+git pull --ff-only
+```
+
+Claude Code and Grok Build read the updated trees directly. Codex installs a
+versioned copy, so rerun the marketplace installer and
+`codex plugin add z80-skills@personal`. Plugin changes raise the manifest
+version so Codex creates a fresh copy. Then open a new task or session in every
+host.
+
+## Which skill do I need?
+
+| Skill | Use it when | You get |
+|---|---|---|
+| [workflow](skills/workflow/SKILL.md) | Any engineering task, Z80 or not, where effort and delegation should match the risk. | Direct Light or Medium execution, or flat Heavy coordination with bounded workers. |
+| [route-z80](skills/route-z80/SKILL.md) | Any natural-language Z80 request, even when the specialist seems obvious; skip it only when you name the specialist directly. | One specialist, or plain `workflow` for ordinary work. |
+| [send-bridgezx](skills/send-bridgezx/SKILL.md) | Named files or directories should go to a ZX or Next over BridgeZX. | A guarded transfer using the explicit or last-known IP, optional destination, and requested order. |
+| [develop-z80](skills/develop-z80/SKILL.md) | An explicit product initiative or an existing SDD dossier, not routine fixes. | Concept brief, specification, plan, backlog, implementation, and evidence per acceptance criterion. |
+| [document-z80](skills/document-z80/SKILL.md) | A project's public documentation needs creating, restructuring, review, or EN/ES sync. | An evidence-grounded README and documentation hierarchy with verified commands and hardware claims. |
+| [port-spectranext](skills/port-spectranext/SKILL.md) | An existing ZX program is being ported to the Spectranext cartridge (not the Spectrum Next). | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and handoff. |
+| [debug-z80](skills/debug-z80/SKILL.md) | You observe a failure and its cause is unknown. | One falsifiable causal explanation and, on request, one verified root-cause fix. |
+| [audit-z80](skills/audit-z80/SKILL.md) | You want a preventive or broad correctness review, or the risk of a change set (`diff` mode). | Read-only findings ranked by severity and confidence, with evidence and residual risk. |
+| [organize-z80](skills/organize-z80/SKILL.md) | Ownership, dependencies, source layout, or runtime placement need mapping or a safe change. | A proportional map, design, reversible migration slice, or an explicit no-change decision. |
+| [shrink-z80](skills/shrink-z80/SKILL.md) | Storage, linked size, resident memory, BSS/stack, banks, or overlays must shrink. | Net reductions classified by safety and quality of evidence. |
+| [optimize-z80](skills/optimize-z80/SKILL.md) | Several objectives compete: size, speed, RAM, rendering, latency. | Up to three prioritized experiments with impact, risk, rollback, and validation. |
 
 ## Usage
 
-The skills are invoked through natural language. The more specific the target,
-objective, and available artifacts are, the more precise the prioritization
-will be.
+Describe the target, the objective, and the artifacts you have; the more
+specific the request, the better the prioritization. The examples name the
+skill in prose. In Codex you can prefix it with `$`, and in Claude Code invoke
+it as `/name`.
 
 ### Adaptive workflow
 
@@ -342,11 +256,6 @@ Prioritize ABI, ISR, and memory; report only findings anchored in the current co
 ```
 
 ```text
-Use audit-z80 in full mode. Review the differences between the 48K and 128K targets,
-including paging, ROM, stack, interrupts, and generated artifacts.
-```
-
-```text
 Use audit-z80 in diff mode against main. Check whether this branch's ISR and
 C/ASM changes break the ABI, preserved registers, shared state, or the memory map.
 ```
@@ -387,10 +296,131 @@ Use optimize-z80 in Measurement mode to obtain a fresh baseline without
 modifying my main working tree.
 ```
 
+## How it works
+
+### Local evidence before folklore
+
+- Only the current code and demonstrably fresh artifacts can confirm a finding
+  or an improvement.
+- Maps, symbols, listings, generated ASM, and linked binaries count as evidence
+  only when they match the same revision, configuration, and target.
+- Scanners, agents, prior knowledge, forums, and other repositories generate
+  candidates; they do not replace local verification.
+- A stale artifact lowers confidence explicitly, to states such as
+  `NEEDS BUILD`, `REQUIERE BUILD`, or `SPECULATIVE`.
+- In multi-target projects, a proposal is promoted only when every target meets
+  its own limits.
+
+### Progressive loading
+
+Each `SKILL.md` is a compact dispatcher. The host first loads the shared
+contract, then only the references and scripts relevant to the observed
+problem. Manuals, technique catalogs, and logs stay out of the context unless
+they can change the result.
+
+### Deterministic tools
+
+The skills ship Python analyzers, mostly standard-library only. They profile
+the project, summarize maps, detect patterns, inventory ABI boundaries, check
+artifact freshness, locate library pulls, estimate T-states, and score
+candidates. Their output is a reproducible signal, not an automatic verdict.
+
+### Adaptive and multi-agent execution
+
+The standalone `workflow` skill is the shared execution core:
+
+| Level | Strategy |
+|---|---|
+| **Light** | The main thread handles a bounded task directly. |
+| **Medium** | The main thread handles one ordered multi-step stream directly. |
+| **Heavy** | The main thread coordinates bounded independent workers in a flat topology. |
+
+In `auto`, each Z80 skill classifies demand as `Focused`, `Standard`, or `Deep`
+after preflight. Workflow owns the route, dispatch, repair, verification, and
+integration. The domain skill keeps its evidence gates, lanes, output contract,
+and write restrictions. An explicit workflow level wins, but never grants an
+operation the project or domain skill forbids. Before dispatch, workflow
+classifies each surface as primary-tree read-only, disposable-worktree-only, or
+authorized primary-tree mutation, and selects only roles that fit.
+
+Explicit user instructions override skill defaults within their scope;
+project constraints, evidence requirements, and runtime limits stay in force.
+When a skill stops, it names the exact rule, following the shared
+[authorization policy](skills/workflow/references/authorization.md).
+
+Heavy delegation maps the same roles (investigator, implementer, verifier) to
+each host. The canonical [roles policy](skills/workflow/references/roles.md)
+holds the per-host mapping:
+
+- **Codex:** subagents default to Sol 6.1 with per-assignment reasoning effort.
+  Astra Medium is used only on an explicit user request for a named difficult
+  causal or high-risk analysis
+  ([opt-in rules](skills/workflow/references/roles.md#explicit-astra-medium-opt-in)).
+- **Claude Code:** the `Agent` tool with `Explore` or `general-purpose`
+  subagents and an explicit `opus` or `sonnet` model; the host exposes no
+  reasoning-effort parameter.
+- **Gemini / Antigravity:** `invoke_subagent` with `research` or `self` types
+  and the inherited model tier.
+
+The host must support and enforce the requested settings; a skill is not a
+runtime spending control.
+
+### Targeted external research
+
+External research resolves a specific uncertainty; it does not decorate the
+report or repeat a list of well-known sites.
+
+It is activated when:
+
+- The user asks for deep research across forums, blogs, repositories, or the
+  demoscene.
+- A compiler version, ABI, firmware, emulator, hardware model, or timing detail
+  can change a primary finding.
+- The code, generated artifacts, and documentation contradict one another.
+- A deep analysis keeps a material blind spot.
+- An instruction sequence, helper, codec, renderer, loader, or banking scheme
+  needs code archaeology.
+
+How it searches:
+
+1. Formulate a question from a minimal local signature: opcode, symbol, emitted
+   fragment, version, address, symptom, or constraint.
+2. Search for exact fragments and concepts with alternative terminology.
+3. Expand terms across English, Spanish, Polish, Russian, Czech, and other
+   relevant regional communities.
+4. Diversify sources: code, tests, commits, issues, forks, emulators, hardware
+   measurements, mailing lists, archived forums, personal blogs, small
+   repositories, disassemblies, generators, and demoscene material.
+5. Follow authors, citations, forks, related issues, and archived links.
+6. Try to refute each finalist: look for bugs, regressions, closed or rejected
+   issues, and model-specific failures.
+7. Check the CPU, Spectrum model, ABI, interrupts, paging, memory, toolchain,
+   and timing before transferring a technique.
+
+Research has a budget and stopping rules and keeps only the few sources that
+can change a decision. A popular technique without a local anchor remains a
+hypothesis. Searches use only minimal normalized signatures and never upload
+private code or project identifiers.
+
+## Optional: shrink-agent
+
+[`tools/shrink-agent`](tools/shrink-agent/README.md) is the applying
+counterpart of the read-only `shrink-z80`. It is an unattended loop for z88dk
+projects. It proposes one size reduction per routine through the Claude API,
+rebuilds every target, and keeps a change only when all targets build, total
+size falls, the configured tests pass, and an independent model review accepts
+it. It works in a disposable worktree branch, makes one commit per routine,
+and never merges or pushes.
+
+It needs Python 3.11 or later, its own virtual environment
+(`tools/shrink-agent/install.py`), and an Anthropic API key. Runs cost money and
+are capped by `--max-usd`, 2 USD by default. In Claude Code, `/shrink-z80 agent`
+runs the census first and asks before launching it. Its README has the
+configuration, outcomes, and limits.
+
 ## Recommended artifacts
 
-The skills can start with source files alone, but these artifacts increase
-confidence:
+The skills can start from source files alone; these artifacts raise confidence:
 
 | Evidence | Usefulness |
 |---|---|
@@ -412,26 +442,27 @@ configuration, and recipe must belong to the same baseline.
   read-only; its first greenfield product-code edit also requires explicit spec
   acceptance. Any multi-milestone auto-advance is bounded to the current session.
 - `port-spectranext` keeps the external Spectranext checkout authoritative and
-  consumer state isolated; source edits stay inside the authorized consumer
-  seam and physical results require explicit user observation.
-- `debug-z80` keeps diagnosis and candidate repairs in a disposable worktree;
-  it edits the primary tree only for a requested, causally supported repair.
-- `document-z80` edits only the public human-facing documentation in scope; it
+  consumer state isolated. Source edits stay inside the authorized consumer
+  seam, and physical results require explicit user observation.
+- `debug-z80` keeps diagnosis and candidate repairs in a disposable worktree.
+  It edits the primary tree only for a requested, causally supported repair.
+- `document-z80` edits only the public human-facing documentation in scope. It
   does not change code, build configuration, releases, or agent instructions.
-- `audit-z80` and `shrink-z80` do not edit the project.
-- `organize-z80` edits source only in `apply` mode after an explicit request,
-  frozen baseline, approved boundary, one named slice, and rollback point; an
-  explicitly requested persistent-map update may edit only that document and
-  its routing pointer.
+- `audit-z80` and `shrink-z80` do not edit the project. `shrink-agent` commits
+  only to its own disposable branch.
+- `organize-z80` edits source only in `apply` mode, after an explicit request,
+  a frozen baseline, an approved boundary, one named slice, and a rollback
+  point. An explicitly requested persistent-map update may edit only that
+  document and its routing pointer.
 - `optimize-z80` modifies only a disposable copy in `Experiment` mode and
   requires explicit approval.
-- The included scripts use the Python standard library, work with local files,
-  and do not perform network searches.
-- Tests write to temporary directories and remove them when finished.
-- The plugin does not include z88dk, SDCC, emulators, or profiling tools.
-- It is not a compiler, hardware profiler, or automatic optimizer.
-- It does not confirm linked savings, timings, or compatibility without
-  appropriate evidence.
+- `send-bridgezx` sends only the named sources to the selected machine and never
+  retries an uncertain transfer.
+- The bundled analyzers work on local files and perform no network access.
+  Tests write to temporary directories and remove them when finished.
+- This is not a compiler, hardware profiler, or automatic optimizer. It does not
+  confirm linked savings, timings, or compatibility without appropriate
+  evidence.
 - SMC, SP abuse, `DI`/`EI`, undocumented opcodes, floating bus behavior, and
   other hardware-dependent techniques require risk labels and target-specific
   validation.
@@ -441,98 +472,84 @@ configuration, and recipe must belong to the same baseline.
 ## Repository structure
 
 - `skills/<name>/`: `SKILL.md`, agent metadata, references, and analyzers.
-- `scripts/`: installation, worktree runner, and tests.
-- `evals/`: routing/evidence cases and fixtures; generated results are ignored.
-- `agent_docs/`: maintained project context.
+- `scripts/`: host installers, the disposable-worktree runner, the skill
+  validator, and repository tests.
+- `tools/shrink-agent/`: the optional unattended size-reduction tool.
+- `evals/`: routing, evidence, and policy cases with fixtures; generated
+  results are ignored.
+- `agent_docs/`: maintained project context for agents.
+- `.codex-plugin/plugin.json`, `plugin.json`, `gemini-extension.json`: host
+  manifests with one shared version.
 
-See the [repository map](agent_docs/project_structure.md) for file ownership.
+See the [repository map](agent_docs/project_structure.md) for file ownership
+and [CHANGELOG.md](CHANGELOG.md) for changes.
 
-## Validation
+## Development and validation
 
-From the repository root, set up the validator's PyYAML dependency in a virtual
-environment:
+Set up the validator and test dependencies in a virtual environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -r scripts/requirements-validation.txt
+python -m pip install -r scripts/requirements-validation.txt pytest
 ```
 
-The activation command above is for POSIX shells; in Windows PowerShell use
-`.venv\Scripts\Activate.ps1` and `python` in place of `python3`.
+In Windows PowerShell, activate with `.venv\Scripts\Activate.ps1` and use
+`python` instead of `python3`.
+
+Validate the skills and run the test suite from the repository root:
 
 ```sh
 python3 scripts/validate_skills.py
-python3 scripts/validate_skills.py skills/route-z80
-python3 scripts/test_validate_skills.py
-```
-
-The first command validates all eleven skills; an optional skill folder limits
-the check to one. This repository owns the validator, so skill-creator updates
-do not replace it. It validates without rewriting `SKILL.md` or
-`agents/openai.yaml`; it does not establish runtime behavior or skill activation.
-
-Included tests:
-
-```sh
-python3 scripts/test_workflow_integration.py
-python3 scripts/test_workflow_context_efficiency.py
-python3 scripts/test_personal_marketplace.py
-python3 scripts/test_run_in_worktree.py
+python3 -m pytest -q
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
-python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
-python3 scripts/test_behavior_evals.py
-python3 skills/send-bridgezx/scripts/test_bridgezx_transfer.py
 ```
 
-The plugin manifest and the front matter of each skill should also be validated
+`validate_skills.py` checks all eleven skills, or one when you pass its folder,
+without rewriting `SKILL.md` or `agents/openai.yaml`. It does not establish
+runtime behavior or activation. `pytest` collects the `scripts/`,
+`optimize-z80`, `send-bridgezx`, and `shrink-agent` tests. The two smoke
+scripts run separately. Validate the manifests and each skill's front matter
 before publishing a new version.
 
-Behavior evals are intentionally separate from unit tests. Validate their
-datasets without using a model:
+### Behavior evals (Codex only)
+
+Behavior evals are separate from the unit tests. They drive the Codex CLI.
+Check the datasets without a model:
 
 ```sh
 python3 scripts/run_behavior_evals.py --dry-run
 ```
 
-After installing the same plugin version shown in `.codex-plugin/plugin.json`,
-run the labelled routing and evidence suites in fresh, read-only Codex sessions:
+After installing the plugin version shown in `.codex-plugin/plugin.json`, run
+the routing and evidence suites in fresh, read-only Codex sessions:
 
 ```sh
 python3 scripts/run_behavior_evals.py --suite evals/routing.jsonl
 python3 scripts/run_behavior_evals.py --suite evals/evidence.jsonl
 ```
 
-The runner refuses a stale installed plugin version unless explicitly
-overridden, records per-route precision and recall, and writes ignored JSON
-results and per-case runtime traces under `evals/results/`. Use `--model` and
-`--reasoning-effort` to make a comparison explicit. Results distinguish requested
-settings from runtime-confirmed data, record reported token usage and observed
-actions, and compare each fixture's files before and after execution. Unobserved
-shell or tool side effects remain unknown; a model's final JSON is not proof
-that no writes were attempted. Traces can contain fixture content and local
-paths; inspect them before sharing.
-
-Reports fingerprint the authored plugin and evaluation inputs; that fingerprint
-does not by itself prove the installed copy matches. Hold cases, fixture inputs,
-model, and effort fixed when comparing skill revisions for quality or cost.
-`evals/baseline.json` retains historical verified results; it is not
-evidence that a later release or expanded suite passed.
+The runner refuses a stale installed plugin unless overridden. It records
+per-route precision and recall and writes ignored JSON results and per-case
+traces under `evals/results/`. Use `--model` and `--reasoning-effort` to make a
+comparison explicit, and keep cases, fixtures, model, and effort fixed when you
+compare skill revisions. Results separate requested settings from
+runtime-confirmed data, record token usage and observed actions, and compare
+fixture files before and after each case. Unobserved side effects remain
+unknown, and traces can contain fixture content and local paths, so inspect
+them before sharing. `evals/baseline.json` keeps historical results only; it
+does not prove a later release passes.
 
 The optional `evals/policy.jsonl` suite checks decisions about model opt-ins,
-authorization, selective reads, and reuse. It is not part of the default suites.
-Its scenarios ask for decisions only: no delegated calls, builds, edits, or
-transfers. See [policy evaluation](evals/POLICY.md) for scope and limitations.
-Validate the extra dataset locally with:
+authorization, selective reads, and reuse. Its scenarios ask only for
+decisions, with no delegated calls, builds, edits, or transfers. A live run uses
+paid inference and tests policy interpretation, not runtime enforcement. See
+[policy evaluation](evals/POLICY.md). Check its dataset locally with:
 
 ```sh
 python3 scripts/run_behavior_evals.py --suite evals/policy.jsonl --dry-run
 ```
-
-A live run must be requested separately with a chosen model and effort; it uses
-paid inference and tests policy interpretation, not runtime enforcement. No live
-Astra validation or cost/quality improvement is claimed for revision 0.8.3.
 
 ## License
 

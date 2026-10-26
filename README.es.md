@@ -1,555 +1,592 @@
-# Z80 Skills — Adaptive Research
+# Z80 Skills
 
 **Idiomas:** [English](README.md) · Español
 
-Plugin para Codex con un workflow adaptativo independiente, un selector de
-dominio ligero, ocho skills complementarios de ingeniería y envío protegido
-mediante BridgeZX para proyectos Z80, especialmente software de ZX Spectrum
-escrito en ensamblador, C o una mezcla de ambos con z88dk o SDCC.
+Skills de agente para proyectos Z80, especialmente software de ZX Spectrum y ZX
+Spectrum Next escrito en ensamblador, C o ambos con z88dk o SDCC. Funcionan con
+Codex, Claude Code y Grok Build desde un único checkout; el soporte de Gemini /
+Antigravity es parcial.
 
-El objetivo no es producir listas genéricas de trucos. Los skills inspeccionan
-el código y los artefactos actuales, adaptan la profundidad y el paralelismo al
-riesgo real y distinguen claramente entre evidencia probada, estimaciones e
-hipótesis.
+El paquete incluye once skills: un `workflow` adaptativo y portable, un
+selector Z80 ligero, ocho especialistas de ingeniería y envío protegido
+mediante BridgeZX. También incluye una herramienta opcional de reducción de
+tamaño desatendida, [`shrink-agent`](tools/shrink-agent/README.md).
 
-> Ejecución adaptativa, desarrollo dirigido por especificaciones, depuración
-> causal, análisis, documentación de repositorios, organización, reducción de
-> tamaño y optimización multiobjetivo basados en
-> evidencia para Z80 y ZX Spectrum.
+Los skills no producen listas genéricas de trucos. Inspeccionan el código y los
+artefactos de build actuales, ajustan la profundidad y el paralelismo al riesgo
+real y separan la evidencia probada de las estimaciones y las hipótesis.
 
 ## Contenido
 
-- [Qué incluye](#qué-incluye)
-- [Qué aporta frente a un análisis genérico](#qué-aporta-frente-a-un-análisis-genérico)
-- [Ejecución adaptativa y multiagente](#ejecución-adaptativa-y-multiagente)
-- [Investigación externa dirigida](#investigación-externa-dirigida)
+- [Hosts compatibles](#hosts-compatibles)
+- [Inicio rápido](#inicio-rápido)
 - [Instalación](#instalación)
+- [¿Qué skill necesito?](#qué-skill-necesito)
 - [Uso](#uso)
+- [Cómo funciona](#cómo-funciona)
+- [Opcional: shrink-agent](#opcional-shrink-agent)
 - [Artefactos recomendados](#artefactos-recomendados)
 - [Seguridad y límites](#seguridad-y-límites)
 - [Estructura del repositorio](#estructura-del-repositorio)
-- [Validación](#validación)
-- [Licencia y copyright](#licencia-y-copyright)
+- [Desarrollo y validación](#desarrollo-y-validación)
+- [Licencia](#licencia)
 
-## Qué incluye
+## Hosts compatibles
 
-| Skill | Pregunta principal | Resultado |
-|---|---|---|
-| [workflow](skills/workflow/SKILL.md) | ¿Cuál es el menor nivel de ejecución suficiente para esta tarea de ingeniería? | Ejecución directa Light o Medium en el hilo principal, o coordinación Heavy plana con workers integrados y acotados. |
-| [route-z80](skills/route-z80/SKILL.md) | ¿Qué único especialista Z80, si procede, es responsable del resultado solicitado? | Una ruta de dominio o `workflow` sin especialista para ingeniería ordinaria. |
-| [send-bridgezx](skills/send-bridgezx/SKILL.md) | ¿Qué ficheros o directorios concretos deben llegar al ZX o Next? | Envío BridgeZX protegido con IP explícita o última conocida, destino opcional y secuencia solicitada. |
-| [develop-z80](skills/develop-z80/SKILL.md) | ¿Cómo convertir esta idea para ZX o Next en un proyecto construible y verificable? | Concepto, especificación, plan técnico, backlog de tareas, implementación y evidencia criterio por criterio. |
-| [document-z80](skills/document-z80/SKILL.md) | ¿Cómo estructurar la documentación pública del repositorio y mantenerla correcta entre idiomas? | README y jerarquía documental basados en evidencia, con comandos, requisitos de hardware y paridad EN/ES verificados. |
-| [port-spectranext](skills/port-spectranext/SKILL.md) | ¿Cómo atraviesa un programa ZX existente el pipeline consumidor del cartucho Spectranext? | Intake canónico, implementación acotada, gates ligados a artefactos, evidencia física y handoff final. |
-| [debug-z80](skills/debug-z80/SKILL.md) | ¿Qué causa este fallo observado y qué componente posee la corrección? | Una explicación causal falsable y, cuando se solicita, un fix de causa raíz verificado. |
-| [audit-z80](skills/audit-z80/SKILL.md) | ¿Hay defectos latentes o riesgos amplios de corrección? | Hallazgos de solo lectura priorizados por severidad y confianza, con evidencia, verificación y riesgo residual. |
-| [organize-z80](skills/organize-z80/SKILL.md) | ¿Qué fronteras de propiedad, dependencias, fuentes y placement necesitan cambiar? | Mapa proporcional, diseño, slice reversible o decisión explícita de no cambiar. |
-| [shrink-z80](skills/shrink-z80/SKILL.md) | ¿Cómo reducir almacenamiento, tamaño enlazado, memoria residente, BSS/stack, bancos u overlays? | Reducciones netas clasificadas por seguridad y por calidad de la evidencia. |
-| [optimize-z80](skills/optimize-z80/SKILL.md) | ¿Cuál es el cuello de botella real y qué cambios ofrecen el mejor equilibrio entre tamaño, velocidad, RAM, renderizado y latencia? | Hasta tres experimentos priorizados con impacto, riesgo, rollback y plan de validación. |
+Todos los hosts leen los mismos árboles canónicos de `skills/`. No se copia
+nada, así que un `git pull` los actualiza todos.
 
-`workflow` es independiente de Z80 y selecciona el esfuerzo de ejecución.
-`route-z80` es el único punto de entrada implícito para seleccionar dominio Z80
-desde lenguaje natural, incluidas coincidencias inequívocas con un especialista.
-Los skills enrutados se solapan solo donde es útil:
+| Host | Instalación | Invocación explícita | Entradas implícitas | Estado |
+|---|---|---|---|---|
+| Codex | Plugin del marketplace personal | `$route-z80`, `$debug-z80`, … | `route-z80`, `workflow` | Completo; las evals de comportamiento se ejecutan aquí |
+| Claude Code | Junctions (Windows) o enlaces simbólicos (macOS, Linux) | `/route-z80`, `/debug-z80`, … | `route-z80`, `workflow` | Completo |
+| Grok Build | `[skills].paths` en `~/.grok/config.toml` | Mediante el catálogo de skills de Grok | Sigue el catálogo de Grok; los campos de restricción de Codex y Claude Code pueden no aplicarse | Carga completa de skills |
+| Gemini / Antigravity | Sin instalador en este repositorio | — | — | Parcial: solo manifiesto y mapeo de delegación |
 
-- Usa `workflow` directamente para planificación, implementación y verificación adaptativas.
-- Usa `route-z80` para elegir un especialista sin cargar todos los candidatos.
-- Usa `send-bridgezx` para entregar ficheros o directorios mediante el cliente
-  oficial BridgeZX sin mantener otra IP ni otra implementación del protocolo.
-- Usa `develop-z80` solo para una iniciativa explícita de producto o un dossier
-  SDD existente, no para fixes ordinarios ni features aisladas del repositorio.
-- Usa `document-z80` para crear, reestructurar, revisar o sincronizar la
-  documentación pública sin borrar la identidad del proyecto.
-- Usa `port-spectranext` para portar un programa ZX existente al cartucho
-  Spectranext, no para targets ZX Spectrum Next ni trabajo sobre el backend.
-- Usa `debug-z80` para un fallo observado cuyo owner causal sigue sin conocerse.
-- Usa `audit-z80` para revisión preventiva o amplia de corrección en solo lectura,
-  o en modo `diff` para el riesgo de corrección de un conjunto de cambios.
-- Usa `organize-z80` para mapear o mejorar con seguridad propiedad, dependencias, layout de fuentes y placement en runtime.
-- Usa `shrink-z80` para una búsqueda exhaustiva centrada exclusivamente en
-  tamaño.
-- Usa `optimize-z80` para decidir entre objetivos que compiten entre sí y
-  ordenar los siguientes experimentos.
+En cualquier host también puedes describir la tarea en lenguaje natural;
+`route-z80` elige el especialista. La delegación multiagente del nivel Heavy se
+adapta a la primitiva de subagentes y a los nombres de modelo de cada host
+(véase [Ejecución adaptativa y
+multiagente](#ejecución-adaptativa-y-multiagente)).
 
-## Qué aporta frente a un análisis genérico
+## Inicio rápido
 
-### Evidencia local antes que folklore
+1. Clona el repositorio una sola vez, en cualquier lugar de tu directorio
+   personal:
 
-- Solo el código actual y los artefactos demostrablemente frescos pueden
-  confirmar un hallazgo o una mejora.
-- Los mapas, símbolos, listings, ASM generado y binarios enlazados cuentan como
-  evidencia únicamente cuando corresponden a la misma revisión, configuración
-  y target.
-- Escáneres, agentes, conocimiento previo, foros y repositorios generan
-  candidatos; no sustituyen la verificación local.
-- Un artefacto obsoleto reduce explícitamente la confianza a estados como
-  `NEEDS BUILD`, `REQUIERE BUILD` o `SPECULATIVE`.
-- En proyectos con varios targets, una propuesta solo supera la puerta de
-  promoción cuando cada target satisface sus propios límites.
+   ```sh
+   git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
+   cd ~/plugins/z80-skills
+   ```
 
-### Carga progresiva
+2. Regístralo en tu host (detalles en [Instalación](#instalación)):
 
-Cada `SKILL.md` funciona como un dispatcher compacto. Codex carga primero el
-contrato común y después únicamente las referencias y scripts pertinentes para
-el problema observado. Esto evita introducir en contexto manuales, técnicas o
-logs que no pueden cambiar el resultado.
+   | Host | Orden |
+   |---|---|
+   | Codex | `python3 scripts/install_personal_marketplace.py` y después `codex plugin add z80-skills@personal` |
+   | Claude Code, Windows | `pwsh -File .\scripts\install-for-claude.ps1` |
+   | Claude Code, macOS o Linux | `sh scripts/install-for-claude.sh` |
+   | Grok Build | `pwsh -File .\scripts\install-for-grok.ps1` |
 
-### Herramientas deterministas
+3. Abre una tarea o sesión **nueva**. El catálogo de skills se carga al inicio
+   y no se refresca dentro de una tarea ya abierta.
 
-El plugin incluye analizadores Python sin dependencias externas para perfilar
-el proyecto, resumir mapas, detectar patrones, inventariar fronteras ABI,
-evaluar frescura de artefactos, localizar library pulls y estimar candidatos.
-Sus resultados son señales reproducibles, no veredictos automáticos.
+4. Prueba una petición dentro de un proyecto Z80:
 
-## Ejecución adaptativa y multiagente
-
-El skill independiente `workflow` es el núcleo común de ejecución:
-
-| Nivel | Estrategia |
-|---|---|
-| **Light** | El hilo principal resuelve directamente una tarea acotada. |
-| **Medium** | El hilo principal resuelve directamente un flujo ordenado de varios pasos. |
-| **Heavy** | El hilo principal coordina workers integrados independientes y acotados en topología plana. |
-
-En `auto`, cada skill Z80 aporta señales de dominio `Focused`, `Standard` o
-`Deep` después del preflight. Workflow controla ruta, despacho, reparación,
-verificación e integración; el skill de dominio conserva puertas de evidencia,
-definición de lanes, contrato de salida y restricciones de escritura. Un nivel
-explícito gana, pero nunca autoriza una operación prohibida por el proyecto o el
-skill de dominio.
-Antes del despacho, workflow clasifica cada superficie como solo lectura del
-árbol principal, exclusiva de un worktree desechable o mutación autorizada del
-árbol principal, y selecciona solo roles compatibles con esa frontera.
-
-Las instrucciones explícitas del usuario prevalecen sobre los valores
-predeterminados del skill dentro del alcance autorizado. Siguen vigentes las
-restricciones del proyecto no modificadas, los requisitos de evidencia y los
-límites del runtime. Las paradas causadas por un skill identifican la regla
-exacta según la [política de autorización](skills/workflow/references/authorization.md).
-
-La delegación usa Sol 6.1 por defecto y conserva el esfuerzo de cada asignación.
-Solo para un análisis causal difícil o de alto riesgo identificado, una petición expresa
-puede seleccionar **Astra Medium** (`gpt-6-astra`, esfuerzo `medium`). Nunca se
-activa por escalado automático, sustitución, herencia ni para otros workers.
-Véase la [política de modelos](skills/workflow/references/roles.md#explicit-astra-medium-opt-in).
-El host debe admitir y aplicar esos ajustes: un skill no es un control técnico
-del gasto. No cambian el modelo del hilo principal ni los requisitos de despacho.
-
-## Investigación externa dirigida
-
-La búsqueda externa se activa para resolver una incertidumbre concreta, no
-para adornar el informe ni repetir una lista de sitios conocidos.
-
-### Cuándo se activa
-
-- El usuario solicita investigación profunda en foros, blogs, repositorios o
-  demoscene.
-- Una versión de compilador, ABI, firmware, emulador, modelo de hardware o
-  detalle de timing puede cambiar un hallazgo principal.
-- El código, los artefactos generados y la documentación se contradicen.
-- Un análisis profundo mantiene un punto ciego material.
-- Una secuencia de instrucciones, helper, codec, renderer, loader o esquema de
-  bancos requiere arqueología de código.
-
-### Cómo busca
-
-1. Formula una pregunta desde una firma local mínima: opcode, símbolo, fragmento
-   emitido, versión, dirección, síntoma o restricción.
-2. Busca fragmentos exactos y conceptos con vocabulario alternativo.
-3. Amplía términos en inglés, español, polaco, ruso, checo y otras comunidades
-   regionales pertinentes.
-4. Diversifica las fuentes: código, tests, commits, issues, forks, emuladores,
-   mediciones de hardware, listas de correo, foros archivados, blogs personales,
-   repositorios pequeños, disassemblies, generadores y material demoscene.
-5. Sigue autores, citas, forks, problemas relacionados y enlaces archivados.
-6. Intenta refutar cada finalista buscando bugs, regresiones, issues cerrados o
-   rechazados y fallos específicos por modelo.
-7. Verifica CPU, modelo Spectrum, ABI, interrupciones, paginación, memoria,
-   toolchain y timing antes de transferir una técnica.
-
-La investigación tiene presupuesto y reglas de parada: conserva solo las pocas
-fuentes capaces de cambiar una decisión. Una técnica popular sin ancla en el
-proyecto permanece como hipótesis.
-
-Para proteger proyectos privados, las búsquedas usan únicamente firmas mínimas
-normalizadas; nunca deben subir código privado ni identificadores del proyecto.
+   ```text
+   Usa route-z80 para elegir el especialista adecuado para esta petición: el
+   build de 128K se cuelga al volver de la ISR.
+   ```
 
 ## Instalación
 
 ### Requisitos
 
-- Codex con soporte para plugins y skills.
-- Los niveles Light y Medium de `workflow` trabajan directamente; Heavy usa
-  subagentes cuando están disponibles. Los roles y la selección de modelos
-  siguen la [política canónica](skills/workflow/references/roles.md), que comprueba
-  las capacidades del runtime y declara las sustituciones de modelo o esfuerzo.
-- Git para clonar y actualizar el repositorio.
-- Python 3.9 o posterior para los helpers generales; Python 3.11 o posterior
-  es obligatorio cuando `optimize-z80` deba interpretar o aplicar una política
-  TOML.
-- z88dk o SDCC únicamente cuando el proyecto o una medición reproducible los
-  requiera.
+- Un host compatible: Codex con soporte de plugins, Claude Code o Grok Build.
+- Git, para clonar y actualizar el repositorio.
+- Python 3.9 o posterior para los helpers incluidos. `optimize-z80` necesita
+  Python 3.11 o posterior para interpretar una política TOML del proyecto; el
+  envío por BridgeZX necesita 3.10 o posterior; `shrink-agent` necesita 3.11 o
+  posterior. En Windows, usa `python` o `py` donde los ejemplos dicen `python3`.
+- PowerShell (`pwsh`) para el instalador de Claude Code en Windows y para el de
+  Grok Build.
+- z88dk o SDCC solo cuando el proyecto o una medición reproducible los
+  necesiten. Este repositorio no incluye compiladores, emuladores ni
+  profilers.
 
-### Primera instalación
-
-Clona el repositorio en cualquier ubicación bajo tu directorio personal. El
-checkout es la fuente canónica de los once skills.
+### Codex
 
 ```sh
-git clone https://github.com/IgnacioMonge/z80-skills.git ~/plugins/z80-skills
 cd ~/plugins/z80-skills
 python3 scripts/install_personal_marketplace.py
 codex plugin add z80-skills@personal
 ```
 
 `install_personal_marketplace.py` crea o actualiza
-`~/.agents/plugins/marketplace.json`, apunta `z80-skills` al checkout real,
-conserva las demás entradas y sustituye solo la entrada llamada `z80-skills`.
-No mantengas copias, enlaces simbólicos ni junctions creados manualmente para
-ningún skill incluido bajo `~/.agents/skills/<skill-name>` ni en la ruta
-heredada `~/.codex/skills/<skill-name>`. Esas copias pueden ocultar el plugin
-con namespace y omitir archivos del paquete como `scripts/run_in_worktree.py`;
-copiar directorios individuales desde `skills/` no constituye una instalación
-completa. El plugin ya incluye los once skills, incluidos `route-z80` y
-`workflow`. El instalador avisa si encuentra una de estas
-ubicaciones duplicadas; muévela o desactívala antes de abrir una tarea nueva de
-Codex.
+`~/.agents/plugins/marketplace.json`, apunta la entrada `z80-skills` a este
+checkout y conserva las demás entradas. Después, Codex instala el plugin con
+los once skills.
 
-Solo `route-z80` participa en la selección implícita de dominio Z80. Los nueve
-skills enrutados siguen disponibles mediante invocación explícita de
-`$send-bridgezx`, `$develop-z80`, `$document-z80`, `$port-spectranext`,
-`$debug-z80`, `$audit-z80`, `$organize-z80`, `$shrink-z80` y `$optimize-z80`;
-después de decidir, `route-z80` carga únicamente el hermano seleccionado. Así el
-router también cubre peticiones inequívocas en lenguaje natural, mientras el
-trabajo ordinario permanece en `workflow` y no se inyectan las nueve descripciones
-especialistas.
+Solo `route-z80` y `workflow` se invocan de forma implícita. Los nueve
+especialistas siguen disponibles como `$send-bridgezx`, `$develop-z80`,
+`$document-z80`, `$port-spectranext`, `$debug-z80`, `$audit-z80`,
+`$organize-z80`, `$shrink-z80` y `$optimize-z80`. Tras seleccionar la ruta,
+`route-z80` carga solo el especialista elegido, de modo que el trabajo
+rutinario sigue en `workflow` y el contexto no se llena con la descripción de
+todos los especialistas.
 
-Abre una tarea nueva de Codex después de instalar: el catálogo de skills se
-carga al iniciar la tarea y no se actualiza dinámicamente dentro de una tarea
-ya abierta.
-
-### Actualización
-
-```sh
-cd /ruta/a/z80-skills
-git pull --ff-only
-python3 scripts/install_personal_marketplace.py
-codex plugin add z80-skills@personal
-```
-
-Los cambios del plugin actualizan la versión del manifiesto incluida en Git
-para que Codex cree una copia instalada nueva. No edites directamente
-`~/.codex/plugins/cache`. Después de actualizar, abre una tarea nueva.
-
-### Grok Build
-
-Grok Build lee este checkout en el sitio. No copies los once skills a
-`~/.grok/skills` ni a `~/.claude/skills`; esas copias se quedan obsoletas.
-
-```powershell
-pwsh -File .\scripts\install-for-grok.ps1
-```
-
-El instalador añade `<repo>/skills` a `~/.grok/config.toml` `[skills].paths`
-y borra las copias obsoletas de los once skills del paquete en `~/.grok/skills`
-y `~/.claude/skills`. Los skills personales ajenos a este repositorio no se
-tocan. Tras un `git pull`, Grok ya ve los árboles actualizados; abre una tarea
-nueva para recargar el catálogo.
+No mantengas copias, enlaces simbólicos ni junctions de los skills incluidos en
+`~/.agents/skills/<nombre>` ni en la ubicación heredada
+`~/.codex/skills/<nombre>`. Ocultan el plugin y no contienen archivos del
+paquete como `scripts/run_in_worktree.py`. El instalador avisa cuando encuentra
+alguna; muévela o desactívala antes de abrir una tarea nueva. No edites nunca
+`~/.codex/plugins/cache` directamente.
 
 ### Claude Code
-
-Claude Code también lee este checkout en el sitio mediante *junctions* de
-directorio. `~/.claude/skills/<nombre>` enlaza a `skills/<nombre>` para los once
-skills, y `~/.claude/scripts` enlaza a `scripts/` para que las referencias
-`../../scripts/run_in_worktree.py` de los skills se resuelvan a través de los
-enlaces.
 
 ```powershell
 pwsh -File .\scripts\install-for-claude.ps1
 ```
 
-El script es idempotente: conserva los enlaces canónicos existentes, reenlaza los
-obsoletos y avisa de directorios reales sin borrarlos. Solo `route-z80` y
-`workflow` se exponen implícitamente; los nueve especialistas declaran
-`disable-model-invocation: true` y siguen disponibles como `/develop-z80`,
-`/optimize-z80`, etc. La delegación Heavy sigue el mapeo para Claude Code en
-[roles.md](skills/workflow/references/roles.md). Tras un `git pull`, abre una
-sesión nueva de Claude Code para recargar el catálogo. Si además ejecutas
-`install-for-grok.ps1`, pásale `-SkipClaudeCleanup`; de lo contrario deshace
-estos enlaces.
+```sh
+sh scripts/install-for-claude.sh
+```
+
+El instalador enlaza `~/.claude/skills/<nombre>` con `skills/<nombre>` para los
+once skills. También enlaza `~/.claude/scripts` y `~/.claude/tools` con
+`scripts/` y `tools/` de este repositorio, para que se resuelvan las
+referencias `../../scripts/...` y `../../tools/...` de los skills. Ambos
+instaladores son idempotentes: sustituyen los enlaces obsoletos e informan de
+los directorios reales que estorban, pero nunca los borran.
+
+Solo `route-z80` y `workflow` se invocan de forma implícita. Los nueve
+especialistas declaran `disable-model-invocation: true` y siguen disponibles
+como `/develop-z80`, `/optimize-z80`, etc.
+
+### Grok Build
+
+```powershell
+pwsh -File .\scripts\install-for-grok.ps1
+```
+
+El instalador añade `<repo>/skills` a `[skills].paths` en
+`~/.grok/config.toml`, de modo que Grok Build lee los árboles en su sitio.
+También borra copias obsoletas de los once skills incluidos en
+`~/.grok/skills` y `~/.claude/skills`, y no toca los skills personales ajenos
+al paquete.
+
+Si también usas Claude Code, ejecuta el instalador de Grok con
+`-SkipClaudeCleanup`. Si no, eliminará los enlaces de Claude Code como si
+fueran copias obsoletas.
+
+### Gemini / Antigravity
+
+El repositorio incluye `gemini-extension.json`, y `workflow` asigna sus roles
+de delegación a `invoke_subagent` en los runtimes que lo ofrecen (véase
+[roles](skills/workflow/references/roles.md#other-hosts-gemini--antigravity)).
+Todavía no hay instalador ni configuración probada para estos hosts.
+
+### Actualización
+
+```sh
+cd ~/plugins/z80-skills
+git pull --ff-only
+```
+
+Claude Code y Grok Build leen directamente los árboles actualizados. Codex
+instala una copia versionada, así que vuelve a ejecutar el instalador del
+marketplace y `codex plugin add z80-skills@personal`. Los cambios del plugin
+suben la versión del manifiesto para que Codex cree una copia nueva. Después,
+abre una tarea o sesión nueva en cada host.
+
+## ¿Qué skill necesito?
+
+| Skill | Úsalo cuando | Obtienes |
+|---|---|---|
+| [workflow](skills/workflow/SKILL.md) | Cualquier tarea de ingeniería, Z80 o no, cuyo esfuerzo y delegación deban ajustarse al riesgo. | Ejecución directa Light o Medium, o coordinación Heavy plana con workers acotados. |
+| [route-z80](skills/route-z80/SKILL.md) | Cualquier petición Z80 en lenguaje natural, aunque el especialista parezca obvio; omítelo solo si nombras directamente al especialista. | Un especialista, o `workflow` para el trabajo ordinario. |
+| [send-bridgezx](skills/send-bridgezx/SKILL.md) | Hay que enviar archivos o directorios concretos a un ZX o Next mediante BridgeZX. | Una transferencia protegida con la IP explícita o la última conocida, destino opcional y el orden pedido. |
+| [develop-z80](skills/develop-z80/SKILL.md) | Una iniciativa de producto explícita o un dosier SDD existente, no arreglos rutinarios. | Concepto, especificación, plan, backlog, implementación y evidencia por criterio de aceptación. |
+| [document-z80](skills/document-z80/SKILL.md) | Hay que crear, reestructurar, revisar o sincronizar EN/ES la documentación pública de un proyecto. | Un README y una jerarquía de documentación basados en evidencia, con órdenes y requisitos de hardware verificados. |
+| [port-spectranext](skills/port-spectranext/SKILL.md) | Un programa ZX existente se está portando al cartucho Spectranext (no al Spectrum Next). | Entrada canónica, implementación acotada, puertas ligadas a artefactos, evidencia física y entrega. |
+| [debug-z80](skills/debug-z80/SKILL.md) | Observas un fallo y su causa es desconocida. | Una explicación causal falsable y, si se pide, una corrección verificada de la causa raíz. |
+| [audit-z80](skills/audit-z80/SKILL.md) | Quieres una revisión preventiva o amplia de corrección, o el riesgo de un conjunto de cambios (modo `diff`). | Hallazgos de solo lectura ordenados por gravedad y confianza, con evidencia y riesgo residual. |
+| [organize-z80](skills/organize-z80/SKILL.md) | Hay que mapear o cambiar con seguridad la propiedad, las dependencias, la estructura de fuentes o la ubicación en runtime. | Un mapa proporcional, un diseño, un tramo de migración reversible o una decisión explícita de no cambiar. |
+| [shrink-z80](skills/shrink-z80/SKILL.md) | Hay que reducir almacenamiento, tamaño enlazado, memoria residente, BSS/pila, bancos u overlays. | Reducciones netas clasificadas por seguridad y calidad de la evidencia. |
+| [optimize-z80](skills/optimize-z80/SKILL.md) | Compiten varios objetivos: tamaño, velocidad, RAM, renderizado, latencia. | Hasta tres experimentos priorizados con impacto, riesgo, reversión y validación. |
 
 ## Uso
 
-Los skills se invocan mediante lenguaje natural. Cuanto más concretos sean el
-target, el objetivo y los artefactos disponibles, más precisa será la
-priorización.
+Describe el objetivo, la meta y los artefactos disponibles; cuanto más concreta
+sea la petición, mejor será la priorización. Los ejemplos nombran el skill en
+la frase. En Codex puedes anteponer `$` y en Claude Code invocarlo como
+`/nombre`.
 
 ### Workflow adaptativo
 
 ```text
-Usa workflow en modo auto para implementar este cambio con el menor nivel de
-ejecución suficiente y conservar los contratos existentes del repositorio.
+Usa workflow en modo auto para implementar este cambio con el nivel de
+ejecución mínimo suficiente y conservar los contratos existentes del repositorio.
 ```
 
 ### Selección de dominio Z80
 
 ```text
 Usa route-z80 para elegir el único especialista relevante para esta petición
-del repositorio Z80, o workflow si no hace falta un contrato especialista.
+sobre el repositorio Z80, o workflow si no hace falta ningún contrato de
+evidencia especializado.
 ```
 
 ### Envío mediante BridgeZX
 
 ```text
-Usa send-bridgezx para enviar build/juego.nex a mi Spectrum Next con la última
-IP conocida por BridgeZX, dentro de JUEGOS/DEMO.
+Usa send-bridgezx para enviar build/game.nex a mi Spectrum Next con la última
+IP conocida de BridgeZX, en GAMES/DEMO.
 ```
 
 ### Documentación del repositorio
 
 ```text
-Usa document-z80 para reestructurar el README como landing page, verificar cada
-afirmación sobre build y hardware y mantener alineados los documentos en inglés
-y español sin perder la voz del proyecto.
+Usa document-z80 para reestructurar el README de este proyecto como página de
+entrada, verificar cada afirmación sobre build y hardware y mantener alineados
+los archivos en inglés y español sin perder la voz del proyecto.
 ```
 
 ### Desarrollo dirigido por especificaciones
 
 ```text
-Usa develop-z80 para dirigir esta idea de juego para ZX Spectrum Next desde el
-concepto hasta una implementación verificada. Elige y ejecuta por mí las fases
-SDD; pregunta solo cuando falte una decisión de producto material.
+Usa develop-z80 para llevar esta idea de juego para ZX Spectrum Next desde el
+concepto hasta una implementación verificada. Elige y ejecuta tú las etapas
+SDD; pregunta solo si falta una decisión de producto material.
 ```
 
 ### Port al cartucho Spectranext
 
 ```text
-Usa port-spectranext para reanudar el port de este programa ZX existente al
-cartucho Spectranext. Empieza por el port request canónico, conserva el seam del
-consumidor y detente para obtener evidencia del hardware real cuando proceda.
+Usa port-spectranext para retomar el port de este programa ZX existente al
+cartucho Spectranext. Empieza por la puerta canónica de petición de port,
+conserva la frontera del consumidor y detente cuando haga falta evidencia de
+hardware real.
 ```
 
 ### Depuración de causa raíz
 
 ```text
-Usa debug-z80 para aislar por qué este build 128K falla al volver de la ISR. No
-edites hasta que un check discriminante identifique el owner causal; entonces
-aplica y verifica el fix mínimo.
+Usa debug-z80 para aislar por qué este build de 128K se cuelga al volver de la
+ISR. No edites hasta que una comprobación discriminante identifique al
+responsable causal; después aplica y verifica la corrección mínima.
 ```
 
 ### Auditoría
 
 ```text
 Usa audit-z80 en modo auto para revisar este proyecto mixto ASM/C.
-Prioriza ABI, ISR y memoria; informa únicamente hallazgos anclados al código actual.
+Prioriza ABI, ISR y memoria; informa solo de hallazgos anclados en el código actual.
 ```
 
 ```text
-Usa audit-z80 en modo full. Revisa las diferencias entre los targets 48K y 128K,
-incluidos paging, ROM, stack, interrupciones y artefactos generados.
-```
-
-```text
-Usa audit-z80 en modo diff contra main. Comprueba si los cambios de esta rama en
-la ISR y en C/ASM rompen el ABI, los registros preservados, el estado compartido o el mapa de memoria.
+Usa audit-z80 en modo diff contra main. Comprueba si los cambios de ISR y C/ASM
+de esta rama rompen la ABI, los registros preservados, el estado compartido o
+el mapa de memoria.
 ```
 
 ### Organización
 
 ```text
-Usa organize-z80 en modo design para mapear propiedad, dependencias y placement
-en este proyecto mixto ASM/C; propone únicamente el menor cambio de frontera justificado.
+Usa organize-z80 en modo design para mapear la propiedad, las dependencias y la
+ubicación en este proyecto mixto ASM/C, y propón solo el cambio de frontera
+mínimo justificado.
 ```
 
 ```text
 Usa organize-z80 en modo apply para ejecutar solo esta fase aprobada; conserva
-scopes de símbolos, mapas, ABI y el punto de rollback existente.
+el alcance de los símbolos, los mapas, la ABI y el punto de reversión existente.
 ```
 
 ### Reducción de tamaño
 
 ```text
 Usa shrink-z80 en modo scan. Necesito recuperar al menos 512 bytes de CODE/DATA
-sin cambiar el comportamiento y separando ahorro exacto de ahorro estimado.
+sin cambiar el comportamiento, y separar los ahorros exactos de los estimados.
 ```
 
 ```text
-Usa shrink-z80 en modo compress para comparar el tamaño neto y la RAM pico de
-los codecs aplicados a estos assets concretos.
+Usa shrink-z80 en modo compress para comparar el tamaño neto y la RAM máxima
+de los códecs aplicados a estos assets concretos.
 ```
 
 ### Optimización multiobjetivo
 
 ```text
 Usa optimize-z80 en modo Triage para identificar el cuello de botella real y
-devolver los tres experimentos con mejor relación entre impacto, riesgo y coste.
+devolver los tres experimentos con mejor equilibrio entre impacto, riesgo y coste.
 ```
 
 ```text
-Usa optimize-z80 en modo Measurement para obtener una línea base fresca sin
-modificar mi árbol principal.
+Usa optimize-z80 en modo Measurement para obtener una línea base actualizada
+sin modificar mi árbol de trabajo principal.
 ```
+
+## Cómo funciona
+
+### Evidencia local antes que folklore
+
+- Solo el código actual y los artefactos cuya actualidad esté demostrada pueden
+  confirmar un hallazgo o una mejora.
+- Mapas, símbolos, listados, ASM generado y binarios enlazados cuentan como
+  evidencia solo cuando corresponden a la misma revisión, configuración y
+  target.
+- Escáneres, agentes, conocimiento previo, foros y otros repositorios generan
+  candidatos; no sustituyen la verificación local.
+- Un artefacto obsoleto rebaja la confianza de forma explícita, a estados como
+  `NEEDS BUILD`, `REQUIERE BUILD` o `SPECULATIVE`.
+- En proyectos con varios targets, una propuesta solo se promueve cuando cada
+  target cumple sus propios límites.
+
+### Carga progresiva
+
+Cada `SKILL.md` es un despachador compacto. El host carga primero el contrato
+compartido y después solo las referencias y scripts relevantes para el
+problema observado. Manuales, catálogos de técnicas y logs quedan fuera del
+contexto salvo que puedan cambiar el resultado.
+
+### Herramientas deterministas
+
+Los skills incluyen analizadores en Python, casi todos solo con la biblioteca
+estándar. Perfilan el proyecto, resumen mapas, detectan patrones, inventarían
+fronteras ABI, comprueban la actualidad de los artefactos, localizan las
+dependencias de biblioteca, estiman T-states y puntúan candidatos. Su
+resultado es una señal reproducible, no un veredicto automático.
+
+### Ejecución adaptativa y multiagente
+
+El skill independiente `workflow` es el núcleo de ejecución compartido:
+
+| Nivel | Estrategia |
+|---|---|
+| **Light** | El hilo principal resuelve directamente una tarea acotada. |
+| **Medium** | El hilo principal resuelve directamente un único flujo ordenado de varios pasos. |
+| **Heavy** | El hilo principal coordina workers independientes y acotados en una topología plana. |
+
+En `auto`, cada skill Z80 clasifica la demanda como `Focused`, `Standard` o
+`Deep` tras el preflight. Workflow decide la ruta, el despacho, la reparación,
+la verificación y la integración. El skill de dominio conserva sus puertas de
+evidencia, sus líneas de trabajo, su contrato de salida y sus restricciones de
+escritura. Un nivel explícito de workflow prevalece, pero nunca autoriza una
+operación que el proyecto o el skill de dominio prohíban. Antes de despachar,
+workflow clasifica cada superficie como de solo lectura en el árbol principal,
+solo en worktree desechable o con mutación autorizada del árbol principal, y
+elige solo los roles que encajan.
+
+Las instrucciones explícitas del usuario prevalecen sobre los valores por
+defecto de los skills dentro de su alcance; las restricciones del proyecto, los
+requisitos de evidencia y los límites del runtime siguen vigentes. Cuando un
+skill se detiene, nombra la regla exacta según la
+[política de autorización](skills/workflow/references/authorization.md)
+compartida.
+
+La delegación Heavy asigna los mismos roles (investigador, implementador,
+verificador) en cada host. La [política de roles](skills/workflow/references/roles.md)
+canónica contiene el mapeo por host:
+
+- **Codex:** los subagentes usan por defecto Sol 6.1 con el esfuerzo de
+  razonamiento de cada encargo. Astra Medium se usa solo si el usuario lo pide
+  explícitamente para un análisis causal difícil o de alto riesgo concreto
+  ([reglas de activación](skills/workflow/references/roles.md#explicit-astra-medium-opt-in)).
+- **Claude Code:** la herramienta `Agent` con subagentes `Explore` o
+  `general-purpose` y un modelo `opus` o `sonnet` explícito; el host no expone
+  un parámetro de esfuerzo de razonamiento.
+- **Gemini / Antigravity:** `invoke_subagent` con tipos `research` o `self` y
+  el nivel de modelo heredado.
+
+El host debe admitir y aplicar los ajustes solicitados; un skill no es un
+control de gasto del runtime.
+
+### Investigación externa dirigida
+
+La investigación externa resuelve una incertidumbre concreta; no sirve para
+adornar el informe ni para repetir una lista de sitios conocidos.
+
+Se activa cuando:
+
+- El usuario pide una investigación profunda en foros, blogs, repositorios o la
+  demoscene.
+- Una versión del compilador, ABI, firmware, emulador, modelo de hardware o
+  detalle de timing puede cambiar un hallazgo principal.
+- El código, los artefactos generados y la documentación se contradicen.
+- Un análisis profundo mantiene un punto ciego material.
+- Una secuencia de instrucciones, helper, códec, renderizador, cargador o
+  esquema de bancos requiere arqueología de código.
+
+Cómo busca:
+
+1. Formula una pregunta a partir de una firma local mínima: opcode, símbolo,
+   fragmento emitido, versión, dirección, síntoma o restricción.
+2. Busca fragmentos exactos y conceptos con terminología alternativa.
+3. Amplía los términos al inglés, español, polaco, ruso, checo y otras
+   comunidades regionales relevantes.
+4. Diversifica las fuentes: código, tests, commits, issues, forks, emuladores,
+   mediciones de hardware, listas de correo, foros archivados, blogs
+   personales, repositorios pequeños, desensamblados, generadores y material de
+   la demoscene.
+5. Sigue a autores, citas, forks, issues relacionadas y enlaces archivados.
+6. Intenta refutar cada finalista: busca bugs, regresiones, issues cerradas o
+   rechazadas y fallos específicos de un modelo.
+7. Comprueba CPU, modelo de Spectrum, ABI, interrupciones, paginación, memoria,
+   toolchain y timing antes de trasladar una técnica.
+
+La investigación tiene presupuesto y reglas de parada, y conserva solo las
+pocas fuentes que pueden cambiar una decisión. Una técnica popular sin un
+ancla local sigue siendo una hipótesis. Las búsquedas usan solo firmas mínimas
+normalizadas y nunca suben código privado ni identificadores del proyecto.
+
+## Opcional: shrink-agent
+
+[`tools/shrink-agent`](tools/shrink-agent/README.md) es la contrapartida
+aplicadora de `shrink-z80`, que es de solo lectura. Es un bucle desatendido
+para proyectos z88dk. Propone una reducción de tamaño por rutina mediante la
+API de Claude, recompila todos los targets y conserva un cambio solo si todos
+compilan, el tamaño total baja, pasan los tests configurados y una revisión
+independiente por modelo lo acepta. Trabaja en una rama de worktree
+desechable, hace un commit por rutina y nunca fusiona ni hace push.
+
+Necesita Python 3.11 o posterior, su propio entorno virtual
+(`tools/shrink-agent/install.py`) y una clave de API de Anthropic. Cada
+ejecución cuesta dinero y está limitada por `--max-usd`, 2 USD por defecto. En
+Claude Code, `/shrink-z80 agent` ejecuta primero el censo y pregunta antes de
+lanzarlo. Su README describe la configuración, los resultados y los límites.
 
 ## Artefactos recomendados
 
-Los skills pueden empezar solo con fuentes, pero estos artefactos aumentan la
+Los skills pueden empezar solo con los fuentes; estos artefactos aumentan la
 confianza:
 
 | Evidencia | Utilidad |
 |---|---|
-| `.asm`, `.s`, `.c`, `.h` | Semántica actual, fronteras ABI, patrones y reachability. |
-| `.map`, `.sym` | Layout, símbolos, secciones, bancos, library pulls y stack gap. |
-| `.lst` o ASM generado | Comportamiento real del compilador y coste del codegen. |
-| Binarios, TAP y assets | Tamaño final, compresión y comparaciones reproducibles. |
+| `.asm`, `.s`, `.c`, `.h` | Semántica actual, fronteras ABI, patrones y alcanzabilidad. |
+| `.map`, `.sym` | Disposición, símbolos, secciones, bancos, dependencias de biblioteca y hueco de pila. |
+| `.lst` o ASM generado | Comportamiento real del compilador y coste de la generación de código. |
+| Binarios, archivos TAP y assets | Tamaño final, compresión y comparaciones reproducibles. |
 | Receta de build y flags | Reproducibilidad, toolchain, ABI y configuración. |
-| Targets y límites explícitos | Vetos, reservas, compatibilidad y ranking correcto. |
+| Targets y límites explícitos | Vetos, reservas, compatibilidad y ordenación correcta. |
 
-Un timestamp reciente por sí solo no demuestra correspondencia. La revisión,
-configuración y receta deben pertenecer a la misma línea base.
+Una marca de tiempo reciente no demuestra por sí sola la correspondencia. La
+revisión, la configuración y la receta deben pertenecer a la misma línea base.
 
 ## Seguridad y límites
 
 - Los análisis normales son de solo lectura.
-- `workflow` nunca amplía los permisos concedidos por el proyecto o el skill de dominio.
-- `develop-z80` mantiene idea, especificación, planificación y desglose de tareas
-  en solo lectura; la primera edición greenfield también exige aceptación
-  explícita de la spec. Todo avance multihito queda acotado a la sesión actual.
-- `port-spectranext` mantiene autoritativo el checkout externo de Spectranext y
-  aislado el estado del consumidor; las ediciones quedan dentro del seam
-  autorizado y los resultados físicos exigen observación explícita del usuario.
-- `debug-z80` mantiene diagnóstico y fixes candidatos en un worktree desechable;
-  solo edita el árbol principal para una reparación solicitada y causalmente probada.
-- `document-z80` edita solo la documentación pública para personas incluida en
-  el alcance; no cambia código, configuración de build, releases ni instrucciones
-  de agentes.
-- `audit-z80` y `shrink-z80` no editan el proyecto.
-- `organize-z80` solo edita código en modo `apply` tras una petición explícita,
-  línea base congelada, frontera aprobada, un slice nombrado y rollback; una
-  actualización solicitada explícitamente del mapa persistente solo puede
-  editar ese documento y su puntero de carga.
-- `optimize-z80` solo modifica una copia desechable en modo `Experiment` y
+- `workflow` nunca amplía los permisos concedidos por un proyecto o un skill de
+  dominio.
+- `develop-z80` mantiene en solo lectura la idea, la especificación, la
+  planificación y el desglose de tareas; su primera edición de código de un
+  producto nuevo exige además la aceptación explícita de la especificación.
+  Cualquier avance automático entre hitos se limita a la sesión actual.
+- `port-spectranext` mantiene como autoridad el checkout externo de
+  Spectranext y aísla el estado del consumidor. Las ediciones de fuentes quedan
+  dentro de la frontera autorizada del consumidor, y los resultados físicos
+  requieren la observación explícita del usuario.
+- `debug-z80` mantiene el diagnóstico y las reparaciones candidatas en un
+  worktree desechable. Solo edita el árbol principal para una reparación
+  solicitada y respaldada causalmente.
+- `document-z80` edita solo la documentación pública para personas dentro del
+  alcance. No cambia código, configuración de build, releases ni instrucciones
+  para agentes.
+- `audit-z80` y `shrink-z80` no editan el proyecto. `shrink-agent` solo hace
+  commits en su propia rama desechable.
+- `organize-z80` edita fuentes solo en modo `apply`, tras una petición
+  explícita, una línea base congelada, una frontera aprobada, un tramo con
+  nombre y un punto de reversión. Una actualización del mapa persistente pedida
+  explícitamente solo puede editar ese documento y su puntero de enrutado.
+- `optimize-z80` modifica solo una copia desechable en modo `Experiment` y
   requiere aprobación explícita.
-- Los scripts incluidos usan la biblioteca estándar de Python, trabajan con
-  archivos locales y no realizan búsquedas de red.
-- Los tests escriben en directorios temporales y los eliminan al terminar.
-- El plugin no incluye z88dk, SDCC, emuladores ni herramientas de profiling.
-- No es un compilador, un profiler de hardware ni un optimizador automático.
-- No confirma ahorros enlazados, timings o compatibilidad sin evidencia
+- `send-bridgezx` envía solo las fuentes indicadas a la máquina seleccionada y
+  nunca reintenta una transferencia dudosa.
+- Los analizadores incluidos trabajan con archivos locales y no acceden a la
+  red. Los tests escriben en directorios temporales y los eliminan al terminar.
+- No es un compilador, un profiler de hardware ni un optimizador automático. No
+  confirma ahorros enlazados, timings ni compatibilidad sin la evidencia
   adecuada.
-- SMC, abuso de SP, `DI`/`EI`, opcodes no documentados, floating bus y otras
-  técnicas dependientes de hardware requieren etiquetas de riesgo y validación
-  específica por target.
-- La investigación externa nunca debe publicar fuentes privadas, rutas,
-  símbolos sensibles ni identificadores del proyecto.
+- SMC, abuso de SP, `DI`/`EI`, opcodes no documentados, comportamiento del
+  floating bus y otras técnicas dependientes del hardware requieren etiquetas
+  de riesgo y validación específica por target.
+- La investigación externa nunca debe publicar código privado, rutas, símbolos
+  sensibles ni identificadores del proyecto.
 
 ## Estructura del repositorio
 
-- `skills/<nombre>/`: `SKILL.md`, metadatos de agente, referencias y analizadores.
-- `scripts/`: instalación, runner de worktrees y pruebas.
-- `evals/`: casos y fixtures de routing/evidencia; los resultados generados se ignoran.
-- `agent_docs/`: contexto mantenido del proyecto.
+- `skills/<nombre>/`: `SKILL.md`, metadatos del agente, referencias y
+  analizadores.
+- `scripts/`: instaladores por host, el runner de worktrees desechables, el
+  validador de skills y los tests del repositorio.
+- `tools/shrink-agent/`: la herramienta opcional de reducción de tamaño
+  desatendida.
+- `evals/`: casos de enrutado, evidencia y política con sus fixtures; los
+  resultados generados se ignoran.
+- `agent_docs/`: contexto del proyecto mantenido para agentes.
+- `.codex-plugin/plugin.json`, `plugin.json`, `gemini-extension.json`:
+  manifiestos de host con una única versión compartida.
 
-Consulta el [mapa del repositorio](agent_docs/project_structure.md) para la propiedad de archivos.
+Consulta el [mapa del repositorio](agent_docs/project_structure.md) para la
+propiedad de los archivos y [CHANGELOG.md](CHANGELOG.md) para los cambios.
 
-## Validación
+## Desarrollo y validación
 
-Desde la raíz del repositorio, prepara la dependencia PyYAML del validador en un
-entorno virtual:
+Prepara las dependencias del validador y de los tests en un entorno virtual:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -r scripts/requirements-validation.txt
+python -m pip install -r scripts/requirements-validation.txt pytest
 ```
 
-El comando de activación anterior es para shells POSIX; en Windows PowerShell
-usa `.venv\Scripts\Activate.ps1` y `python` en lugar de `python3`.
+En Windows PowerShell, actívalo con `.venv\Scripts\Activate.ps1` y usa `python`
+en lugar de `python3`.
+
+Valida los skills y ejecuta los tests desde la raíz del repositorio:
 
 ```sh
 python3 scripts/validate_skills.py
-python3 scripts/validate_skills.py skills/route-z80
-python3 scripts/test_validate_skills.py
-```
-
-El primer comando valida los once skills; una carpeta de skill opcional limita
-la comprobación a uno. El repositorio mantiene el validador, por lo que las
-actualizaciones de skill-creator no lo sustituyen. Valida sin reescribir
-`SKILL.md` ni `agents/openai.yaml`; no demuestra el comportamiento en runtime ni
-la activación de los skills.
-
-Pruebas incluidas:
-
-```sh
-python3 scripts/test_workflow_integration.py
-python3 scripts/test_workflow_context_efficiency.py
-python3 scripts/test_personal_marketplace.py
-python3 scripts/test_run_in_worktree.py
+python3 -m pytest -q
 python3 skills/audit-z80/scripts/smoke_test.py
 python3 skills/shrink-z80/tests/run_smoke.py
-python3 -m unittest discover -s skills/optimize-z80/scripts -p 'test_*.py'
-python3 scripts/test_behavior_evals.py
-python3 skills/send-bridgezx/scripts/test_bridgezx_transfer.py
 ```
 
-También debe validarse el manifiesto del plugin y el frontmatter de cada skill
-antes de publicar una nueva versión.
+`validate_skills.py` comprueba los once skills, o uno si le pasas su carpeta,
+sin reescribir `SKILL.md` ni `agents/openai.yaml`. No establece el
+comportamiento en runtime ni la activación. `pytest` recoge los tests de
+`scripts/`, `optimize-z80`, `send-bridgezx` y `shrink-agent`. Los dos scripts
+smoke se ejecutan aparte. Valida los manifiestos y el front matter de cada
+skill antes de publicar una versión nueva.
 
-Los evals de comportamiento están separados deliberadamente de los unit tests.
-Valida sus datasets sin consumir modelo:
+### Evals de comportamiento (solo Codex)
+
+Las evals de comportamiento están separadas de los tests unitarios y usan la
+CLI de Codex. Comprueba los datasets sin modelo:
 
 ```sh
 python3 scripts/run_behavior_evals.py --dry-run
 ```
 
-Tras instalar la misma versión que muestra `.codex-plugin/plugin.json`, ejecuta
-las suites etiquetadas de routing y evidencia en sesiones Codex nuevas y de solo
-lectura:
+Tras instalar la versión del plugin indicada en `.codex-plugin/plugin.json`,
+ejecuta las suites de enrutado y de evidencia en sesiones nuevas de Codex de
+solo lectura:
 
 ```sh
 python3 scripts/run_behavior_evals.py --suite evals/routing.jsonl
 python3 scripts/run_behavior_evals.py --suite evals/evidence.jsonl
 ```
 
-El runner rechaza una versión instalada obsoleta salvo override explícito,
-registra precisión y recall por ruta y escribe resultados JSON ignorados bajo
-`evals/results/`, junto con trazas del runtime por caso. Usa `--model` y
-`--reasoning-effort` para hacer explícita la comparación. Los resultados separan
-los ajustes solicitados de los confirmados por el runtime, registran el consumo
-de tokens informado y las acciones observadas, y comparan los archivos de cada
-fixture antes y después. Los efectos no observables de comandos o herramientas
-quedan como desconocidos; el JSON final del modelo no demuestra que no intentó
-escribir. Las trazas pueden contener datos del fixture y rutas locales;
-revísalas antes de compartirlas.
+El runner rechaza un plugin instalado obsoleto salvo que se fuerce. Registra
+precisión y exhaustividad por ruta y escribe resultados JSON y trazas por caso,
+ignorados por Git, en `evals/results/`. Usa `--model` y `--reasoning-effort`
+para que la comparación sea explícita, y mantén fijos casos, fixtures, modelo y
+esfuerzo al comparar revisiones de los skills. Los resultados separan los
+ajustes solicitados de los datos confirmados por el runtime, registran el uso
+de tokens y las acciones observadas, y comparan los archivos del fixture antes
+y después de cada caso. Los efectos secundarios no observados siguen siendo
+desconocidos, y las trazas pueden contener contenido de fixtures y rutas
+locales, así que revísalas antes de compartirlas. `evals/baseline.json`
+conserva solo resultados históricos; no demuestra que una versión posterior
+pase.
 
-Los informes incluyen una huella del plugin fuente y de las entradas de
-evaluación; esa huella no demuestra por sí sola que la copia instalada coincida.
-Mantén iguales los casos, fixtures, modelo y esfuerzo al comparar revisiones
-de skills por calidad o coste. `evals/baseline.json` conserva
-resultados históricos verificados; no demuestra que una versión posterior o
-una suite ampliada hayan pasado.
-
-La suite opcional `evals/policy.jsonl` comprueba decisiones sobre la autorización
-de modelos, permisos, lecturas selectivas y reutilización. No forma parte de las
-suites predeterminadas. Sus escenarios solo piden decisiones: no delegar,
-compilar, editar ni transferir. Véase [evaluación de políticas](evals/POLICY.md)
-para su alcance y limitaciones. Valida el dataset adicional localmente con:
+La suite opcional `evals/policy.jsonl` comprueba decisiones sobre activación de
+modelos, autorización, lecturas selectivas y reutilización. Sus escenarios solo
+piden decisiones, sin llamadas delegadas, builds, ediciones ni transferencias.
+Una ejecución real usa inferencia de pago y prueba la interpretación de la
+política, no su aplicación en runtime. Consulta la
+[evaluación de políticas](evals/POLICY.md). Comprueba su dataset localmente
+con:
 
 ```sh
 python3 scripts/run_behavior_evals.py --suite evals/policy.jsonl --dry-run
 ```
 
-Una ejecución real requiere una petición separada y un modelo/esfuerzo elegido;
-consume inferencia y evalúa la interpretación de políticas, no su imposición por
-el runtime. La revisión 0.8.3 no afirma validación real con Astra ni mejoras
-medidas de coste o calidad.
+## Licencia
 
-## Licencia y copyright
+Este proyecto se distribuye bajo la [licencia MIT](LICENSE).
 
 Copyright © 2026 M. Ignacio Monge García.
-
-Este proyecto se distribuye bajo la [Licencia MIT](LICENSE). Permite usar,
-copiar, modificar, publicar y distribuir el software y su documentación,
-siempre que se conserven el aviso de copyright y el texto de la licencia.
 
 ## Autor
 
