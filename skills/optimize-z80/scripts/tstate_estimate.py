@@ -251,7 +251,7 @@ def estimate(op, args):
     if op == "nextreg":
         if not dst or not src:
             return None
-        return 12 if src == "a" else 16
+        return 17 if src == "a" else 20
     if op == "ex":
         if args.strip().lower() in {"de,hl", "af,af'"}:
             return 4

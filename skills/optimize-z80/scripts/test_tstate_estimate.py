@@ -170,8 +170,8 @@ class TstateEstimateTest(unittest.TestCase):
             "setae": 8,
             "add hl,a": 8,
             "add de,$1234": 16,
-            "nextreg $50,a": 12,
-            "nextreg $50,$01": 16,
+            "nextreg $50,a": 17,
+            "nextreg $50,$01": 20,
             "ldirx": 16,
         }
         for source, expected in cases.items():

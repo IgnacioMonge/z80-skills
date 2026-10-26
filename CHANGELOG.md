@@ -25,6 +25,15 @@ repository; these entries track development toward the first published release.
   budget sweep, peephole helpers, callee/fastcall ABI, twin routines) above a
   30 B materiality threshold; micro lanes run only when named, and `agent`
   runs the census and asks before launching shrink-agent.
+- `optimize-z80` scorer enforces `constraints.maintainability = "release"`
+  (vetoes `undocumented`, `smc`, `sp_abuse` and `interrupt_windows` tags unless
+  `[forbidden]` sets them to `false`) and per-target `resident_ceiling` /
+  `stack_gap_floor` gates from `[targets.<name>]` against candidate
+  `target_metrics`; a missing or failing target vetoes the candidate, and
+  omitting `target_metrics` demotes `PROVEN` to `LIKELY`. `--profile auto`
+  derives scoring weights from the policy `priority`.
+- Workflow roles map to Gemini / Antigravity `invoke_subagent` types and model
+  tiers.
 - `tools/shrink-agent`: unattended Claude API loop that applies size reductions to a
   z88dk project in a disposable worktree, one routine per commit, gated by all-target
   builds, byte measurement, optional tests and an independent model review.
@@ -52,6 +61,13 @@ repository; these entries track development toward the first published release.
 
 ### Changed
 
+- Heavy workflow de-escalates to direct work when preflight or a first worker
+  leaves fewer than two independent workstreams, and passes one immutable
+  preflight/baseline digest to worker capsules so workers neither repeat
+  discovery nor create competing worktrees.
+- `shrink-z80` moves the shrink-agent setup, `--dry-run` gate and runbook into
+  `references/dispatcher.md`, and resolves the worktree runner from the
+  physical skill directory after following symlinks and Windows junctions.
 - Workflow delegation adds a closed worker status set, verifier finding triage,
   bounded waits with worker resumption, file-less recovery after context
   compaction, and one-worker batching of same-shape edits. Completion maps every
@@ -118,6 +134,18 @@ repository; these entries track development toward the first published release.
 - Optimize's T-state estimator accounts for IX/IY half-register loads,
   INC/DEC and accumulator arithmetic, recognizes SLL, and reports unsupported
   half-register combinations as unknown instead of assigning fallback costs.
+- The T-state estimator times CPL, SCF, CCF, DAA, NEG, RETI, RETN, RLD, RRD,
+  IM, RLC/RRC and the Z80N extended instructions, with NEXTREG at 17 T
+  (`reg,A`) and 20 T (`reg,value`).
+- `map_hotspots.py` folds compiler local labels and string literals into the
+  owning function and sizes each section's last symbol from z88dk
+  `__<section>_tail` constants.
+- `winner_census.py` no longer proposes moving a routine to one overlay when
+  another overlay references it through a table word, nor lists
+  table-referenced routines as unreferenced. It counts SDCC's 5-byte
+  `ld hl,n; add hl,sp; ld sp,hl` caller cleanup, marks single-site ABI
+  candidates as fastcall-only, and reports resident net bytes for frame-idiom
+  helpers when overlays exist.
 - BridgeZX instructions now match the executor's client-resolution precedence
   and reject an invalid supplied root without silently selecting another client.
 - Audit reports place findings before profile details outside preflight mode.
