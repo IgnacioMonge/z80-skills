@@ -61,6 +61,9 @@ repository; these entries track development toward the first published release.
 
 ### Changed
 
+- Agent context is compacted around canonical sources, current Grok/Claude
+  installation, actual tooling dependencies and distinct worktree boundaries;
+  validation commands, historical evidence and decision rationale are preserved.
 - Heavy workflow de-escalates to direct work when preflight or a first worker
   leaves fewer than two independent workstreams, and passes one immutable
   preflight/baseline digest to worker capsules so workers neither repeat
@@ -116,6 +119,9 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- Standard `python -m pytest -q` collects same-named test modules without
+  collisions; shrink-agent tests handle Windows Python paths with spaces and
+  aliases through the existing shell-path helper and executable identity checks.
 - Plugin version 0.8.7 refreshes installed copies after the routine-corpora
   references were added; a cached 0.8.6 copy does not contain those additions.
 - Plugin version 0.8.6 refreshes installed copies after the Antique Toy

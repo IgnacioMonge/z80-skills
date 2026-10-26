@@ -1,34 +1,19 @@
 # Project Overview
 
-Z80 Skills is a Codex plugin with eight complementary engineering skills for
-Z80 and ZX Spectrum projects written in assembly, C, or mixed C/ASM with z88dk
-or SDCC, one BridgeZX delivery skill, a thin domain selector, and a shared
-adaptive workflow core.
+Z80 Skills is a Codex plugin bundling eight engineering specialists, BridgeZX delivery, a domain
+router and an adaptive workflow for Z80/ZX Spectrum C, assembly and mixed
+z88dk/SDCC projects. See the [skill catalog](../README.md#what-is-included).
 
-The project is evidence-first: current source and fresh, source-matched build
-artifacts are required for promoted findings, size claims, and optimization
-claims. Scanners, external research, and delegated agents produce candidates;
-the main agent verifies and ranks them.
+Domain and effort are separate: `route-z80` selects one specialist contract;
+`workflow` selects the smallest sufficient execution level. Only the router
+participates in implicit Z80-domain selection, even for unambiguous requests.
+The nine routed skills are explicit-only and loaded individually.
 
-Skill responsibilities and entry points are listed in the
-[README catalog](../README.md#what-is-included).
+Scanners, research and workers produce candidates; the main agent verifies and
+ranks them using current source and fresh, source-matched artifacts. Mutation,
+remote-write and evidence limits live in [core technology](project_core_tech.md).
 
-Domain selection and execution effort are separate decisions: `route-z80`
-chooses the contract, while `workflow` chooses the smallest sufficient route.
-Only the router participates in implicit Z80-domain selection; the nine routed
-skills are explicit-only and are loaded individually after routing. Ambiguity is
-not required for the router to hand an unqualified request to one specialist.
-
-Labelled behavior evals complement structural tests with direct, indirect,
-negative, and ambiguous routing prompts plus evidence fixtures for audit, size,
-and multi-objective optimization. Runtime evals use isolated read-only Codex
+Behavior evaluations complement structural tests with direct, indirect,
+negative, ambiguous and evidence cases. Live runs use isolated read-only Codex
 sessions and require the installed plugin version to match the manifest.
-
-Normal analysis keeps the primary tree read-only. `develop-z80`, an authorized
-`port-spectranext` consumer slice, a causally proven requested `debug-z80`
-repair, and an approved `organize-z80 apply` slice may edit it within their
-explicit mutation gates. `document-z80` may edit only the requested public
-documentation. `send-bridgezx` may write only the requested sources to the
-selected remote Spectrum;
-measurement and experiments use detached disposable worktrees and the shared
-runner contract.
+See the [verification handoff](latest_session_work.md) for commands and history.

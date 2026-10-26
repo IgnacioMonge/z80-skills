@@ -368,7 +368,7 @@ def test_definition_line_found_by_name_when_map_line_is_wrong(tmp_path):
 
 def test_project_python_overrides_interpreter(tmp_path):
     assert sa.python_for_shell(_cfg(tmp_path, python="/opt/py 3/bin/python")) == '"/opt/py 3/bin/python"'
-    assert sa.python_for_shell(_cfg(tmp_path)).strip('"') == sys.executable.replace("\\", "/")
+    assert Path(sa.python_for_shell(_cfg(tmp_path)).strip('"')).samefile(sys.executable)
 
 
 def test_root_defaults_to_config_directory(tmp_path):
@@ -397,11 +397,11 @@ def test_files_target_measures_each_file_from_the_previous_build(tmp_path):
         "Path('A.OVL').write_bytes(b'x' * 7)\nPath('B.OVL').write_bytes(b'y' * 3)\n"
     )
     cfg = _cfg(wt, targets=[sa.Target("main", "{python} build.py", "out.map"), sa.Target("ovl", files="*.OVL")])
-    res = sa.build_all(cfg, wt, tmp_path / "cache", sys.executable)
+    res = sa.build_all(cfg, wt, tmp_path / "cache", sa.python_for_shell(cfg))
     assert {k: v.size for k, v in res.items()} == {"main": 16, "ovl/A.OVL": 7, "ovl/B.OVL": 3}
     assert sa.missing_targets(cfg, res) == []
     cfg = _cfg(wt, targets=[sa.Target("main", "{python} build.py", "out.map"), sa.Target("ovl", files="*.BIN")])
-    res = sa.build_all(cfg, wt, tmp_path / "cache", sys.executable)
+    res = sa.build_all(cfg, wt, tmp_path / "cache", sa.python_for_shell(cfg))
     assert not res["ovl"].ok and "no files match" in res["ovl"].error
 
 

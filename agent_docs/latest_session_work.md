@@ -1,53 +1,30 @@
 # Latest Session Work
 
-## 2026-09-04 — 0.8.0
+## Verification Handoff
 
-- Consolidated the pending documentation, BridgeZX, routing, evidence, and
-  Spectranext changes; aligned the Codex, root, and Gemini manifests at 0.8.0.
-- Reviewed BridgeZX against the official local client and corrected cancellation
-  during preparation. Corrected named timing annotation parsing and made the
-  shrink freshness fixture independent of subprocess duration.
-- Validated all eleven skills, plugin metadata, 71 unit tests, and the audit and
-  shrink smoke checks. Installed and confirmed the 0.8.0 Codex plugin.
-- Installed 0.8.0 passed all 34 routing and four evidence cases in fresh,
-  read-only Codex sessions; the verified summary is in `evals/baseline.json`.
-- Workflow model selection remains canonical in `skills/workflow/`; Grok
-  preserves its host-specific model controls and direct Medium execution.
+Run from the repository root with the host-approved Python interpreter:
 
-## 2026-09-02
+- `python -m pytest -q`: deterministic suite; `pytest.ini` handles collection.
+- `python scripts/validate_skills.py`: all eleven skill definitions.
+- `python skills/audit-z80/scripts/smoke_test.py` and
+  `python skills/shrink-z80/tests/run_smoke.py`: additional analyzer checks.
+- `python scripts/run_behavior_evals.py --dry-run`: default evaluation datasets;
+  see [validation](../README.md#validation) for optional policy cases and live runs.
 
-- Added `document-z80`, an explicit routed skill for evidence-grounded public
-  repository documentation, compact information architecture, and maintained
-  English/Spanish parity.
-- Connected it to `route-z80`, the shared adaptive workflow, Codex/Grok/Claude
-  installation, bilingual operator documentation, and direct/indirect routing
-  evals.
+Regression lessons: compare Python executable identity, not Windows path
+spelling; build tests use `python_for_shell` like production. Preserve
+[BridgeZX preparation cancellation](../skills/send-bridgezx/scripts/test_bridgezx_transfer.py),
+[named timing-annotation parsing](../skills/optimize-z80/scripts/test_tstate_estimate.py) and
+[freshness fixtures independent of subprocess duration](../skills/shrink-z80/tests/run_smoke.py).
 
-## 2026-08-25
+## Verified History
 
-- Added `send-bridgezx`, a routed explicit skill that validates local sources,
-  selects the explicit or last-known BridgeZX IP, verifies Classic/Next,
-  supports a relative destination and explicit sequential delivery, and stops
-  without retrying uncertain outcomes.
-- Added deterministic executor tests and direct/indirect routing cases.
+On 2026-09-04, installed 0.8.0 passed 71 unit tests, eleven skill definitions,
+manifest consistency and audit/shrink smoke checks. Its 34 routing and four
+evidence cases passed in fresh read-only sessions with the runtime-default model.
+The [baseline](../evals/baseline.json) records the live evaluation results and a later
+five-case routing check on installed 0.8.4 (2026-10-09).
 
-## 2026-08-19
-
-- Added a debug evidence eval for open causality and stale map evidence.
-- Removed the forked Grok workflow policy; the installer now copies and patches
-  the canonical workflow in its staging tree.
-- Added `route-z80` to Grok installation and Claude sync, with English and
-  Spanish operator documentation and installer regression coverage.
-- Moved the detailed debug causal method behind a progressive reference and
-  added runtime-portability contracts to debug and develop.
-- Added explicit workflow invocation policy metadata.
-- Consolidated duplicated audit/shrink scanner mechanics into the canonical
-  shrink `scan_common.py` module and added a structural anti-drift test.
-- Reconciled behavior-eval metadata with the manifest version used by each run.
-
-## Handoff
-
-The normal validation target is `python -m pytest -q`. The standalone audit and
-shrink smoke scripts exercise analyzer behavior beyond the root unit-test
-discovery. Runtime model eval results live under ignored `evals/results/`; only
-verified summaries belong in `evals/baseline.json`.
+These results do not establish full live coverage for later versions or expanded
+datasets. Raw results/traces stay in ignored `evals/results/`; retain only verified
+summaries in the baseline. [The diary](project_diary.md) retains decision rationale.

@@ -2,26 +2,27 @@
 
 ## Current State
 
-- The plugin contains `workflow`, `route-z80`, eight explicit engineering
-  skills, and the explicit `send-bridgezx` delivery skill.
-- `debug-z80` owns unresolved-cause diagnosis and permits a minimal primary-tree
-  repair only after its causal gate is satisfied.
-- Runtime routing and evidence datasets cover all routes, including repository
-  documentation, BridgeZX delivery, the debug mutation boundary, and
-  stale-evidence rejection. Installed 0.8.0 passed all 34 routing and four
-  evidence cases with the runtime-default model on 2026-09-04.
-- The Grok installer derives its workflow overlay from the canonical
-  `skills/workflow/` files and installs all eleven skills. Optional Claude sync
-  copies the canonical skill set.
-- Audit and shrink scanners share traversal, text matching, hit reporting, and
-  map/symbol parsing through `skills/shrink-z80/scripts/scan_common.py`; their
-  domain rules and reports remain separate.
+- Grok reads canonical `skills/` through `[skills].paths`; Claude uses junctions
+  or symlinks. Neither needs copied skill trees. The
+  [Grok installer](../scripts/install-for-grok.ps1) removes obsolete bundled
+  copies; use `-SkipClaudeCleanup` to preserve Claude's links. See
+  [installation](../README.md#installation).
+- Audit and shrink share traversal, matching, reporting and map/symbol parsing
+  in [scan_common.py](../skills/shrink-z80/scripts/scan_common.py); domain rules
+  and reports stay separate.
+- [Verification commands and version-specific history](latest_session_work.md)
+  distinguish deterministic checks from live model evaluations.
 
-## Release Gate
+No unimplemented durable milestone is recorded.
 
-Before publishing a local revision, run the deterministic test suite, validate
-all skill directories and the plugin manifest, bump the release version,
-reinstall from the personal marketplace, and confirm that the
-installed version equals the manifest.
+## Publication Gate
 
-No unimplemented durable milestone is currently recorded.
+Before publishing, satisfy applicable deterministic checks, validate all skills
+and manifests, and reconcile the committed changelog against the latest published
+stable baseline, or the first release if none exists. Preserve cumulative pending
+entries; a push alone does not require a version bump.
+
+For a plugin release, align all three manifest versions. Reinstall from the
+personal marketplace and confirm the installed version matches the manifest
+before live behavior evaluations. Follow the repository's changelog/release
+policy for versioning and stable-release notes.

@@ -1,48 +1,21 @@
 # Project Structure
 
-```text
-.codex-plugin/plugin.json       Plugin metadata and skill root
-evals/
-  baseline.json                Verified non-sensitive behavior summary
-  routing.jsonl                 Labelled domain-selection prompts
-  evidence.jsonl                Labelled evidence-contract prompts
-  fixtures/                     Isolated stale/missing-evidence projects
-  schemas/                      Structured runtime-eval outputs
-scripts/
-  install_personal_marketplace.py
-  run_behavior_evals.py          Ephemeral read-only Codex eval runner
-  run_in_worktree.py             Shared disposable-worktree gate
-  test_behavior_evals.py         Dataset, schema, and scoring tests
-  test_personal_marketplace.py   Canonical-source installer tests
-  test_run_in_worktree.py        Runner contract tests
-  test_workflow_integration.py   Workflow composition and portability tests
-skills/
-  route-z80/                     Thin Z80 domain selector
-  send-bridgezx/                 Guarded BridgeZX file delivery
-  document-z80/                  Evidence-grounded repository documentation
-  develop-z80/                   Idea-to-implementation SDD workflow
-  port-spectranext/              External Spectranext consumer-port workflow
-  debug-z80/                     Root-cause diagnosis and gated repair
-  audit-z80/                     Read-only correctness audit
-  organize-z80/                  Architecture and reorganization workflow
-  shrink-z80/                    Size-only analysis and analyzers
-  optimize-z80/                  Multi-objective optimization and analyzers
-  workflow/                      Shared adaptive execution core
-```
+| Path | Ownership |
+| --- | --- |
+| `.codex-plugin/plugin.json`, `plugin.json`, `gemini-extension.json` | Host manifests; keep versions aligned. |
+| `skills/<name>/` | Each skill owns its `SKILL.md`, `agents/openai.yaml`, progressive references and any analyzers/tests. |
+| [workflow](../skills/workflow/SKILL.md) | Canonical execution policy; load only when invoked or composed. |
+| `scripts/` | Installers, skill validator, disposable-worktree gate, behavior-eval runner and regression tests. |
+| [shrink-agent](../tools/shrink-agent/README.md) | Optional applying optimizer with its own worktree controller and tests. |
+| `evals/` | Routing, evidence and policy datasets; fixtures, schemas and verified historical `baseline.json`. |
+| `pytest.ini` | Repository-wide test collection and local import paths. |
+| `agent_docs/` | Selective project context governed by [AGENTS.md](../AGENTS.md). |
 
-Each skill owns its `SKILL.md` and `agents/openai.yaml`; domain detail lives in
-`references/` only where progressive loading helps. `port-spectranext` keeps
-the external cartridge checkout authoritative and adds no duplicate pipeline
-script. Analyzer-bearing skills own `scripts/`; `shrink-z80` additionally owns
-its smoke tests. The root README documents installation, usage, safety rules,
-repository structure, and validation commands. Runtime behavior results are
-generated under ignored `evals/results/`; they are not mixed with deterministic
-unit tests.
+The [README](../README.md) owns installation, usage, the skill catalog and public
+validation instructions. Domain contracts and safety gates stay in their skills.
+`port-spectranext` keeps the external cartridge checkout authoritative; do not
+duplicate its pipeline here.
 
-See the [README catalog](../README.md#what-is-included) for skill responsibilities;
-domain evidence and safety gates remain in the specialized skills.
-
-Repository instructions live in `AGENTS.md`; durable project context is kept
-under `agent_docs/`. The canonical adaptive workflow lives under
-`skills/workflow/` and is loaded only when invoked or composed by another
-skill.
+Audit and shrink own standalone smoke checks in addition to pytest. Live model
+results and traces belong under ignored `evals/results/`, separate from
+deterministic tests; only verified summaries belong in `evals/baseline.json`.
