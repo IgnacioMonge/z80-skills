@@ -60,6 +60,11 @@ In `diff` mode, state one verdict line after the findings and before coverage:
 The verdict summarizes the promoted evidence; it never certifies the change as
 correct.
 
+## Craft mode
+
+In `craft` mode, use the finding format, impact scale, and verdict in
+`craft-review.md`; the coverage note above still applies.
+
 ## No-finding case
 
 If you do not find a bug:

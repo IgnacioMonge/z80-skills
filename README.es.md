@@ -190,7 +190,7 @@ abre una tarea o sesión nueva en cada host.
 | [document-z80](skills/document-z80/SKILL.md) | Hay que crear, reestructurar, revisar o sincronizar EN/ES la documentación pública de un proyecto. | Un README y una jerarquía de documentación basados en evidencia, con órdenes y requisitos de hardware verificados. |
 | [port-spectranext](skills/port-spectranext/SKILL.md) | Un programa ZX existente se está portando al cartucho Spectranext (no al Spectrum Next). | Entrada canónica, implementación acotada, puertas ligadas a artefactos, evidencia física y entrega. |
 | [debug-z80](skills/debug-z80/SKILL.md) | Observas un fallo y su causa es desconocida. | Una explicación causal falsable y, si se pide, una corrección verificada de la causa raíz. |
-| [audit-z80](skills/audit-z80/SKILL.md) | Quieres una revisión preventiva o amplia de corrección, o el riesgo de un conjunto de cambios (modo `diff`). | Hallazgos de solo lectura ordenados por gravedad y confianza, con evidencia y riesgo residual. |
+| [audit-z80](skills/audit-z80/SKILL.md) | Quieres una revisión preventiva o amplia de corrección, el riesgo de un conjunto de cambios (modo `diff`) o saber si un programador experto de Z80/SDCC aceptaría el código (modo `craft`). | Hallazgos de solo lectura ordenados por gravedad y confianza, con evidencia y riesgo residual; en modo `craft`, el código sobrante con su alternativa experta, el ahorro medido y un veredicto. |
 | [organize-z80](skills/organize-z80/SKILL.md) | Hay que mapear o cambiar con seguridad la propiedad, las dependencias, la estructura de fuentes o la ubicación en runtime. | Un mapa proporcional, un diseño, un tramo de migración reversible o una decisión explícita de no cambiar. |
 | [shrink-z80](skills/shrink-z80/SKILL.md) | Hay que reducir almacenamiento, tamaño enlazado, memoria residente, BSS/pila, bancos u overlays. | Reducciones netas clasificadas por seguridad y calidad de la evidencia. |
 | [optimize-z80](skills/optimize-z80/SKILL.md) | Compiten varios objetivos: tamaño, velocidad, RAM, renderizado, latencia. | Hasta tres experimentos priorizados con impacto, riesgo, reversión y validación. |
@@ -268,6 +268,16 @@ Prioriza ABI, ISR y memoria; informa solo de hallazgos anclados en el código ac
 Usa audit-z80 en modo diff contra main. Comprueba si los cambios de ISR y C/ASM
 de esta rama rompen la ABI, los registros preservados, el estado compartido o
 el mapa de memoria.
+```
+
+```text
+Usa audit-z80 en modo craft sobre src/overlay y asm/overlay. ¿Aceptaría este código
+un programador experto de Z80/SDCC? Mide el desperdicio más fuerte y da un veredicto.
+```
+
+```text
+Usa audit-z80 en modo craft diff contra main. ¿Ha metido el parche generado por la IA
+envoltorios huecos, rutinas duplicadas o ASM poco idiomático?
 ```
 
 ### Organización

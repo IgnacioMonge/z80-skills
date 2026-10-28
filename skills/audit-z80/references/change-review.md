@@ -8,8 +8,10 @@ tree stays read-only.
 
 - An observed failure with unresolved causality, including a regression against
   a known baseline, belongs to `$debug-z80`.
-- A review without a Z80 correctness question (naming, duplication, structure,
-  general code quality) belongs to `$workflow`.
+- A review of naming, formatting, or readability without a Z80 cost or
+  expert-craft question belongs to `$workflow`. Whether the change is
+  inflated, hollow, duplicated, or non-idiomatic for an expert Z80/SDCC
+  programmer is `craft diff` (`craft-review.md`).
 
 ## Scope
 

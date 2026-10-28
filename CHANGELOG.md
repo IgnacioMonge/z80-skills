@@ -7,6 +7,18 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- `audit-z80` `craft` mode answers whether an expert Z80/SDCC programmer would
+  accept the code or find it inflated, hollow, duplicated, or non-idiomatic;
+  `craft diff` judges only what a change set adds. `scripts/craft_scan.py`
+  queues structural C and ASM leads (forwarders, single-use helpers, constant
+  or unused parameters, clone families across files and overlays, untouched
+  register saves, codegen outliers from a fresh map, narrating and history
+  comments) with churn-weighted hotspots, counting references across the whole
+  project and both arms of `#if`/`#else` and ASM `IF` blocks. Dead code,
+  duplicated literals and ASM micro idioms stay with `shrink-z80`'s scanners.
+  `references/craft-review.md` requires an expert alternative, a measured delta
+  and a preservation argument per finding, adds a blind-rewrite lane that never
+  sees the original body, and ends in an evidence-based verdict.
 - Reviewed Zeda and baze routine corpora add biased single-pair and CPI loop
   control, iterative division near powers of two, signed saturating narrowing
   and Galois LFSR steps, with original examples, emulator tests and a source

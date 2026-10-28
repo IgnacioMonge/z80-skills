@@ -22,6 +22,7 @@ Choose from project signals; do not launch every lane by default.
 | `semantics-reachability` | C promotion/signedness/lifetime, buffers, hostile paths, re-entry, state transitions |
 | `hardware-firmware-ux` | ULA/contention, ports, ROM/RST8/esxDOS/divMMC, 48K/128K differences, flicker/input/audio/stalls |
 | `research-scout` | `external-research.md` trigger fires and source discovery can resolve a top uncertainty |
+| `craft-blind-rewrite` | `craft` mode and a hotspot unit has a stated contract and tests or vectors that pin it |
 
 The main agent keeps preflight, scanner execution, evidence ledger, and final
 verification. It may cover the lane with the best local context while delegates
@@ -34,7 +35,8 @@ cover the others.
 - Assign one question and a narrow path/artifact set. Overlap only for an
   intentional adversarial check.
 - Do not let delegates spawn delegates, edit files, rank globally, or write the
-  final report.
+  final report. The one exception is the `craft-blind-rewrite` delegate: it
+  writes only inside the disposable worktree assigned under `hard-contract.md`.
 - Run deterministic scanners once in the main agent. Pass a short result digest
   instead of duplicating the scan.
 - Send only relevant reference sections, exact paths, and at most a short
@@ -52,6 +54,22 @@ Baseline: <target, toolchain, flags, ABI, ISR, map/list freshness; <=12 lines>
 Control: <workflow level and assigned worker role>
 Constraints: read-only; no nested agents; candidates only
 References: <only relevant files/sections>
+```
+
+## Blind Rewrite Brief
+
+The `craft-blind-rewrite` delegate never sees the unit's body or history, so
+its version is not anchored on the code under review.
+
+```text
+Task: audit-z80 blind rewrite
+Unit: <name, target, toolchain and flags>
+Contract: <signature or entry/exit registers, preserved registers and flags,
+side effects, memory placement, timing limits>
+Tests: <paths of the tests or vectors that pin the behavior>
+Constraints: do not open <unit path> or its git history; no edits outside the
+assigned disposable worktree; no nested agents
+Return: the code and one line per contract item showing how it is met
 ```
 
 ## Compact Return Contract

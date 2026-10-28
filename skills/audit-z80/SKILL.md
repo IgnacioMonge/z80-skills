@@ -1,6 +1,6 @@
 ---
 name: audit-z80
-description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits, or for the correctness risk of a change set (diff, branch, or PR) without an observed failure, involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
+description: Evidence-first, read-only review of mixed Z80 ASM/C projects, especially ZX Spectrum code built with z88dk or SDCC. Use for preventive or broad bug audits, for the correctness risk of a change set (diff, branch, or PR) without an observed failure, involving ABI, stack/register/flag clobbers, ISR/shared state, memory maps, banks/overlays, firmware, generated code, toolchain behavior, hardware timing, or regression risk, or for an expert craft review of whether an expert Z80/SDCC programmer would accept the code or find it inflated, hollow, duplicated, or non-idiomatic, including vibecoded or AI-generated code. Do not use for root-cause diagnosis of one observed failure. Uses the shared workflow skill to scale execution while preserving Z80-specific evidence and safety gates.
 disable-model-invocation: true
 ---
 
@@ -40,12 +40,16 @@ limitation and continue directly without claiming delegated execution.
 - `diff [<base>..<head>]`: audit the correctness risk a change set introduces
   or exposes; without a range, review the branch and uncommitted changes
   against the default branch's merge base.
+- `craft [<paths>]` / `craft diff [<base>..<head>]`: expert craft review of
+  the code as it stands, or of what a change set adds: inflated, hollow,
+  duplicated, or non-idiomatic ASM/C, with measured deltas and a verdict.
 - Focused modes: `asm`, `c`, `abi`, `isr`, `memory`, `spectrum-hw`, `esxdos`,
   `toolchain`, `copt`, `map`.
 
 For every real audit, read `references/hard-contract.md`,
 `references/dispatcher.md`, and `references/preflight.md`; in `diff` mode, also
-read `references/change-review.md`. Read
+read `references/change-review.md`; in `craft` mode, also read
+`references/craft-review.md`. Read
 `references/agent-orchestration.md` only when more than one independent
 investigation lane is useful.
 
@@ -86,6 +90,7 @@ is incomplete.
 - Preflight and profile: `references/preflight.md`
 - Routing and scripts: `references/dispatcher.md`
 - Change-set scope and named risks: `references/change-review.md`
+- Expert craft review and verdict: `references/craft-review.md`
 - Domain lanes for delegated analysis: `references/agent-orchestration.md`
 - External discovery: `references/external-research.md`
 - Promotion: `references/promotion-gate.md`

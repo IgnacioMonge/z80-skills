@@ -183,7 +183,7 @@ host.
 | [document-z80](skills/document-z80/SKILL.md) | A project's public documentation needs creating, restructuring, review, or EN/ES sync. | An evidence-grounded README and documentation hierarchy with verified commands and hardware claims. |
 | [port-spectranext](skills/port-spectranext/SKILL.md) | An existing ZX program is being ported to the Spectranext cartridge (not the Spectrum Next). | Canonical intake, bounded implementation, artifact-bound gates, physical evidence, and handoff. |
 | [debug-z80](skills/debug-z80/SKILL.md) | You observe a failure and its cause is unknown. | One falsifiable causal explanation and, on request, one verified root-cause fix. |
-| [audit-z80](skills/audit-z80/SKILL.md) | You want a preventive or broad correctness review, or the risk of a change set (`diff` mode). | Read-only findings ranked by severity and confidence, with evidence and residual risk. |
+| [audit-z80](skills/audit-z80/SKILL.md) | You want a preventive or broad correctness review, the risk of a change set (`diff` mode), or to know whether an expert Z80/SDCC programmer would accept the code (`craft` mode). | Read-only findings ranked by severity and confidence, with evidence and residual risk; in `craft` mode, waste with its expert alternative, measured delta, and a verdict. |
 | [organize-z80](skills/organize-z80/SKILL.md) | Ownership, dependencies, source layout, or runtime placement need mapping or a safe change. | A proportional map, design, reversible migration slice, or an explicit no-change decision. |
 | [shrink-z80](skills/shrink-z80/SKILL.md) | Storage, linked size, resident memory, BSS/stack, banks, or overlays must shrink. | Net reductions classified by safety and quality of evidence. |
 | [optimize-z80](skills/optimize-z80/SKILL.md) | Several objectives compete: size, speed, RAM, rendering, latency. | Up to three prioritized experiments with impact, risk, rollback, and validation. |
@@ -258,6 +258,16 @@ Prioritize ABI, ISR, and memory; report only findings anchored in the current co
 ```text
 Use audit-z80 in diff mode against main. Check whether this branch's ISR and
 C/ASM changes break the ABI, preserved registers, shared state, or the memory map.
+```
+
+```text
+Use audit-z80 in craft mode on src/overlay and asm/overlay. Would an expert
+Z80/SDCC programmer accept this code? Measure the strongest waste and give a verdict.
+```
+
+```text
+Use audit-z80 in craft diff mode against main. Did the AI-generated patch add
+hollow wrappers, duplicated routines, or non-idiomatic ASM?
 ```
 
 ### Organization

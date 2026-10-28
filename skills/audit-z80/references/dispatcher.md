@@ -50,6 +50,10 @@ in `SKILL.md`.
 - `diff`: complete step 1, then replace the broad pressure map with the scope
   and named risks in `change-review.md`; load domain references only for those
   risks.
+- `craft` / `craft diff`: complete step 1 for the toolchain profile, then
+  replace steps 2-6 with `craft-review.md`, which keeps `promotion-gate.md` for
+  every expert alternative; a correctness defect met on the way still goes
+  through steps 4-6.
 - Focused modes: run only the named domain plus any boundary required to prove
   it. For example, `abi` includes generated code when present; `spectrum-hw`
   includes interrupt/memory state when ports or paging depend on it.
@@ -74,4 +78,9 @@ without a current project anchor.
 - `abi_inventory.py`: C/ASM conventions, exports/imports, and cleanup hints.
 - `z80_pattern_scan.py`: expert-review candidates around flags, interrupts,
   stack tricks, ports, timing, paging, codegen, and layout.
-- `smoke_test.py`: package checks after script changes.
+- `craft_scan.py`: craft lead queue (forwarders, single-use helpers,
+  constant or unused parameters, clone families, untouched register saves,
+  codegen outliers from a fresh map, narrating comments) with hotspots;
+  `--changed-from` limits it to a change set. Dead code and duplicated
+  literals come from `shrink-z80`'s scanners.
+- `smoke_test.py` and `test_craft_scan.py`: package checks after script changes.
