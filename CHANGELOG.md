@@ -139,6 +139,8 @@ repository; these entries track development toward the first published release.
 - Standard `python -m pytest -q` collects same-named test modules without
   collisions; shrink-agent tests handle Windows Python paths with spaces and
   aliases through the existing shell-path helper and executable identity checks.
+- Plugin version 0.8.9 refreshes installed copies after `auto` and `full`
+  gained the craft pass; a cached 0.8.8 copy does not run it.
 - Plugin version 0.8.8 refreshes installed copies after the `audit-z80`
   `craft` mode was added; a cached 0.8.7 copy does not contain it.
 - Plugin version 0.8.7 refreshes installed copies after the routine-corpora
