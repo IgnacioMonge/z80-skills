@@ -34,8 +34,10 @@ limitation and continue directly without claiming delegated execution.
 - `help`: summarize modes from this file and stop.
 - `preflight`: run the relevant profile scripts, report escalation signals, and
   stop.
-- `auto` (default): preflight, then choose focused, standard, or deep demand.
-- `full` / `diverge`: force broad category coverage; depth still adapts to the
+- `auto` (default): preflight, then choose focused, standard, or deep demand;
+  end with a craft pass.
+- `full` / `diverge`: force broad category coverage, including the complete
+  craft review; depth still adapts to the
   evidence and available agent capacity.
 - `diff [<base>..<head>]`: audit the correctness risk a change set introduces
   or exposes; without a range, review the branch and uncommitted changes
@@ -48,8 +50,8 @@ limitation and continue directly without claiming delegated execution.
 
 For every real audit, read `references/hard-contract.md`,
 `references/dispatcher.md`, and `references/preflight.md`; in `diff` mode, also
-read `references/change-review.md`; in `craft` mode, also read
-`references/craft-review.md`. Read
+read `references/change-review.md`; in `craft`, `auto`, and `full` modes, also
+read `references/craft-review.md`. Read
 `references/agent-orchestration.md` only when more than one independent
 investigation lane is useful.
 

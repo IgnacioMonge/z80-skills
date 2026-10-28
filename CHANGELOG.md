@@ -18,7 +18,8 @@ repository; these entries track development toward the first published release.
   duplicated literals and ASM micro idioms stay with `shrink-z80`'s scanners.
   `references/craft-review.md` requires an expert alternative, a measured delta
   and a preservation argument per finding, adds a blind-rewrite lane that never
-  sees the original body, and ends in an evidence-based verdict.
+  sees the original body, and ends in an evidence-based verdict. `auto` and
+  `full` end with a craft pass reported in its own section.
 - Reviewed Zeda and baze routine corpora add biased single-pair and CPI loop
   control, iterative division near powers of two, signed saturating narrowing
   and Galois LFSR steps, with original examples, emulator tests and a source

@@ -44,9 +44,10 @@ in `SKILL.md`.
 ## Mode Routing
 
 - `preflight`: complete step 1, report the profile and escalation signals, stop.
-- `auto`: run the workflow at the demand level supported by preflight.
+- `auto`: run the workflow at the demand level supported by preflight, then
+  the craft pass in `craft-review.md`.
 - `full` / `diverge`: cover every applicable domain, but collapse irrelevant
-  domains into one concise `n/a` statement.
+  domains into one concise `n/a` statement, then the complete craft review.
 - `diff`: complete step 1, then replace the broad pressure map with the scope
   and named risks in `change-review.md`; load domain references only for those
   risks.

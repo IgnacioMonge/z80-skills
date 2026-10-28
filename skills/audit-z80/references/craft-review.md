@@ -17,6 +17,19 @@ reported under the normal audit rules, not as craft.
   justify its existence. Scanner rows, delegate output, and the reviewer's own
   impression are candidates until the proof below promotes them.
 
+## Craft Pass In `auto` And `full`
+
+After the correctness workflow, `auto` and `full` run this review on the same
+scope and reuse its profile (skip step 2):
+
+- `auto` at focused or standard demand: steps 1 and 3-8, without the blind
+  rewrite;
+- `auto` at deep demand, and `full`: also the blind rewrite of the core
+  hotspot unit.
+
+Skip the pass when the user limits the audit to correctness. Its findings and
+verdict go in their own report section.
+
 ## Workflow
 
 1. Scope. A path list reviews code as it stands. `craft diff [<base>..<head>]`

@@ -63,7 +63,9 @@ correct.
 ## Craft mode
 
 In `craft` mode, use the finding format, impact scale, and verdict in
-`craft-review.md`; the coverage note above still applies.
+`craft-review.md`; the coverage note above still applies. In `auto` and `full`,
+put the craft pass in its own section after the correctness findings, with its
+own verdict; never rank waste together with bugs.
 
 ## No-finding case
 
