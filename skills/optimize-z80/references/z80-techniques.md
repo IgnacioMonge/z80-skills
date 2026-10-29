@@ -31,10 +31,10 @@ Each recommended technique must state:
 Peepholes are cleanup, not strategy:
 
 - `xor a` / `sub a` instead of `ld a,0` when flags may change.
-- `add a,a` instead of `sla a` for simple left shift of A when H and P/V are dead (`sla` sets parity; `add` sets half-carry and overflow).
+- `add a,a` instead of `sla a` for simple left shift of A when H and P/V are dead.
 - `add hl,hl` for 16-bit left shift.
 - `DJNZ` for 8-bit B counters.
-- `jp fn` instead of `call fn; ret` when the return address is on top of the stack and `fn` does not read or rewrite it ([preconditions](../../shrink-z80/references/asm-micro.md#safe-local-patterns)).
+- `jp fn` instead of `call fn; ret` under the [tail-call preconditions](../../shrink-z80/references/asm-micro.md#safe-local-patterns).
 - `or a`, `cp a`, `scf`, `ccf`, `sbc a,a` for flag/mask work when flags are acceptable.
 - Merge adjacent 8-bit loads into 16-bit loads when register pairing allows.
 - Prefer 8-bit state and counters over 16-bit when range proves it.

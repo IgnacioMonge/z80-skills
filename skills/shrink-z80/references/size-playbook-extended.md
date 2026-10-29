@@ -94,7 +94,7 @@ When the target matrix includes Next and policy allows Z80N:
 
 ## H. Control-flow and dispatch density
 
-- `call foo; ret` -> `jp foo`; shared tails; fall-through state machines.
+- `call foo; ret` -> `jp foo` under the [tail-call preconditions](asm-micro.md#safe-local-patterns); shared tails; fall-through state machines.
 - Relative offset tables (1 byte) vs absolute vectors (2 bytes) inside a page.
 - Stack dispatch (`push hl; ret`) vs `jp (hl)` under register pressure.
 - Sparse `switch`: SDCC tables can be worse than explicit cascades — inspect

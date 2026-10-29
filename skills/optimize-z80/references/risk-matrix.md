@@ -38,7 +38,7 @@ Required mitigation:
 - remove duplicate work
 - delete dead wrappers
 - delete static functions proved unused by whole-file/repo search
-- `call; ret` -> `jp`
+- `call; ret` -> `jp` under the [tail-call preconditions](../../shrink-z80/references/asm-micro.md#safe-local-patterns)
 - table/literal dedup
 - branch ordering
 - `DJNZ` where register allocation already fits
