@@ -7,6 +7,13 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- `shrink-z80` ASM micro patterns add `cp 0` to `or a` and `ld de/bc,1..3`
+  plus `add hl,rr` to `inc hl`, each with the flags and registers that must be
+  dead, checked on z88dk-ticks.
+- `optimize-z80` toolchain notes give MDL's Spectrum-safe options (`-cpu z80`
+  or `z80n`, source dialect, `-po-ldo`, protection pragmas), warn that `-asm`
+  expands includes and that `-so` random checks are not proof, and point to its
+  pinned pattern catalog with per-rewrite constraints.
 - `audit-z80` `craft` mode answers whether an expert Z80/SDCC programmer would
   accept the code or find it inflated, hollow, duplicated, or non-idiomatic;
   `craft diff` judges only what a change set adds. `scripts/craft_scan.py`
@@ -136,6 +143,11 @@ repository; these entries track development toward the first published release.
 
 ### Fixed
 
+- `shrink-z80`, `optimize-z80` and shrink-agent no longer treat `call foo`
+  plus `ret` to `jp foo` as unconditionally safe: the rewrite now requires the
+  return address on top of the stack and a callee that does not read or
+  rewrite it.
+- `optimize-z80` allows `add a,a` for `sla a` only when H and P/V are dead.
 - Standard `python -m pytest -q` collects same-named test modules without
   collisions; shrink-agent tests handle Windows Python paths with spaces and
   aliases through the existing shell-path helper and executable identity checks.

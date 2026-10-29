@@ -82,6 +82,9 @@ Do not propose copt from one isolated pattern.
 ## MDL Z80 Optimizer
 
 Use as optional external evidence, not as a blind patcher.
+Options below were checked against
+[santiontanon/mdlz80optimizer](https://github.com/santiontanon/mdlz80optimizer/tree/3004430f67f17013dc47127fd14d8640fbf08b6f)
+(Apache-2.0) at `3004430f67f1`.
 
 Useful concepts:
 
@@ -90,6 +93,19 @@ Useful concepts:
 - expanded annotated ASM
 - hotspot execution when harness exists
 - peephole pattern discovery
+
+Before trusting a run:
+
+- Pass `-cpu z80`, or `-cpu z80n` for Next. The default `z80msx` uses MSX timing, so its `-po speed` choices and cycle reports do not describe a Spectrum.
+- Pass the source `-dialect` (`sjasmplus`, `pasmo`, `sdcc`, `sdasz80`, ...); the list has no z88dk z80asm dialect. Only `sdcc` and `sdasz80` exclude the patterns tagged `sdcc-unsafe`, among them the `call` plus `ret` tail call.
+- Pass `-po-ldo` while code still changes: it disables rewrites that depend on current label values.
+- Mark self-modified instructions, unresolved `jp (hl)` tables and protected blocks with `mdl:self-modifying`, `mdl:jumptable` and `mdl:no-opt-start`/`mdl:no-opt-end`.
+- Review `-po` console proposals (and `-popotential`) one by one against `asm-micro.md` and the routine contract. `-asm` output expands macros and includes; never replace project sources with it.
+- `-so` accepts a result after `-so-checks` random tests (10000 by default). Treat it as a candidate that still needs proof, not as equivalence.
+
+[`pbo-patterns.txt`](https://github.com/santiontanon/mdlz80optimizer/blob/3004430f67f17013dc47127fd14d8640fbf08b6f/src/main/resources/data/pbo-patterns.txt)
+holds 187 rewrites, each with its dead-register, dead-flag and stack
+constraints; consult it as a rule source for micro proposals.
 
 Reject whole-file autopatching unless user explicitly asks and validation is strong.
 

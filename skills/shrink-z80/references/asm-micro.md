@@ -4,11 +4,13 @@ Use this file when the task is down in hand-written assembly or generated hot sp
 
 ## Safe local patterns
 
-- `call foo` plus `ret` to `jp foo`
+- `call foo` plus `ret` to `jp foo` only when the return address is on top of the stack at the `call` (no pending `push`, including arguments for `foo`, and no `ex (sp),hl` swap) and `foo` neither reads nor rewrites its return address (inline data after the `call`, `pop` or `ex (sp),hl` return tricks)
 - repeated tails to one shared `jp tail`
 - `dec b` plus `jr nz` to `djnz` when flags after `dec` are dead
 - `jp` to `jr` only when range is proven; conditional `jr` exists only for `NZ/Z/NC/C` (never `M/P/PE/PO`)
 - `ld a,0` to `xor a` only when flag differences are irrelevant
+- `cp 0` to `or a` (saves 1 byte) only when P/V, N and F bits 3/5 are dead; S, Z, H and C match
+- `ld de,1..3` or `ld bc,1..3` plus `add hl,rr` to one to three `inc hl` (saves 3/2/1 bytes) only when that pair and H, N, C and F bits 3/5 are dead; `inc hl` changes no flags
 - branchy `ld a,0` / `ld a,255` boolean masks to carry setup plus `sbc a,a` only when `C` can be made the predicate and `0xff` is acceptable or can be normalized
 - remove unnecessary IX or IY preserve pairs only when every callee contract is known
 - merge repeated suffix tails when the shared tail plus jumps saves net bytes
