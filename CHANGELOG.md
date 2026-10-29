@@ -146,7 +146,8 @@ repository; these entries track development toward the first published release.
 - `shrink-z80`, `optimize-z80` and shrink-agent no longer treat `call foo`
   plus `ret` to `jp foo` as unconditionally safe: the rewrite now requires the
   return address on top of the stack and a callee that does not read or
-  rewrite it.
+  rewrite it. `optimize-z80`'s `pattern_scan.py` reports the pattern as
+  `CHECK` instead of `SAFE`.
 - `optimize-z80` allows `add a,a` for `sla a` only when H and P/V are dead.
 - Standard `python -m pytest -q` collects same-named test modules without
   collisions; shrink-agent tests handle Windows Python paths with spaces and

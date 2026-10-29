@@ -12,7 +12,7 @@ STATIC_C_FUNC = re.compile(
 )
 
 PATTERNS = [
-    ("asm_tail_call", re.compile(r"\bcall\s+([\w.$@?]+)\s*(?:;[^\n]*)?\n\s*ret\b", re.I), "SAFE", "call+ret can often become jp"),
+    ("asm_tail_call", re.compile(r"\bcall\s+([\w.$@?]+)\s*(?:;[^\n]*)?\n\s*ret\b", re.I), "CHECK", "call+ret may become jp; prove stack and callee (asm-micro.md)"),
     ("asm_block_repeat", re.compile(r"\b(ldir|otir|cpir|inir|indr|otdr)\b", re.I), "MEDIUM", "block repeat may be size-good but not speed-best"),
     ("asm_block_single", re.compile(r"\b(ldi|ldd|cpi|cpd|ini|ind|outi|outd)\b", re.I), "CHECK", "single-step block op; compare setup cost versus loop alternatives"),
     ("asm_index_regs", re.compile(r"\b(?:ix|iy)(?:[+-]|\s*\+|\s*\-|\b)", re.I), "CHECK", "IX/IY access costs prefix bytes/t-states"),
