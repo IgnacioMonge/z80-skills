@@ -136,10 +136,17 @@ destination. Display-page selection does not remap bank 7 to `4000`. Reserve scr
 storage by address and lifetime before reusing the rest of that physical bank.
 
 If mainline and ISR both page, the latch shadow and hardware OUT need one coherent
-ownership transaction; an ISR between them must not observe/restore a mismatched
-mapping. Reuse the project's paging helper and preserve its interrupt contract.
-Keep every called helper, stack, vector read, workspace and patched operand valid,
-not only ISR entry. Apply [page history/flip rules](zx-spectrum-hardware.md#page-local-history-and-screen-flipping).
+ownership transaction, serialized from the initial shadow read through the OUT;
+masking only the final write can leave a stale read/modify/write. An ISR between
+updates must not observe/restore a mismatched mapping. If an ISR temporarily
+pages a player without updating the foreground shadow, prove restoration on
+every exit and that nested paths do not treat the shadow as the instantaneous
+hardware map. Reuse the project's helper and preserve its interrupt contract;
+an unconditional EI is unsuitable for callers requiring interrupts disabled.
+Keep every switching helper and its continuation, stack, vector read, workspace
+and patched operand valid, not only ISR entry. A resident trampoline must restore
+the caller's bank before returning to a banked return address. Apply
+[page history/flip rules](zx-spectrum-hardware.md#page-local-history-and-screen-flipping).
 
 Reject unproved aliases or interrupted transactions; fixed-memory staging or the
 existing renderer is the fallback. Trace all source/destination/music mappings,

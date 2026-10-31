@@ -2,6 +2,10 @@
 
 Use this file for `spectrum-hw`, `esxdos`, `isr`, `memory`, `map`, overlay, loader, screen, divMMC, dot-command, or real-hardware-sensitive audits.
 
+For 128K-family audits, use the existing
+[hardware paging contract](../../optimize-z80/references/zx-spectrum-hardware.md#128k--paging)
+and [model rules](../../optimize-z80/references/zx-spectrum-models.md).
+
 ## Contended memory and timing
 
 - Treat `$4000..$7fff` on 48K Spectrum as contended RAM. Code executing there, or data accessed there, can gain ULA wait states while the display is being drawn.

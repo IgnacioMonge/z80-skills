@@ -182,13 +182,39 @@ jitter; an unbounded `wait until A != $FF` loop is not a reliable raster lock.
 
 ## 128K / Paging
 
-Check:
+Normal paging uses this CPU map:
 
-- bank switch cost
-- double-buffer via screen pages
-- assets in banks vs resident pressure
-- code/data ownership across banks
-- interrupt code visibility across banks
+| CPU address | Physical storage |
+| --- | --- |
+| `$0000..$3FFF` | Selected ROM |
+| `$4000..$7FFF` | RAM bank 5 |
+| `$8000..$BFFF` | RAM bank 2 |
+| `$C000..$FFFF` | Selected RAM bank, 0..7 |
+
+Mapping bank 2 or 5 at `$C000` aliases existing RAM; it adds no capacity.
+Count physical allocations once, including code, stack and screen reservations.
+A loader or decompressor writing the alias can overwrite the fixed region.
+Source: [128 service manual, section 1.4](https://spectrumforeveryone.com/wp-content/uploads/2017/11/ZX-Spectrum-128-Service-Manual.pdf).
+
+Use the full `$7FFD` port address. Bits 0..2 select the bank at `$C000`, bit 3
+selects ULA screen bank 5 (0) or 7 (1), bit 4 selects ROM, and bit 5 locks
+paging until reset. Preserve unrelated bits and the software latch shadow;
+firmware-compatible paths use `BANKM` at `$5B5C`.
+Source: [128K paging](https://worldofspectrum.org/faq/reference/128kreference.htm).
+
+On +2A/+3, `$1FFD` bit 0 selects all-RAM configurations that replace the normal
+map, including low memory. In normal mode, its bit 2 combines with `$7FFD`
+bit 4 to select one of four ROMs. Preserve disk/printer control and firmware's
+`BANK678` shadow at `$5B67`. Normal-map residency assumptions do not hold in
+all-RAM mode. Source: [+3 memory management](https://worldofspectrum.net/ZXSpectrum128%2B3Manual/chapter8pt24.html).
+
+A bank-plus-offset handle needs the correct mapping before dereferencing;
+validate its bank and span, including wrap past `$FFFF`. For transfers and
+foreground/ISR paging, use the existing
+[simultaneous-visibility contract](generated-rendering.md#paging-must-preserve-simultaneous-visibility).
+For model-dependent contention and read-port hazards, use
+[model rules](zx-spectrum-models.md#paging-discipline); for startup and banked
+packaging, use [loader/CRT rules](toolchain.md#classic-128k-banked-programs).
 
 Do not propose bank tricks for 48K-only projects.
 

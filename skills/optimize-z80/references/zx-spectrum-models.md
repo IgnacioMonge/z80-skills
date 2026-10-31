@@ -58,6 +58,15 @@ For 128K-family projects, prove:
 - whether interrupts can fire while a banked routine is active
 - whether page changes occur on hot paths or only phase boundaries
 
+Use the [hardware map and paging fields](zx-spectrum-hardware.md#128k--paging)
+for physical aliases and the normal versus all-RAM map.
+
+Do not read `$7FFD` to probe the latch: original 128/grey +2 HAL logic can
+change paging on a read and crash the machine. Velesoft's
+[Umbrella equations](https://velesoft.speccy.cz/zx/umbrella/umbrella.htm) document
+the fault and correction; a [tested installation](https://spectrumforeveryone.com/technical/applying-the-unrainerin-7ffd-fix-to-128grey-2-machines/)
+distinguishes +2A/+3. Read the software shadow instead.
+
 ## Frame Window Planning
 
 PAL reference timing, T-states relative to ULA /INT assertion:
@@ -82,6 +91,11 @@ traffic. Split work across windows/frames or use validated beam racing when
 it cannot fit; see [copy/fill lower bounds](z80-techniques.md#ldi-chains-vs-ldir-vs-manual-copy).
 On 128K/+2, odd banks contend; +2A/+3 contend banks 4-7. A high logical
 address alone does not prove uncontended placement.
+
+The [128 service manual, section 1.4](https://spectrumforeveryone.com/wp-content/uploads/2017/11/ZX-Spectrum-128-Service-Manual.pdf)
+originally used the later model's contended-bank numbering. The linked edition
+includes an editor's correction; apply that correction when choosing hot banks,
+rather than copying the uncorrected rule into a 128/+2 layout.
 
 ## IM2, I And Refresh Safety
 

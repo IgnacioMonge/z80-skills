@@ -7,6 +7,10 @@ repository; these entries track development toward the first published release.
 
 ### Added
 
+- Existing Spectrum hardware, model, rendering and toolchain references add
+  128K bank aliases, paging-latch/read hazards, interrupt transaction details
+  and banked loader/CRT contracts. Research guidance adds a pinned, limited
+  Tuerkas128/Perseus source assessment.
 - `shrink-z80` ASM micro patterns add `cp 0` to `or a` and `ld de/bc,1..3`
   plus `add hl,rr` to `inc hl`, each with the flags and registers that must be
   dead, checked on z88dk-ticks.

@@ -65,6 +65,23 @@ ROM, resident RAM, boot time and cold-path functionality; keep the original
 CRT/sections when those invariants cannot be proved.
 Source: [z88dk runtime and section guidance](https://github.com/z88dk/z88dk/wiki/WritingOptimalCode).
 
+### Classic 128K Banked Programs
+
+[z88dk's Spectrum platform documentation](https://github.com/z88dk/z88dk/wiki/Platform---Sinclair-ZX-Spectrum#128k-program-generation)
+documents classic `+zx` banked code/data and banked TAP packaging; Next uses
+`+zxn`. Its classic-library `#pragma bank` convention is not a universal
+SDCC/newlib ABI. Verify the installed CRT, compiler, sections, generated calls
+and loader before choosing a recipe. Count resident glue and padding as well
+as bank contents; retain an existing runtime that already fits the layout.
+
+Record boot mode, ROM, paging-lock state, loaded bank ranges, entry map, stack,
+interrupt state and return-to-firmware policy. A locked 48 BASIC entry cannot
+be unlocked by another write. A snapshot starting after loading does not prove
+that a TAP/TZX loader loads every bank or survives its own writes. Validate
+the delivery artifact from its real entry path, including failure exits and
+final mapping. Use the [hardware paging contract](zx-spectrum-hardware.md#128k--paging)
+for latch fields, physical aliases and extended modes.
+
 ## z88dk-copt
 
 Use as a possible MEDIUM lane when repeated generated-ASM patterns are proven.

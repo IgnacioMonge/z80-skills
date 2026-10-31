@@ -50,7 +50,7 @@ coverage never means a technique is proven faster in the current project.
 | UART/filesystem batching and state reuse | Mentioned | [I/O](modern-spectrum-io.md); no device-specific FIFO budgets or driver recipes |
 | Frame slicing and perceived latency | Developed | [Temporal amortization](z80-techniques.md#temporal-amortization-work-spread-across-frames) and [UX](optimization-paths.md#perceived-latency-ux) |
 | ABI/codegen and linked runtime/initialization | Developed | [ABI](z88dk-sdcc-abi.md), [CRT/sections](toolchain.md#linked-runtime-and-initialization); installed compiler decides |
-| Banking and overlays | Mentioned | [Banking path](optimization-paths.md#overlay--banking); no per-engine layout |
+| Banking and overlays | Mentioned | [Banking path](optimization-paths.md#overlay--banking), [128K map](zx-spectrum-hardware.md#128k--paging) and [visibility transactions](generated-rendering.md#paging-must-preserve-simultaneous-visibility); no per-engine layout |
 | AY/beeper kernel optimization | Mentioned | [Audio signals](zx-spectrum-models.md#audio-and-input); player-specific kernels absent |
 | Exact quarter-square, signed correction, difference tables and BCD | Developed | [Demoscene math](demoscene-math.md); host identities do not validate emitted kernels or speed |
 | Generated sampling kernels, affine derivation and executable work lists | Developed | [Generated rendering](generated-rendering.md); generation/residency/dispatch costs and target proof still required |
