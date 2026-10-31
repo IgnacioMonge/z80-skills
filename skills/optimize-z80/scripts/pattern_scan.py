@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
+
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import EXCLUDE_DIRS  # noqa: E402
 
 STATIC_C_FUNC = re.compile(
     r"(?m)^\s*static\s+(?!const\b)(?:[\w_]+\s+|\*|\s)+?"
@@ -39,7 +46,7 @@ PATTERNS = [
 ]
 
 EXTS = {".c", ".h", ".asm", ".s", ".inc", ".lst", ".lis"}
-IGNORE_DIRS = {".git", ".hg", ".svn", "__pycache__", "node_modules"}
+IGNORE_DIRS = EXCLUDE_DIRS | {".mex"}
 
 
 def is_ignored(path: Path, root: Path, ignore_dirs: set[str]) -> bool:

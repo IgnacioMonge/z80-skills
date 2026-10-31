@@ -14,7 +14,7 @@ HOST_ONLY_DIRS = {"tools", "scripts", "tests", "test", "host", "client", "pc"}
 EXCLUDE_DIRS = {
     ".git", ".hg", ".svn", ".venv", "venv", "env", "node_modules", "target",
     "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox", ".cache",
-    ".worktrees", ".codex-safety", ".aider.tags.cache.v4", "third_party", "vendor",
+    ".worktrees", ".claude", ".codex-safety", ".aider.tags.cache.v4", "third_party", "vendor",
 }
 SOURCE_EXTS = {".c", ".h", ".i", ".asm", ".s", ".inc", ".opt", ".rul"}
 C_EXTS = {".c", ".h", ".i"}
@@ -40,7 +40,7 @@ ASM_MNEMONICS = {"adc", "add", "and", "bit", "call", "ccf", "cp", "cpd", "cpdr",
 LABEL_RE = re.compile(r"^([A-Za-z_.$?@][\w.$?@]*):\s*(.*)$")
 DIRECTIVE_SYMBOL_RE = re.compile(r"[A-Za-z_.$][\w.$?@]*")
 BARE_LABEL_RE = re.compile(r"^[A-Za-z_.$?@][\w.$?@]*$")
-BRANCH_TARGET_RE = re.compile(r"\b(?:call|jp|jr)\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
+BRANCH_TARGET_RE = re.compile(r"\b(?:call|jp|jr|djnz)\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
 CALL_TARGET_RE = re.compile(r"\bcall\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
 UNCOND_CALL_TARGET_RE = re.compile(r"\bcall\s+(?!(?:z|nz|c|nc|m|p|pe|po)\s*,)([A-Za-z_.$?@][\w.$?@]*)", re.IGNORECASE)
 ASM_COMMENT_RE = re.compile(r";.*$")

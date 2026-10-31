@@ -9,6 +9,12 @@ import json
 import re
 from pathlib import Path
 
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import EXCLUDE_DIRS  # noqa: E402
+
 LABEL = re.compile(r"^\s*([A-Za-z_.$@?][\w.$@?]*):")
 CALL = re.compile(
     r"\b(call|jp)\s+(?:(?:z|nz|c|nc|m|p|pe|po)\s*,\s*)?"
@@ -16,7 +22,15 @@ CALL = re.compile(
     re.I,
 )
 EXTS = {".asm", ".s", ".inc", ".lst", ".lis"}
-IGNORE_DIRS = {".git", ".hg", ".svn", "__pycache__", "node_modules", ".mex"}
+IGNORE_DIRS = EXCLUDE_DIRS | {".mex"}
+
+
+def is_ignored(p: Path, root: Path, ignore_dirs: set[str]) -> bool:
+    try:
+        parts = p.relative_to(root).parts
+    except ValueError:
+        parts = p.parts
+    return any(part in ignore_dirs for part in parts)
 
 
 def main():
@@ -33,7 +47,7 @@ def main():
     emit_limit = None if args.limit <= 0 else args.limit
     edges = []
     for p in root.rglob("*"):
-        if any(part in ignore_dirs for part in p.parts) or not p.is_file() or p.suffix.lower() not in EXTS:
+        if is_ignored(p, root, ignore_dirs) or not p.is_file() or p.suffix.lower() not in EXTS:
             continue
         current = None
         for n, line in enumerate(p.read_text(errors="replace").splitlines(), 1):

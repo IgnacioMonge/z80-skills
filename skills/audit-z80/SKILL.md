@@ -21,13 +21,14 @@ limitation and continue directly without claiming delegated execution.
 
 ## Runtime Portability
 
-- Resolve `SKILL_DIR` as the directory containing this file before invoking a
-  bundled script.
+- Canonicalize the discovered `SKILL.md` path by following symlinks and Windows
+  junctions, then resolve `SKILL_DIR` from its physical parent.
 - Use the Python 3 interpreter exposed by the host or explicitly provided by
   the user (written `<python>` in references); never assume a platform-specific
   path.
-- Invoke bundled scripts as `"$SKILL_DIR/scripts/<name>.py"` (or an equivalent
-  absolute path), never as a project-relative `scripts/<name>.py`.
+- Invoke bundled scripts as `"$SKILL_DIR/scripts/<name>.py"` and
+  `"$SKILL_DIR/../../scripts/run_in_worktree.py"` by verified canonical
+  absolute path, never as a project-relative `scripts/<name>.py`.
 
 ## Modes
 

@@ -20,6 +20,7 @@ from scan_common import (  # noqa: E402
     conditional_call,
     directive_symbols,
     explicit_label,
+    is_host_only_path,
     print_pattern_hits,
     read_text_lines,
     rel_path,
@@ -147,7 +148,7 @@ INLINE_ASM_TOUCH_RE = re.compile(
 )
 EXPORT_RE = re.compile(r"^\s*(?:PUBLIC|GLOBAL|XDEF|EXPORT|\.globl)\s+(.+)", re.IGNORECASE)
 ARRAY_DECL_RE = re.compile(r"\b(?:uint8_t|char|unsigned\s+char)\s+(\w+)\s*\[(\d+)\]")
-ARRAY_WRITE_RE = re.compile(r"\b(\w+)\s*\[[^]]+\]\s*=")
+ARRAY_WRITE_RE = re.compile(r"\b(\w+)\s*\[([^]]+)\]\s*=")
 
 HIGH_KEYS = {
     "block-op-bc-zero", "halt-while-di-active", "exit-with-interrupts-disabled",
@@ -474,7 +475,14 @@ def scan_c_structure(
         write = ARRAY_WRITE_RE.search(line)
         if write and write.group(1) in arrays:
             size, decl_line = arrays[write.group(1)]
-            if size <= 8:
+            idx_expr = write.group(2).strip()
+            in_bounds_const = False
+            try:
+                const_idx = int(idx_expr, 0)
+                in_bounds_const = 0 <= const_idx < size
+            except ValueError:
+                pass
+            if size <= 8 and not in_bounds_const:
                 add_hit(
                     hits,
                     "small-buffer-write",
@@ -583,6 +591,8 @@ def main() -> int:
     files: list[Path] = []
     skipped_too_large: list[Path] = []
     for path in scope.files:
+        if scope.kind == "directory" and is_host_only_path(path, scope.base):
+            continue
         _, skipped = read_text_lines(path)
         if skipped:
             skipped_too_large.append(path)

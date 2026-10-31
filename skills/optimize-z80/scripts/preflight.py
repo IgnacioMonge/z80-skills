@@ -7,14 +7,22 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
+if str(COMMON_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(COMMON_SCRIPTS))
+
+from scan_common import EXCLUDE_DIRS, HOST_ONLY_DIRS  # noqa: E402
 
 try:
     import tomllib
 except ModuleNotFoundError:  # Python < 3.11 fallback for simple policy files.
     tomllib = None
 
-SOURCE_EXTS = {".c", ".h", ".asm", ".s", ".inc", ".py", ".cfg", ".ld", ".lst", ".lis"}
+SOURCE_EXTS = {".c", ".h", ".asm", ".s", ".inc", ".cfg", ".ld", ".opt", ".rul"}
+MTIME_SKEW_SECONDS = 2.0
 ARTIFACT_GLOBS = {
     "maps": ["*.map"],
     "symbols": ["*.sym", "*.noi", "*.sld"],
@@ -28,14 +36,17 @@ ARTIFACT_GLOBS = {
     "binaries": ["*.bin", "*.ovl", "*.OVL", "*.dat", "*.DAT"],
     "sdcc_dumps": ["*.adb", "*.adb.json", "*.dump", "*.ic", "*.graph"],
 }
-CORE_IGNORE_DIRS = {".git", ".hg", ".svn", "__pycache__", "node_modules"}
+CORE_IGNORE_DIRS = EXCLUDE_DIRS | {".mex"}
 SOURCE_IGNORE_DIRS = CORE_IGNORE_DIRS | {
     "build",
     "release",
     "dist",
-    ".mex",
+    "obj",
+    "out",
+    "gen",
+    "generated",
 }
-ARTIFACT_IGNORE_DIRS = CORE_IGNORE_DIRS | {".mex"}
+ARTIFACT_IGNORE_DIRS = CORE_IGNORE_DIRS
 
 
 def ignored(p: Path, root: Path, ignore_dirs=SOURCE_IGNORE_DIRS) -> bool:
@@ -90,6 +101,14 @@ def find_artifacts(root: Path):
     return out
 
 
+def is_host_only(p: Path, root: Path) -> bool:
+    try:
+        parts = p.relative_to(root).parts[:-1]
+    except ValueError:
+        parts = p.parts[:-1]
+    return any(part.lower() in HOST_ONLY_DIRS for part in parts)
+
+
 def detect_sources(root: Path):
     exts = {".c": 0, ".h": 0, ".asm": 0, ".s": 0, ".inc": 0, ".py": 0}
     newest = None
@@ -97,7 +116,7 @@ def detect_sources(root: Path):
         e = p.suffix.lower()
         if e in exts:
             exts[e] += 1
-        if e in SOURCE_EXTS:
+        if e in SOURCE_EXTS and not is_host_only(p, root):
             m = p.stat().st_mtime
             if newest is None or m > newest[1]:
                 newest = (p, m)
@@ -125,7 +144,7 @@ def freshness(root: Path, artifacts, newest_source):
             "newest_source": rel(newest_source[0], root),
         }
     newest_art = max(candidates, key=lambda x: x[2])
-    stale = newest_source[1] > newest_art[2]
+    stale = (newest_source[1] - newest_art[2]) > MTIME_SKEW_SECONDS
     return {
         "status": "mtime_stale" if stale else "mtime_fresh_or_unknown",
         "method": "mtime_heuristic",

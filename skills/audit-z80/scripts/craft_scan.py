@@ -1398,18 +1398,25 @@ def comment_leads(cfiles: list[CFile], afiles: list[AsmFile]) -> tuple[list[Lead
 
 # ------------------------------------------------------------------ map cost
 
-def map_rows(path: Path) -> dict[str, list[tuple[int, str, str]]]:
+def map_rows(path: Path) -> dict[str, list[tuple[int, str, str, str]]]:
     """Code symbols per section, sorted by address; banks may reuse an address in another section."""
-    rows: dict[tuple[str, int], tuple[int, str, str]] = {}
+    rows: dict[tuple[str, int], tuple[int, str, str, str]] = {}
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         m = MAP_RE.match(line)
         if not m or not m.group(4).startswith(CODE_SECTION_HINTS):
             continue
-        name, addr, module, section = m.group(1), int(m.group(2), 16), m.group(3), m.group(4)
+        name, addr, module, section, loc = (
+            m.group(1),
+            int(m.group(2), 16),
+            m.group(3),
+            m.group(4),
+            m.group(5).strip(),
+        )
+        src_file = re.split(r"::|:", loc, maxsplit=1)[0].strip().replace("\\", "/")
         key = (section, addr)
         if key not in rows or rows[key][1].startswith(LOCAL_PREFIXES):
-            rows[key] = (addr, name, module)
-    sections: dict[str, list[tuple[int, str, str]]] = defaultdict(list)
+            rows[key] = (addr, name, module, src_file)
+    sections: dict[str, list[tuple[int, str, str, str]]] = defaultdict(list)
     for (section, _), row in sorted(rows.items()):
         sections[section].append(row)
     return sections
@@ -1428,20 +1435,22 @@ def map_costs(map_paths: list[Path], funcs: list[CFunc], base: Path, variants: s
     leads: dict[tuple[Path, str], Lead] = {}
     # the map module names the object file: gui_c <- gui.c
     by_symbol: dict[tuple[str, str], CFunc | None] = {}
+    by_rel_symbol: dict[tuple[str, str], CFunc] = {}
     for func in funcs:
         key = ("_" + func.name, f"{func.path.stem}_c")
         # two files with one basename share a module name: the map cannot tell them apart
         by_symbol[key] = func if key not in by_symbol or by_symbol[key] is func else None
+        by_rel_symbol[("_" + func.name, rel_path(func.path, base).lower())] = func
     for map_path in map_paths:
         if not map_path.is_file():
             notes.append(f"map: missing {map_path}")
             continue
-        sizes: dict[tuple[str, str], int] = {}
+        sizes: dict[tuple[str, str, str], int] = {}
         sections = map_rows(map_path)
         tails = {name: int(addr, 16) for name, addr in MAP_TAIL_RE.findall(map_path.read_text(encoding="utf-8", errors="replace"))}
         for section, rows in sections.items():
             owner = None
-            for idx, (addr, name, module) in enumerate(rows):
+            for idx, (addr, name, module, src_file) in enumerate(rows):
                 end = rows[idx + 1][0] if idx + 1 < len(rows) else tails.get(section)
                 if end is None:
                     break
@@ -1452,9 +1461,26 @@ def map_costs(map_paths: list[Path], funcs: list[CFunc], base: Path, variants: s
                 if name.startswith(LOCAL_PREFIXES) and owner and owner[1] == module:
                     sizes[owner] += size
                     continue
-                owner = (name, module)
+                owner = (name, module, src_file)
                 sizes[owner] = size
-        matched = [(by_symbol[key], size) for key, size in sizes.items() if by_symbol.get(key)]
+
+        def resolve_func(name: str, module: str, src_file: str) -> CFunc | None:
+            fn = by_symbol.get((name, module))
+            if fn is not None:
+                return fn
+            if src_file:
+                norm = src_file.lower()
+                if (name, norm) in by_rel_symbol:
+                    return by_rel_symbol[(name, norm)]
+                stem_mod = f"{Path(src_file).stem}_c"
+                return by_symbol.get((name, stem_mod))
+            return None
+
+        matched = [
+            (fn, size)
+            for (name, module, src_file), size in sizes.items()
+            if (fn := resolve_func(name, module, src_file)) is not None
+        ]
         if not matched:
             notes.append(f"map: no C function matched in {rel_path(map_path, base)}")
             continue

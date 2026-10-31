@@ -24,7 +24,10 @@ def parse_line(line: str):
     m = GENERIC.match(line)
     if m:
         name, hx, meta = m.groups()
-        return {"name": name, "addr": int(hx, 16), "section": "", "module": "", "meta": meta}
+        parts = [p.strip() for p in meta.split(",")]
+        module = parts[3] if len(parts) >= 4 else ""
+        section = parts[4].lower() if len(parts) >= 5 else ""
+        return {"name": name, "addr": int(hx, 16), "section": section, "module": module, "meta": meta}
     m = PLAIN.match(line)
     if m:
         hx, name = m.groups()

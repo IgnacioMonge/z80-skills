@@ -9,11 +9,18 @@ COMMON_SCRIPTS = Path(__file__).resolve().parents[2] / "shrink-z80" / "scripts"
 if str(COMMON_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(COMMON_SCRIPTS))
 
-from scan_common import directive_symbols  # noqa: E402
+from scan_common import (  # noqa: E402
+    DIST_DIRS,
+    EXCLUDE_DIRS,
+    GENERATED_DIRS,
+    HOST_ONLY_DIRS,
+    directive_symbols,
+)
 
-TEXT_EXTS = {".asm", ".c", ".h", ".i", ".inc", ".lst", ".s"}
+TEXT_EXTS = {".asm", ".c", ".h", ".i", ".inc", ".s"}
+SINGLE_FILE_EXTS = TEXT_EXTS | {".lst"}
 TOP_LEVEL_FILES = {"Makefile", "makefile"}
-SKIP_DIRS = {".git", ".svn", ".hg", ".venv", "venv", "node_modules", "__pycache__", "third_party", "vendor"}
+SKIP_DIRS = EXCLUDE_DIRS | GENERATED_DIRS | DIST_DIRS | HOST_ONLY_DIRS
 MAX_BYTES = 2_000_000
 DIRECT_CALLCONV_RE = re.compile(r"__z88dk_callee|__z88dk_fastcall|__naked|__smallc|__sdcccall\s*\(\s*[01]\s*\)")
 DEFINE_CONV_RE = re.compile(r"^\s*#\s*define\s+(\w+)\b.*(__z88dk_callee|__z88dk_fastcall|__naked|__smallc|__sdcccall\s*\(\s*[01]\s*\))")
@@ -41,7 +48,7 @@ def files(root: Path) -> tuple[list[Path], list[Path]]:
     found: list[Path] = []
     too_large: list[Path] = []
     if root.is_file():
-        return ([root] if root.suffix.lower() in TEXT_EXTS and root.stat().st_size <= MAX_BYTES else []), too_large
+        return ([root] if root.suffix.lower() in SINGLE_FILE_EXTS and root.stat().st_size <= MAX_BYTES else []), too_large
     for path in root.rglob("*"):
         if skip_path(path, root) or not path.is_file():
             continue

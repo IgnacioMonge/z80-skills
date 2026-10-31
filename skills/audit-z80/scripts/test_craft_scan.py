@@ -616,6 +616,19 @@ class CraftScanTest(unittest.TestCase):
             tail_map.unlink()
         self.assertIn("sum_row  # bytes=256", sections(out)["c-codegen-outlier"])
 
+    def test_flattened_module_name_matches_via_location_field(self) -> None:
+        flat_map = self.root / "build" / "flat.map"
+        flat_map.write_text(
+            MAP.replace("logic_c, code_compiler, logic.c:", "src_main_build_c, code_compiler, src\\logic.c::fn::0::1:"),
+            encoding="utf-8",
+        )
+        try:
+            out = self.run_scan(self.root, "--map", flat_map)
+        finally:
+            flat_map.unlink()
+        self.assertIn("sum_row", sections(out)["c-codegen-outlier"])
+        self.assertIn("bytes=256", sections(out)["c-codegen-outlier"])
+
     def test_public_wrapper_over_static_is_not_a_forwarder(self) -> None:
         self.assertNotIn("public_face", self.section("c-forwarder"))
 

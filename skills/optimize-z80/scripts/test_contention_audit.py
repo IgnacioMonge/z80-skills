@@ -18,6 +18,7 @@ class ContentionAuditTest(unittest.TestCase):
             out = subprocess.check_output([sys.executable, str(MODULE), str(mapfile), "--include-uncontended", "--model", "128k"], text=True)
             self.assertIn("contended_128k", out)
             self.assertIn("uncontended_128k", out)
+            self.assertIn("code_compiler | logic", out)
             self.assertIn("SUMMARY model=128k", out)
 
     def test_banked_range_requires_page_and_uses_model_mapping(self):

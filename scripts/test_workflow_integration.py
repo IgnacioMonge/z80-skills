@@ -128,6 +128,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
                 contract,
             )
             self.assertIn("scripts/run_in_worktree.py", contract)
+            self.assertIn("following symlinks and Windows junctions", contract)
 
         organize = ROOT / "skills" / "organize-z80"
         self.assertIn(

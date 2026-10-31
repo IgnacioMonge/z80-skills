@@ -9,7 +9,10 @@ from pathlib import Path
 from scan_common import ASM_EXTS, C_EXTS, SOURCE_EXTS, active_source_lines, branch_targets, read_text_lines, rel_path, resolve_target_scope, source_kind, split_label, print_scope
 
 C_FUNC_HEAD_RE = re.compile(r"^\s*(?:static\s+)?[A-Za-z_][\w\s\*]*\s+([A-Za-z_]\w*)\s*\([^;]*\)\s*(?:\{|$)")
+C_PROTO_RE = re.compile(r"^\s*(?:extern\s+|static\s+|inline\s+)*[A-Za-z_][\w\s\*]*\s+([A-Za-z_]\w*)\s*\([^;{}]*\)\s*;")
 CALLLIKE_RE = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+C_IDENT_RE = re.compile(r"\b([A-Za-z_]\w*)\b")
+ASM_IDENT_RE = re.compile(r"\b([A-Za-z_.$?@][\w.$?@]*)\b")
 INDIRECT_RE = re.compile(r"\b(?:jp|call)\s+\((hl|ix|iy)\)|\(\s*\*\s*\w+\s*\)\s*\(", re.IGNORECASE)
 PUBLIC_RE = re.compile(r"^\s*(?:public|global|xdef|export)\s+(.+)$", re.IGNORECASE)
 ENTRYPOINTS = {"main", "_main", "start", "_start", "crt0", "_crt0", "init", "_init"}
@@ -87,18 +90,36 @@ def main() -> int:
                 if name:
                     defined.setdefault(name, []).append(where)
 
+    defined_aliases: set[str] = set()
+    for sym in defined:
+        defined_aliases.update(symbol_aliases(sym))
+
     for path, rows in file_rows.items():
         suffix = path.suffix.lower()
         text_lines = [line for _, line in rows]
         for idx, (_lineno, line) in enumerate(rows):
             if suffix in ASM_EXTS:
-                for target_name in branch_targets(line):
+                if PUBLIC_RE.match(line):
+                    continue
+                targets = set(branch_targets(line))
+                for target_name in targets:
                     add_ref(refs, target_name)
+                _, rest = split_label(line)
+                for token in ASM_IDENT_RE.findall(rest):
+                    if token not in targets and token in defined_aliases:
+                        add_ref(refs, token)
             elif suffix in C_EXTS:
+                if C_PROTO_RE.match(line):
+                    continue
                 def_name = c_definition_name(text_lines, idx)
-                for name in CALLLIKE_RE.findall(line):
+                call_names = set(CALLLIKE_RE.findall(line))
+                for name in call_names:
                     if name != def_name:
                         add_ref(refs, name)
+                scan_line = line.split("{", 1)[1] if def_name and "{" in line else ("" if def_name else line)
+                for token in C_IDENT_RE.findall(scan_line):
+                    if token != def_name and token not in call_names and token in defined_aliases:
+                        add_ref(refs, token)
 
     print("\n[symbols_defined]")
     print("none" if not defined else "\n".join(f"{name}: {places[0]}" for name, places in sorted(defined.items())[:200]))

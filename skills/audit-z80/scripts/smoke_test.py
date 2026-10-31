@@ -18,11 +18,12 @@ def run(script: str, target: Path, *args: str) -> str:
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        for name in ("src", "asm", "build", "lib", "vendor"):
+        for name in ("src", "asm", "build", "lib", "vendor", "tools"):
             (root / name).mkdir()
         (root / "src" / "api.h").write_text("#define FAST __z88dk_fastcall\ntypedef unsigned char u8;\n__smallc int foo(uint8_t a);\nint bar(uint8_t a) __sdcccall(0);\nFAST void baz(uint8_t a);\nu8 typed(u8 a);\n", encoding="utf-8")
         (root / "src" / "dummy.c").write_text("int dummy(void) { return 0; }\n", encoding="utf-8")
-        (root / "main.c").write_text("static const char *names[] = {\"a\", \"b\"};\nchar buf[4];\nvoid f(int i) { buf[i] = 'x'; }\nvoid g(void) { __asm call helper __endasm; }\nvoid caller(void) { x = foo(1); orphan(1); }\n", encoding="utf-8")
+        (root / "tools" / "host_tool.c").write_text("char hbuf[2]; void h(int i) { hbuf[i] = 1; }\n__z88dk_fastcall int host_fn(int x);\n", encoding="utf-8")
+        (root / "main.c").write_text("static const char *names[] = {\"a\", \"b\"};\nchar buf[4];\nvoid safe_const(void) { buf[0] = 'a'; }\nvoid f(int i) { buf[i] = 'x'; }\nvoid g(void) { __asm call helper __endasm; }\nvoid caller(void) { x = foo(1); orphan(1); }\n", encoding="utf-8")
         (root / "top.asm").write_text("PUBLIC _plain\n_plain:\n    di\n.local:\n    ret\ncond:\n    push hl\n    jp nz, later\n    pop hl\nlater:\n    ret\ninternal:\n    push hl\n    jr .restore\n.restore:\n    pop hl\n    ret\nrepeat:\n    call nz, helper\n    call nz, helper\n    call nz, helper\n    ret\nwrapper:\n    call helper\n    ret nz\n", encoding="utf-8")
         (root / "asm" / "mod.asm").write_text("PUBLIC _foo, _bar, _orphan\nPUBLIC _typed\n_foo: push hl\n    ret\n_bar:\n    ret\n_orphan:\n    ret\n_typed:\n    ret\n", encoding="utf-8")
         (root / "lib" / "hidden.asm").write_text("hidden:\n    di\n    ret\n", encoding="utf-8")
@@ -36,8 +37,11 @@ def main() -> int:
 
         z80 = run("z80_pattern_scan.py", root)
         assert "main.c" in z80 and "top.asm" in z80 and "lib/hidden.asm" in z80
+        assert "tools/host_tool.c" not in z80
         assert "mixed-pointer-literal-table" in z80
         assert "small-buffer-write" in z80
+        sbw_section = z80.split("[small-buffer-write]", 1)[1].split("\n\n", 1)[0]
+        assert "buf[i] = 'x'" in sbw_section and "buf[0] = 'a'" not in sbw_section
         assert "inline-asm-register-clobber" in z80
         assert "exit-with-interrupts-disabled" in z80
         stack_section = z80.split("[stack-delta-at-exit]", 1)[1].split("\n\n", 1)[0] if "[stack-delta-at-exit]" in z80 else ""
@@ -53,6 +57,7 @@ def main() -> int:
 
         abi = run("abi_inventory.py", root)
         assert "__smallc" in abi
+        assert "host_fn" not in abi and "build/gen.lst" not in abi
         assert "__sdcccall(0)" in abi
         assert "FAST->__z88dk_fastcall" in abi
         assert "_foo <- asm/mod.asm" in abi and "_bar <- asm/mod.asm" in abi

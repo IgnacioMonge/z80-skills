@@ -76,6 +76,19 @@ def routines(symbols, origin: int, end: int) -> list[tuple[int, int, str, str]]:
     return [tuple(r) for r in out]
 
 
+def routine_sections(symbols, origin: int, end: int) -> dict[int, str]:
+    """Map routine start address -> section name."""
+    starts = [s for s in symbols if origin <= s[0] < end]
+    out: dict[int, str] = {}
+    last_module = None
+    for addr, name, module, section in starts:
+        if name.startswith(LOCAL_PREFIXES) and out and last_module == module:
+            continue
+        out[addr] = section.lower()
+        last_module = module
+    return out
+
+
 def word_hits(blob: bytes, value: int) -> list[int]:
     needle = bytes((value & 0xFF, value >> 8))
     hits, at = [], blob.find(needle)
@@ -118,17 +131,39 @@ def strong_refs(blob: bytes, origin: int | None) -> dict[int, list[int]]:
     return refs
 
 
-def falls_through(code: bytes, offset: int) -> bool:
-    """True unless the bytes before offset end in ret, jp nn, jr e or jp (hl)."""
-    if offset <= 0:
+def falls_through(code: bytes, offset: int, prev_section: str = "") -> bool:
+    """True unless the bytes before offset end in an unconditional terminator or rodata."""
+    if offset <= 0 or prev_section.startswith("rodata"):
         return False
     if code[offset - 1] in (0xC9, 0xE9):
+        return False
+    if offset >= 2 and (code[offset - 2], code[offset - 1]) in (
+        (0xDD, 0xE9),
+        (0xFD, 0xE9),
+        (0xED, 0x4D),
+        (0xED, 0x45),
+    ):
         return False
     if offset >= 3 and code[offset - 3] == 0xC3:
         return False
     if offset >= 2 and code[offset - 2] == 0x18:
         return False
     return True
+
+
+PUSH_OPCODES = {0xC5, 0xD5, 0xE5, 0xF5}
+EPILOGUE_POPS = {0xC1, 0xD1, 0xE1}
+
+
+def is_epilogue_restore(blob: bytes, call_offset: int, cleanup_end: int) -> bool:
+    """True when pop bc/de/hl after call is immediately followed by ret and has no arg push before call."""
+    pops = blob[call_offset + 3 : cleanup_end]
+    if not pops or any(b not in EPILOGUE_POPS for b in pops):
+        return False
+    if cleanup_end >= len(blob) or blob[cleanup_end] != 0xC9:
+        return False
+    window = blob[max(0, call_offset - 8) : call_offset]
+    return not any(b in PUSH_OPCODES for b in window)
 
 
 def main() -> int:
@@ -149,6 +184,10 @@ def main() -> int:
         end = bss
     symbols = load_map(args.map)
     rts = routines(symbols, args.origin, end)
+    rt_sections = routine_sections(symbols, args.origin, end)
+    prev_sec_by_addr: dict[int, str] = {}
+    for idx, (addr, _s, _n, _m) in enumerate(rts):
+        prev_sec_by_addr[addr] = rt_sections.get(rts[idx - 1][0], "") if idx > 0 else ""
     overlays = {}
     for spec in args.overlay:
         name, _, path = spec.partition("=")
@@ -230,18 +269,22 @@ def main() -> int:
 
     dead = [(s, n, m) for a, (s, n, m, callers, users, weak) in info.items()
             if s >= args.min_bytes and not callers and not users and weak <= 0
-            and not falls_through(code, a - args.origin)]
+            and not falls_through(code, a - args.origin, prev_sec_by_addr.get(a, ""))]
     print("\n[unreferenced]  no reference anywhere and no fall-through; check indirect use")
     for size, name, module in sorted(dead, reverse=True)[: args.top]:
         print(f"  {size:5d} B  {name} ({module})")
     if not dead:
         print("  none")
 
-    starts = {addr: name for addr, _s, name, _m in rts}
+    starts = {
+        addr: name
+        for addr, _s, name, _m in rts
+        if not rt_sections.get(addr, "").startswith("rodata")
+    }
     cleanup = collections.defaultdict(lambda: [0, 0])
     for blob in [code, *overlays.values()]:
         for i in range(len(blob) - 3):
-            if blob[i] not in CALLS:
+            if blob[i] != 0xCD:
                 continue
             target = blob[i + 1] | (blob[i + 2] << 8)
             if target not in starts:
@@ -259,6 +302,8 @@ def main() -> int:
                 while j < len(blob) and blob[j] in CLEANUP and cost < 12:
                     cost += 1
                     j += 1
+                if cost and is_epilogue_restore(blob, i, j):
+                    cost = 0
             if cost:
                 cleanup[target][0] += 1
                 cleanup[target][1] += cost
